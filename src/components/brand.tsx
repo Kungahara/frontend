@@ -1,0 +1,10 @@
+import Link from "next/link";
+
+export function Brand() {
+  return (
+    <Link className="brand" href="/" aria-label="Kungahara home">
+      <span className="brand-mark" aria-hidden="true">K</span>
+      <span>Kungahara</span>
+    </Link>
+  );
+}
