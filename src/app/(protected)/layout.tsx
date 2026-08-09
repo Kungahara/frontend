@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Brand } from "@/components/brand";
+import { LogoutButton } from "@/components/logout-button";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard" },
@@ -18,7 +19,8 @@ export default function ProtectedLayout({ children }: LayoutProps<"/">) {
             <Link key={item.href} href={item.href}>{item.label}</Link>
           ))}
         </nav>
-        <p className="sidebar-note">Protected workspace scaffold</p>
+        <LogoutButton />
+        <p className="sidebar-note">Your protected workspace</p>
       </aside>
       <main className="workspace">{children}</main>
     </div>

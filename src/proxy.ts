@@ -3,13 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedRoutes = ["/dashboard", "/profile", "/settings"];
 
 export function proxy(request: NextRequest) {
-  const guardEnabled = process.env.AUTH_GUARD_ENABLED === "true";
   const isProtected = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route),
   );
   const hasSession = request.cookies.has("kungahara_session");
 
-  if (guardEnabled && isProtected && !hasSession) {
+  if (isProtected && !hasSession) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
