@@ -5,7 +5,9 @@ import {
   FileText,
   LayoutDashboard,
   Moon,
+  Rocket,
   ShoppingCart,
+  Sparkles,
   Sun,
 } from "lucide-react";
 import Link from "next/link";
@@ -62,11 +64,27 @@ const pageTitles: Record<string, string> = {
   "/profile": "Help",
 };
 
+const sidebarSlides = [
+  {
+    title: "Future",
+    description: "Build a smarter business, one clear decision at a time.",
+    points: ["Plan what comes next", "Grow with confidence"],
+    icon: Rocket,
+  },
+  {
+    title: "Features",
+    description: "Everything you need to keep daily work moving smoothly.",
+    points: ["Simple business tools", "Insights in one place"],
+    icon: Sparkles,
+  },
+];
+
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dark, setDark] = useState(false);
+  const [sidebarSlide, setSidebarSlide] = useState(0);
   const authenticationStarted = useRef(false);
 
   useEffect(() => {
@@ -80,6 +98,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       .catch(() => router.replace("/login"));
   }, [router]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSidebarSlide((current) => (current + 1) % sidebarSlides.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, []);
+
   if (!user) {
     return <main className="dashboard-page-loading"><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
   }
@@ -87,6 +112,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const name = `${user.firstName} ${user.lastName}`.trim();
   const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase();
   const pageTitle = pageTitles[pathname] ?? "Kungahara";
+  const activeSlide = sidebarSlides[sidebarSlide];
+  const SlideIcon = activeSlide.icon;
   const currentDate = new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -106,6 +133,22 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           </Link>
         ))}
       </nav>
+      <section className="dashboard-sidebar-promo" aria-label="Kungahara highlights" aria-live="polite">
+        <div className="sidebar-promo-art" aria-hidden="true">
+          <span className="sidebar-promo-orbit" />
+          <span className="sidebar-promo-icon"><SlideIcon /></span>
+        </div>
+        <div className="sidebar-promo-copy" key={activeSlide.title}>
+          <p>{activeSlide.title}</p>
+          <strong>{activeSlide.description}</strong>
+          <ul>{activeSlide.points.map((point) => <li key={point}>{point}</li>)}</ul>
+        </div>
+        <div className="sidebar-promo-dots" aria-label="Choose highlight">
+          {sidebarSlides.map((slide, index) => (
+            <button className={sidebarSlide === index ? "active" : ""} type="button" aria-label={`Show ${slide.title}`} aria-pressed={sidebarSlide === index} key={slide.title} onClick={() => setSidebarSlide(index)} />
+          ))}
+        </div>
+      </section>
       <div className="dashboard-general">
         <p className="dashboard-nav-label">General</p>
         <nav className="dashboard-secondary-nav" aria-label="General">

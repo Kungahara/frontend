@@ -928,7 +928,7 @@ a {
 /* Reference-matched application navigation and top bar */
 .auth-card .auth-story { border-radius: 1.4rem; }
 .dashboard-shell { height: 100dvh; min-height: 0; grid-template-columns: 13.5rem minmax(0, 1fr); gap: 0; padding: 0; overflow: hidden; background: #edf0f4; }
-.dashboard-sidebar { height: 100dvh; min-height: 0; padding: 1.35rem 1.1rem 1rem; overflow: hidden; color: #2d323c; background: #fff; border: 0; border-radius: 0; box-shadow: none; }
+.dashboard-sidebar { height: 100dvh; min-height: 0; padding: 1.08rem 1.1rem 1rem; overflow: hidden; color: #2d323c; background: #fff; border: 0; border-radius: 0; box-shadow: none; }
 .dashboard-sidebar .brand { padding-inline: 0.35rem; color: #252a34; font-size: 0.98rem; font-weight: 600; }
 .dashboard-sidebar .brand-mark { width: 1.9rem; height: 1.9rem; color: white; font-size: 0.78rem; background: #315fe4; border-radius: 50%; }
 .dashboard-sidebar .dashboard-nav-label { color: #9aa0aa; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.09em; }
@@ -954,6 +954,23 @@ a {
 .dashboard-sidebar-signout { display: flex; width: 100%; min-height: 2.5rem; align-items: center; gap: 0.65rem; padding: 0.55rem 0.7rem; color: #555c68; font-size: 0.72rem; font-weight: 450; background: transparent; border: 0; border-radius: 0.5rem; transition: color 150ms ease, background 150ms ease; }
 .dashboard-sidebar-signout svg { width: 0.9rem; height: 0.9rem; flex: 0 0 auto; stroke-width: 1.65; }
 .dashboard-sidebar-signout:hover { color: #315fe4; background: #f3f6ff; }
+.dashboard-sidebar-promo { position: relative; display: grid; min-height: 9.35rem; margin: 0.65rem 0.25rem 0.55rem; padding: 0.6rem 0.72rem 0.5rem; overflow: hidden; color: white; background: linear-gradient(155deg, #173fc7 0%, #3869ef 58%, #5b83f4 100%); border-radius: 0.9rem; box-shadow: 0 7px 16px rgb(49 95 228 / 20%); }
+.dashboard-sidebar-promo::before { position: absolute; top: -2rem; left: -1.2rem; width: 5rem; height: 5rem; background: rgb(255 255 255 / 10%); border-radius: 50%; content: ""; }
+.sidebar-promo-art { position: relative; display: grid; height: 2.65rem; place-items: center; }
+.sidebar-promo-orbit { position: absolute; width: 2.7rem; height: 2.7rem; border: 1px solid rgb(255 255 255 / 28%); border-radius: 50%; box-shadow: 2.2rem 0 0 -0.9rem rgb(173 202 255 / 38%), -2rem 0.5rem 0 -1rem rgb(255 255 255 / 28%); }
+.sidebar-promo-icon { position: relative; display: grid; width: 1.8rem; height: 1.8rem; place-items: center; color: #315fe4; background: white; border-radius: 50%; box-shadow: 0 4px 9px rgb(11 37 115 / 22%); }
+.sidebar-promo-icon svg { width: 0.9rem; height: 0.9rem; fill: #dbe7ff; stroke-width: 1.7; }
+.sidebar-promo-copy { position: relative; animation: sidebar-promo-in 300ms ease both; }
+.sidebar-promo-copy > p { margin-top: 0.25rem; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; opacity: 0.75; }
+.sidebar-promo-copy > strong { display: block; margin-top: 0.22rem; font-size: 0.66rem; font-weight: 600; line-height: 1.25; }
+.sidebar-promo-copy ul { display: grid; gap: 0.18rem; margin-top: 0.38rem; list-style: none; }
+.sidebar-promo-copy li { position: relative; padding-left: 0.8rem; font-size: 0.55rem; line-height: 1.25; opacity: 0.88; }
+.sidebar-promo-copy li::before { position: absolute; top: 0.18rem; left: 0; width: 0.38rem; height: 0.38rem; border: 1px solid rgb(255 255 255 / 72%); border-radius: 50%; content: ""; }
+.sidebar-promo-dots { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.3rem; margin-top: 0.38rem; }
+.sidebar-promo-dots button { width: 0.3rem; height: 0.3rem; padding: 0; background: rgb(255 255 255 / 42%); border: 0; border-radius: 999px; cursor: pointer; transition: width 180ms ease, background 180ms ease; }
+.sidebar-promo-dots button.active { width: 1rem; background: white; }
+@keyframes sidebar-promo-in { from { opacity: 0; transform: translateY(0.3rem); } to { opacity: 1; transform: translateY(0); } }
+
 .dashboard-stage { height: 100dvh; min-height: 0; grid-template-rows: 4.2rem minmax(0, 1fr); gap: 0; padding: 0; background: #edf0f4; }
 .dashboard-page-identity { display: grid; gap: 0.12rem; min-width: 0; }
 .dashboard-page-identity strong { color: #222731; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em; }
@@ -979,6 +996,7 @@ a {
 @media (max-width: 850px) {
   .dashboard-shell { grid-template-columns: 4.5rem minmax(0, 1fr); padding: 0; gap: 0.3rem; }
   .dashboard-sidebar { height: 100dvh; }
+  .dashboard-sidebar-promo { display: none; }
   .dashboard-stage { height: 100dvh; padding: 0.3rem 0.3rem 0.3rem 0; }
   .dashboard-page-identity small { display: none; }
   .dashboard-topbar-actions { gap: 0.3rem; }
