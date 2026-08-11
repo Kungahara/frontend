@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Stock" };
+export const metadata: Metadata = { title: "Dashboard" };
 
-export default function StockPage() {
-  return <section className="stock-data-body" aria-label="Stock data area" />;
+export default function DashboardPage() {
+  return <section className="stock-data-body" aria-label="Dashboard data area" />;
 }
