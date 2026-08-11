@@ -6,6 +6,7 @@ export type AuthUser = {
   role: "owner" | "admin" | "member";
   businessId: string | null;
   emailVerified: boolean;
+  profileImageUrl: string | null;
 };
 
 export class ApiError extends Error {

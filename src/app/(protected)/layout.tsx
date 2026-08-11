@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, type SVGProps, useEffect, useRef, useState } from "react";
+import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState } from "react";
 
 import { Brand } from "@/components/brand";
+import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monitor";
 import { LogoutButton } from "@/components/logout-button";
+import { ProfileMenu } from "@/components/profile-menu";
 import { authRequest, type AuthUser } from "@/lib/api/client";
 
 function StockIcon(props: SVGProps<SVGSVGElement>) {
@@ -85,7 +87,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dark, setDark] = useState(false);
   const [sidebarSlide, setSidebarSlide] = useState(0);
+  const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsUnread, setNotificationsUnread] = useState(false);
+  const [alertsHydrated, setAlertsHydrated] = useState(false);
   const authenticationStarted = useRef(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const currencyAlertIds = useRef(new Set<string>());
 
   useEffect(() => {
     // React Strict Mode invokes effects twice in development. Refresh tokens
@@ -105,12 +113,50 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return () => window.clearInterval(timer);
   }, []);
 
+  const receiveCurrencyAlert = useCallback((alert: CurrencyAlert) => {
+    if (currencyAlertIds.current.has(alert.id)) return;
+    currencyAlertIds.current.add(alert.id);
+    setCurrencyAlerts((current) => [alert, ...current]);
+    setNotificationsUnread(true);
+  }, []);
+
+  useEffect(() => {
+    const key = `kungahara:currency-alerts:${new Date().toISOString().slice(0, 10)}`;
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(key) ?? "[]") as CurrencyAlert[];
+        const alerts = Array.isArray(saved) ? saved : [];
+        currencyAlertIds.current = new Set(alerts.map((alert) => alert.id));
+        setCurrencyAlerts(alerts);
+        setNotificationsUnread(window.localStorage.getItem(`${key}:unread`) === "true");
+      } catch {
+        setCurrencyAlerts([]);
+      }
+      setAlertsHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!alertsHydrated) return;
+    const key = `kungahara:currency-alerts:${new Date().toISOString().slice(0, 10)}`;
+    window.localStorage.setItem(key, JSON.stringify(currencyAlerts));
+    window.localStorage.setItem(`${key}:unread`, String(notificationsUnread));
+  }, [alertsHydrated, currencyAlerts, notificationsUnread]);
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    function closeOnOutsideClick(event: PointerEvent) {
+      if (!notificationsRef.current?.contains(event.target as Node)) setNotificationsOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [notificationsOpen]);
+
   if (!user) {
     return <main className="dashboard-page-loading"><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
   }
 
-  const name = `${user.firstName} ${user.lastName}`.trim();
-  const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase();
   const pageTitle = pageTitles[pathname] ?? "Kungahara";
   const activeSlide = sidebarSlides[sidebarSlide];
   const SlideIcon = activeSlide.icon;
@@ -161,15 +207,21 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     <section className="dashboard-stage">
       <header className="dashboard-topbar">
         <div className="dashboard-page-identity"><strong>{pageTitle}</strong><small>{currentDate}</small></div>
-        <div className="dashboard-topbar-actions">
-          <div className="dashboard-theme-toggle" aria-label="Theme">
-            <button className={!dark ? "active" : ""} type="button" aria-label="Use light theme" aria-pressed={!dark} title="Light theme" onClick={() => setDark(false)}><Sun aria-hidden="true" /></button>
-            <button className={dark ? "active" : ""} type="button" aria-label="Use dark theme" aria-pressed={dark} title="Dark theme" onClick={() => setDark(true)}><Moon aria-hidden="true" /></button>
-          </div>
-          <button type="button" aria-label="Notifications"><Bell aria-hidden="true" /></button>
-          <div className="dashboard-account">
-            <span className="dashboard-account-mark" aria-hidden="true">{initials}</span>
-            <span><strong>{name}</strong><small>{user.email}</small></span>
+        <div className="dashboard-topbar-right">
+          <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
+          <div className="dashboard-topbar-actions">
+            <div className="dashboard-theme-toggle" aria-label="Theme">
+              <button className={!dark ? "active" : ""} type="button" aria-label="Use light theme" aria-pressed={!dark} title="Light theme" onClick={() => setDark(false)}><Sun aria-hidden="true" /></button>
+              <button className={dark ? "active" : ""} type="button" aria-label="Use dark theme" aria-pressed={dark} title="Dark theme" onClick={() => setDark(true)}><Moon aria-hidden="true" /></button>
+            </div>
+            <div className="dashboard-notifications" ref={notificationsRef}>
+              <button type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
+              {notificationsOpen && <div className="notification-popover">
+                <strong>Today&apos;s notifications</strong>
+                {currencyAlerts.length ? currencyAlerts.map((alert) => <article key={alert.id}><b>{alert.title}</b><p>{alert.message}</p></article>) : <p>No new notifications.</p>}
+              </div>}
+            </div>
+            <ProfileMenu user={user} onUserChange={setUser} />
           </div>
         </div>
       </header>
