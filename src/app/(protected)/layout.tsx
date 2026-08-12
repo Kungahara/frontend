@@ -211,8 +211,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
           <div className="dashboard-topbar-actions">
             <div className="dashboard-theme-toggle" aria-label="Theme">
-              <button className={!dark ? "active" : ""} type="button" aria-label="Use light theme" aria-pressed={!dark} title="Light theme" onClick={() => setDark(false)}><Sun aria-hidden="true" /></button>
-              <button className={dark ? "active" : ""} type="button" aria-label="Use dark theme" aria-pressed={dark} title="Dark theme" onClick={() => setDark(true)}><Moon aria-hidden="true" /></button>
+              <button className={!dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={!dark} title="Toggle theme" onClick={() => setDark((current) => !current)}><Sun aria-hidden="true" /></button>
+              <button className={dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={dark} title="Toggle theme" onClick={() => setDark((current) => !current)}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications" ref={notificationsRef}>
               <button type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>

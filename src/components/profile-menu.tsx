@@ -50,12 +50,12 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
 
   return <div className="dashboard-profile-control" ref={rootRef}>
     <button className="dashboard-account" type="button" aria-label="Open profile options" aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
-      <span className="dashboard-account-mark" aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
+      <span className={`dashboard-account-mark${user.profileImageUrl ? " has-image" : ""}`} aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
       <span><strong>{name}</strong><small>{user.email}</small></span>
     </button>
     {open && <div className="dashboard-profile-menu">
       <div className="profile-menu-heading">
-        <span className="profile-menu-avatar">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={72} height={72} unoptimized /> : initials}</span>
+        <span className={`profile-menu-avatar${user.profileImageUrl ? " has-image" : ""}`}>{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={72} height={72} unoptimized /> : initials}</span>
         <span><strong>{name}</strong><small>{user.email}</small></span>
       </div>
       <label className={`profile-menu-action${busy ? " disabled" : ""}`}>
