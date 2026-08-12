@@ -230,7 +230,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="dashboard-workspace">
+      <main className={`dashboard-workspace${pathname === "/stock" ? " stock-workspace" : ""}`}>
         {children}
         {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
           <span className="route-loading-spinner" aria-hidden="true" />

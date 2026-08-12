@@ -1,9 +1,11 @@
 "use client";
 
-import { ShoppingBag, TrendingDown, TrendingUp } from "lucide-react";
+import { Coins, PackageMinus, ShoppingBag, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Product = { id: string; name: string; quantity: number };
+import { inventoryFetch } from "@/lib/inventory-client";
+
+type Product = { id: string; name: string; quantity: number; costPrice: string };
 type StockMovement = { productId: string; quantity: number; createdAt: string };
 
 function StockStatusIcon() {
@@ -24,6 +26,47 @@ function SellingCard({ title, itemName, percentage, remainingStock, tone }: { ti
   </article>;
 }
 
+function StockValueCard({ products, movements }: { products: Product[]; movements: StockMovement[] }) {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const hasProducts = products.length > 0;
+  const calculatedCurrentValue = products.reduce((total, product) => total + product.quantity * Number(product.costPrice), 0);
+  const currentValue = hasProducts ? calculatedCurrentValue : 200000;
+  const movementValueThisMonth = movements.reduce((total, movement) => {
+    if (new Date(movement.createdAt) < startOfMonth) return total;
+    const product = products.find((item) => item.id === movement.productId);
+    return total + movement.quantity * Number(product?.costPrice ?? 0);
+  }, 0);
+  const lastMonthValue = hasProducts ? Math.max(0, currentValue - movementValueThisMonth) : currentValue / 1.17;
+  const change = hasProducts ? lastMonthValue ? ((currentValue - lastMonthValue) / lastMonthValue) * 100 : currentValue > 0 ? 100 : 0 : 17;
+  const ChangeIcon = change >= 0 ? TrendingUp : TrendingDown;
+  const formattedValue = new Intl.NumberFormat("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 }).format(currentValue);
+
+  return <article className="stock-summary-card stock-value-card" aria-label="Stock value">
+    <span className="stock-summary-title">Stock value</span>
+    <span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span>
+    <div className="stock-value-amount">{formattedValue}</div>
+    <div className="stock-value-comparison">
+      <span className={`stock-summary-change${change >= 0 ? " increase" : " decrease"}`}><ChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(change))}%</span>
+      <span>than last month</span>
+    </div>
+  </article>;
+}
+
+function LeastStockCard({ product }: { product?: Product }) {
+  const itemName = product?.name || "Nike T-Shirt";
+  const remainingStock = product?.quantity ?? 8;
+
+  return <article className="stock-summary-card least-stock-card" aria-label="Least item in stock">
+    <span className="stock-summary-title">Least item in stock</span>
+    <span className="stock-summary-icon least-stock-icon"><PackageMinus aria-hidden="true" /></span>
+    <div className="least-stock-name"><span>{itemName}</span></div>
+    <span className="least-stock-remaining">Remaining stock: <strong>{new Intl.NumberFormat("en").format(remainingStock)}</strong></span>
+  </article>;
+}
+
 export function StockSummaryCard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
@@ -32,19 +75,24 @@ export function StockSummaryCard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      fetch("/api/products", { signal: controller.signal }),
-      fetch("/api/stock-movements", { signal: controller.signal }),
-    ]).then(async ([productsResponse, movementsResponse]) => {
-      if (!productsResponse.ok || !movementsResponse.ok) throw new Error("Unable to load stock");
-      const [productsBody, movementsBody] = await Promise.all([productsResponse.json(), movementsResponse.json()]);
-      setProducts(Array.isArray(productsBody.products) ? productsBody.products : []);
-      setMovements(Array.isArray(movementsBody.stockMovements) ? movementsBody.stockMovements : []);
-    }).catch((requestError) => {
-      if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-      setError(true);
-    }).finally(() => setLoading(false));
-    return () => controller.abort();
+    function loadStock() {
+      setError(false);
+      void Promise.all([
+        inventoryFetch("/api/products", { signal: controller.signal }),
+        inventoryFetch("/api/stock-movements", { signal: controller.signal }),
+      ]).then(async ([productsResponse, movementsResponse]) => {
+        if (!productsResponse.ok || !movementsResponse.ok) throw new Error("Unable to load stock");
+        const [productsBody, movementsBody] = await Promise.all([productsResponse.json(), movementsResponse.json()]);
+        setProducts(Array.isArray(productsBody.products) ? productsBody.products : []);
+        setMovements(Array.isArray(movementsBody.stockMovements) ? movementsBody.stockMovements : []);
+      }).catch((requestError) => {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        setError(true);
+      }).finally(() => setLoading(false));
+    }
+    loadStock();
+    window.addEventListener("kungahara:inventory-changed", loadStock);
+    return () => { controller.abort(); window.removeEventListener("kungahara:inventory-changed", loadStock); };
   }, []);
 
   const totalUnits = products.reduce((total, product) => total + product.quantity, 0);
@@ -70,8 +118,10 @@ export function StockSummaryCard() {
   const rankedProducts = [...salesByProduct].sort((first, second) => second.sold - first.sold);
   const mostSelling = rankedProducts[0];
   const leastSelling = rankedProducts.length > 1 ? rankedProducts[rankedProducts.length - 1] : rankedProducts[0];
+  const leastStockProduct = [...products].sort((first, second) => first.quantity - second.quantity)[0];
 
   return <div className="stock-summary-grid">
+    <StockValueCard products={products} movements={movements} />
     <article className="stock-summary-card" aria-label="Total stock status">
       <span className="stock-summary-title">Stock status</span>
       <span className="stock-summary-icon stock-status-icon"><StockStatusIcon /></span>
@@ -83,7 +133,8 @@ export function StockSummaryCard() {
       </div>
       <span className="stock-summary-previous">Stock size: <strong>{loading || error ? "—" : formattedTotal}</strong></span>
     </article>
-    {!loading && !error && <SellingCard title="Most selling item" itemName={mostSelling?.name || "Zara Jeans"} percentage={totalSold && mostSelling ? (mostSelling.sold / totalSold) * 100 : 72} remainingStock={mostSelling?.quantity ?? 60} tone="best" />}
-    {!loading && !error && <SellingCard title="Least selling item" itemName={leastSelling?.name || "Nike Shorts"} percentage={totalSold && leastSelling ? (leastSelling.sold / totalSold) * 100 : 10} remainingStock={leastSelling?.quantity ?? 60} tone="least" />}
+    <SellingCard title="Most selling item" itemName={mostSelling?.name || "Zara Jeans"} percentage={totalSold && mostSelling ? (mostSelling.sold / totalSold) * 100 : 72} remainingStock={mostSelling?.quantity ?? 60} tone="best" />
+    <SellingCard title="Least selling item" itemName={leastSelling?.name || "Nike Shorts"} percentage={totalSold && leastSelling ? (leastSelling.sold / totalSold) * 100 : 10} remainingStock={leastSelling?.quantity ?? 60} tone="least" />
+    <LeastStockCard product={leastStockProduct} />
   </div>;
 }
