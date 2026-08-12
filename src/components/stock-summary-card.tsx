@@ -7,15 +7,8 @@ type Product = { id: string; name: string; quantity: number };
 type StockMovement = { productId: string; quantity: number; createdAt: string };
 
 function StockStatusIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M2.2 4.4h3.1l1.4 10.2c.1.9.9 1.6 1.8 1.6h8.7" />
-    <path d="M7 7.2h11.8l-1.5 6.2c-.2.8-.9 1.3-1.7 1.3H8.2" />
-    <path d="M8.1 7.2c.4-2 2-3.4 3.9-3.4h1.9c2 0 3.6 1.4 4 3.4" />
-    <path d="M9.2 7.2V6.1c0-.7.6-1.3 1.3-1.3h4.8c.7 0 1.3.6 1.3 1.3v1.1" />
-    <path d="M18.8 7.2 21.4 2" />
-    <path d="M8.4 18.3h9.8" />
-    <circle cx="8.3" cy="20" r="1.2" />
-    <circle cx="18.4" cy="20" r="1.2" />
+  return <svg viewBox="0 0 27.948 27.948" fill="currentColor" aria-hidden="true">
+    <path d="M9.689 19.484h15.503v1.936H8.133L4.99 7.153H.69V5.218h5.854l3.145 14.266Zm1.761 3.224a2.62 2.62 0 1 0 0 5.24 2.62 2.62 0 0 0 0-5.24Zm10.8 0a2.62 2.62 0 1 0 0 5.24 2.62 2.62 0 0 0 0-5.24Zm-11.582-4.673L8.37 6.133h3.76L20.463 0l3.729 5.064-.161 1.069h3.227l-2.687 11.902H10.668Zm12.916-12.558-.892.656h.794l.098-.656Zm-10.546.655h1.958l-.117-.16.379-.279.324.439h.48l-.492-.669.38-.279.697.948h.544l-.89-1.207.381-.279 1.095 1.486h.626l-1.301-1.768.379-.28 1.507 2.048h.544l-1.697-2.308.379-.278 1.902 2.586h1.668l1.639-1.205-3.07-4.176-7.315 5.381Zm8.712-.827-2.088-2.839-.382.279 2.089 2.839.381-.279Zm-.73.54-2.09-2.84-.379.279 2.092 2.839.377-.278Z" />
   </svg>;
 }
 

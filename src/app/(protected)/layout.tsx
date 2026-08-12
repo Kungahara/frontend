@@ -90,6 +90,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsUnread, setNotificationsUnread] = useState(false);
+  const [routeLoading, setRouteLoading] = useState(false);
   const [alertsHydrated, setAlertsHydrated] = useState(false);
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -153,6 +154,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
   }, [notificationsOpen]);
 
+  useEffect(() => {
+    setRouteLoading(false);
+  }, [pathname]);
+
   if (!user) {
     return <main className="dashboard-page-loading"><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
   }
@@ -173,7 +178,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <p className="dashboard-nav-label">Menu</p>
       <nav className="dashboard-nav" aria-label="Menu">
         {menuItems.map(({ href, label, icon: Icon }) => (
-          <Link className={pathname === href ? "active" : ""} href={href} key={href}>
+          <Link className={pathname === href ? "active" : ""} href={href} key={href} onClick={() => { if (pathname !== href) setRouteLoading(true); }}>
             <Icon aria-hidden="true" />
             <span>{label}</span>
           </Link>
@@ -198,8 +203,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <div className="dashboard-general">
         <p className="dashboard-nav-label">General</p>
         <nav className="dashboard-secondary-nav" aria-label="General">
-          <Link className={pathname.startsWith("/settings") ? "active" : ""} href="/settings"><SettingsIcon aria-hidden="true" /><span>Settings</span></Link>
-          <Link className={pathname.startsWith("/profile") ? "active" : ""} href="/profile"><HelpIcon aria-hidden="true" /><span>Help</span></Link>
+          <Link className={pathname.startsWith("/settings") ? "active" : ""} href="/settings" onClick={() => { if (!pathname.startsWith("/settings")) setRouteLoading(true); }}><SettingsIcon aria-hidden="true" /><span>Settings</span></Link>
+          <Link className={pathname.startsWith("/profile") ? "active" : ""} href="/profile" onClick={() => { if (!pathname.startsWith("/profile")) setRouteLoading(true); }}><HelpIcon aria-hidden="true" /><span>Help</span></Link>
           <LogoutButton className="dashboard-sidebar-signout" showIcon />
         </nav>
       </div>
@@ -225,7 +230,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="dashboard-workspace">{children}</main>
+      <main className="dashboard-workspace">
+        {children}
+        {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
+          <span className="route-loading-spinner" aria-hidden="true" />
+          <strong>Loading page…</strong>
+          <small>Please wait a moment.</small>
+        </div>}
+      </main>
     </section>
   </div>;
 }
