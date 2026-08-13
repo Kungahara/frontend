@@ -1123,28 +1123,34 @@ a {
 .stock-profit-section header button { display: inline-flex; min-height: 1.9rem; align-items: center; gap: 0.3rem; padding: 0.35rem 0.58rem; color: #3864e8; font-size: 0.6rem; font-weight: 650; background: #edf1ff; border: 0; border-radius: 0.48rem; cursor: pointer; }
 .stock-profit-section header button:hover { color: white; background: #3864e8; }
 .stock-profit-section header button svg { width: 0.7rem; height: 0.7rem; }
-.stock-analysis-legend { display: flex; align-items: center; gap: 0.8rem; margin: 0.65rem 0 0.2rem; }
+.stock-analysis-meta { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.55rem 1rem; margin: 0.65rem 0 0.2rem; }
+.stock-analysis-legend { display: flex; align-items: center; gap: 0.8rem; }
 .stock-analysis-legend span { display: inline-flex; align-items: center; gap: 0.3rem; color: #6f7885; font-size: 0.58rem; font-weight: 600; }
 .stock-analysis-legend span::before { width: 0.55rem; height: 0.18rem; background: #35b866; border-radius: 999px; content: ""; }
 .stock-analysis-legend .expenses::before { background: #ef6a70; }
+.stock-date-range { display: flex; align-items: center; gap: 0.35rem; color: #798290; font-size: 0.56rem; }
+.stock-date-range > span:first-child { margin-right: 0.15rem; font-weight: 650; }
+.stock-date-range input { width: 7.2rem; height: 1.75rem; padding: 0 0.35rem; color: #414956; font: inherit; background: #f7f8fb; border: 1px solid #e2e6ed; border-radius: 0.4rem; outline: none; }
+.stock-date-range input:focus { border-color: #8da7f4; box-shadow: 0 0 0 2px rgb(56 100 232 / 12%); }
 .stock-profit-section .stock-analysis-chart { min-height: 0; flex: 1; margin-top: 0.25rem; }
 .stock-profit-section .stock-analysis-chart svg { height: 100%; min-height: 15rem; }
 .stock-analysis-chart svg .profit-series { color: #35b866; }
 .stock-analysis-chart svg .expense-series { color: #ef6a70; }
 .stock-category-section, .stock-product-section { display: flex; flex-direction: column; }
-.stock-category-section > header, .stock-product-section > header { padding-bottom: 0.65rem; border-bottom: 1px solid #edf0f4; }
+.stock-category-section > header, .stock-product-section > header { padding-bottom: 0.65rem; }
 .stock-category-list { display: grid; min-height: 0; flex: 1; align-content: start; gap: 0.38rem; margin-top: 0.65rem; overflow-y: auto; }
-.stock-category-list button { display: grid; gap: 0.12rem; padding: 0.55rem 0.62rem; color: #4a5360; text-align: left; background: #f6f8fb; border: 1px solid transparent; border-radius: 0.55rem; cursor: pointer; }
-.stock-category-list button:hover { color: #315fe4; background: #edf1ff; }
-.stock-category-list button.active { color: #315fe4; background: #edf1ff; border-color: #cbd7ff; box-shadow: inset 3px 0 #3864e8; }
-.stock-category-list button span { overflow: hidden; font-size: 0.66rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.stock-category-list button small { color: #939aa5; font-size: 0.54rem; }
+.stock-category-list button { display: flex; min-width: 0; min-height: 2.4rem; align-items: center; justify-content: space-between; gap: 0.65rem; padding: 0.52rem 0.7rem; color: #4a5360; text-align: left; background: white; border: 1px solid #e4e8f0; border-radius: 0.55rem; box-shadow: 0 2px 6px rgb(32 48 80 / 7%); cursor: pointer; }
+.stock-category-list button:hover { color: #315fe4; background: #f4f7ff; border-color: #cbd7ff; }
+.stock-category-list button.active { color: white; background: #3864e8; border-color: #3864e8; box-shadow: 0 4px 10px rgb(56 100 232 / 24%); }
+.stock-category-list button span { min-width: 0; overflow: hidden; font-size: 0.7rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.stock-category-list button small { flex: 0 0 auto; color: #939aa5; font-size: 0.6rem; }
+.stock-category-list button.active small { color: rgb(255 255 255 / 78%); }
 .stock-product-choice { display: grid; min-height: 0; flex: 1; align-content: start; gap: 0.32rem; margin-top: 0.65rem; overflow-y: auto; }
-.stock-product-choice button { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.46rem 0.55rem; color: #56606d; text-align: left; background: transparent; border: 1px solid #e8ebf1; border-radius: 0.48rem; cursor: pointer; }
+.stock-product-choice button { display: flex; min-width: 0; min-height: 2.4rem; align-items: center; justify-content: space-between; gap: 0.65rem; padding: 0.52rem 0.7rem; color: #56606d; text-align: left; background: white; border: 1px solid #e4e8f0; border-radius: 0.55rem; box-shadow: 0 2px 6px rgb(32 48 80 / 7%); cursor: pointer; }
 .stock-product-choice button:hover { color: #315fe4; background: #f3f6ff; border-color: #d9e1ff; }
-.stock-product-choice button.active { color: white; background: #3864e8; border-color: #3864e8; }
-.stock-product-choice button span { min-width: 0; overflow: hidden; font-size: 0.6rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.stock-product-choice button small { flex: 0 0 auto; color: #9299a4; font-size: 0.52rem; }
+.stock-product-choice button.active { color: white; background: #3864e8; border-color: #3864e8; box-shadow: 0 4px 10px rgb(56 100 232 / 24%); }
+.stock-product-choice button span { min-width: 0; overflow: hidden; font-size: 0.7rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.stock-product-choice button small { flex: 0 0 auto; color: #9299a4; font-size: 0.6rem; }
 .stock-product-choice button.active small { color: rgb(255 255 255 / 78%); }
 .stock-analysis { flex: 0 0 auto; margin: 0 0.65rem 0.65rem; padding: 0.75rem; background: #fbfcff; border: 1px solid #e6eaf2; border-radius: 0.75rem; }
 .stock-analysis > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
@@ -1161,6 +1167,15 @@ a {
 .stock-analysis-chart svg .stock-axis-label { fill: #657080; font-size: 10px; font-weight: 600; }
 .stock-analysis-chart svg polyline { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .stock-analysis-chart svg circle { fill: currentColor; stroke: white; stroke-width: 2; }
+.stock-analysis-chart svg .stock-vertical-grid { stroke-opacity: 0.6; }
+.stock-analysis-chart svg .stock-chart-area { stroke: none; }
+.stock-analysis-chart svg .stock-chart-point { cursor: pointer; }
+.stock-analysis-chart svg .stock-chart-point-ring { fill: white; stroke: currentColor; stroke-width: 1.6; transition: r 120ms ease; }
+.stock-analysis-chart svg .stock-chart-point-core { fill: currentColor; stroke: none; pointer-events: none; }
+.stock-analysis-chart svg .stock-chart-point:hover .stock-chart-point-ring { r: 6px; }
+.stock-analysis-chart svg .stock-chart-tooltip rect { fill: #252b35; stroke: none; filter: drop-shadow(0 3px 5px rgb(0 0 0 / 18%)); }
+.stock-analysis-chart svg .stock-chart-tooltip text { fill: #dce2eb; font-size: 8px; }
+.stock-analysis-chart svg .stock-chart-tooltip .value { fill: white; font-weight: 700; }
 .stock-analysis-empty { color: #9299a4; font-size: 0.65rem; }
 .stock-analysis-products { min-height: 12.5rem; padding: 0.65rem; background: white; border: 1px solid #edf0f5; border-radius: 0.65rem; }
 .stock-analysis-products > strong { color: #343b46; font-size: 0.66rem; font-weight: 700; }
@@ -1222,12 +1237,15 @@ a {
 .dashboard-theme-dark .stock-analysis, .dashboard-theme-dark .stock-analysis-chart, .dashboard-theme-dark .stock-analysis-products { background: #111827; border-color: #283246; }
 .dashboard-theme-dark .stock-profit-section, .dashboard-theme-dark .stock-category-section, .dashboard-theme-dark .stock-product-section { background: #151b2a; border-color: #263044; }
 .dashboard-theme-dark .stock-profit-section h2, .dashboard-theme-dark .stock-category-section h2, .dashboard-theme-dark .stock-product-section h2 { color: #f3f5f9; }
-.dashboard-theme-dark .stock-category-section > header, .dashboard-theme-dark .stock-product-section > header { border-color: #263044; }
-.dashboard-theme-dark .stock-product-choice button { color: #c9d1de; border-color: #2a3548; }
+.dashboard-theme-dark .stock-date-range { color: #aab3c1; }
+.dashboard-theme-dark .stock-date-range input { color: #e8edf5; background: #111827; border-color: #2a3548; color-scheme: dark; }
+.dashboard-theme-dark .stock-analysis-chart svg .stock-chart-point-ring { fill: #111827; }
+.dashboard-theme-dark .stock-product-choice button { color: #c9d1de; background: #111827; border-color: #2a3548; }
 .dashboard-theme-dark .stock-product-choice button:hover { color: #aebfff; background: #1c2740; }
 .dashboard-theme-dark .stock-product-choice button.active { color: white; background: #3864e8; border-color: #3864e8; }
-.dashboard-theme-dark .stock-category-list button { color: #c9d1de; background: #111827; }
-.dashboard-theme-dark .stock-category-list button:hover, .dashboard-theme-dark .stock-category-list button.active { color: #aebfff; background: #1c2740; }
+.dashboard-theme-dark .stock-category-list button { color: #c9d1de; background: #111827; border-color: #2a3548; }
+.dashboard-theme-dark .stock-category-list button:hover { color: #aebfff; background: #1c2740; }
+.dashboard-theme-dark .stock-category-list button.active { color: white; background: #3864e8; border-color: #3864e8; }
 .dashboard-theme-dark .stock-analysis > header h3, .dashboard-theme-dark .stock-analysis-products > strong { color: #f2f5fa; }
 .dashboard-theme-dark .stock-analysis-products label { color: #c9d1de; }
 .dashboard-theme-dark .stock-analysis-products label:hover { background: #1c2536; }

@@ -31,27 +31,63 @@ function stockPercentage(product: Product) {
   return Math.min(100, Math.round((product.quantity / product.lowStockLevel) * 100));
 }
 
-function StockAnalysisChart({ products, categoryId, productId }: { products: Product[]; categoryId: string; productId: string }) {
+function availableQuantity(product: Product) {
+  return Math.max(0, Number(product.quantity) || 0);
+}
+
+function dateInputValue(date: Date) {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function oneYearAgo() {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 1);
+  return dateInputValue(date);
+}
+
+function StockAnalysisChart({ products, categoryId, productId, startDate, endDate }: { products: Product[]; categoryId: string; productId: string; startDate: string; endDate: string }) {
+  const [hoveredPoint, setHoveredPoint] = useState<{ index: number; series: "Profit" | "Expenses" } | null>(null);
   const categoryProducts = categoryId === "all" ? products : products.filter((product) => product.categoryId === categoryId);
   const selected = productId === "all" ? categoryProducts : categoryProducts.filter((product) => product.id === productId);
-  const annualExpenses = selected.reduce((total, product) => total + product.quantity * Number(product.costPrice), 0);
-  const annualProfit = selected.reduce((total, product) => total + product.quantity * Math.max(0, Number(product.sellingPrice) - Number(product.costPrice)), 0);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const expenses = months.map((_, index) => annualExpenses * ((index + 1) / 12));
-  const profit = months.map((_, index) => annualProfit * ((index + 1) / 12));
+  const annualExpenses = selected.reduce((total, product) => total + availableQuantity(product) * Number(product.costPrice), 0);
+  const annualProfit = selected.reduce((total, product) => total + availableQuantity(product) * Math.max(0, Number(product.sellingPrice) - Number(product.costPrice)), 0);
+  const start = new Date(`${startDate}T00:00:00`);
+  const requestedEnd = new Date(`${endDate}T00:00:00`);
+  const end = requestedEnd >= start ? requestedEnd : start;
+  const rangeDays = Math.max(1, (end.getTime() - start.getTime()) / 86_400_000);
+  const rangeScale = rangeDays / 365;
+  const pointCount = 7;
+  const dates = Array.from({ length: pointCount }, (_, index) => new Date(start.getTime() + ((end.getTime() - start.getTime()) * index) / (pointCount - 1)));
+  const profitPattern = [0.62, 0.8, 0.56, 1, 0.74, 0.65, 0.84];
+  const expensePattern = [0.78, 0.66, 0.82, 0.7, 0.88, 0.76, 0.68];
+  const profit = profitPattern.map((ratio) => annualProfit * rangeScale * ratio);
+  const expenses = expensePattern.map((ratio) => annualExpenses * rangeScale * ratio);
   const maxValue = Math.max(1, ...expenses, ...profit);
-  const x = (index: number) => 58 + (index / 11) * 468;
-  const y = (value: number) => 196 - (value / maxValue) * 154;
+  const x = (index: number) => 58 + (index / (pointCount - 1)) * 468;
+  const y = (value: number) => 190 - (value / maxValue) * 150;
   const formatRwf = (value: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+  const formatDate = (date: Date) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: rangeDays > 370 ? "2-digit" : undefined }).format(date);
+  const hoveredValues = hoveredPoint?.series === "Profit" ? profit : expenses;
+  const tooltipX = hoveredPoint ? Math.min(438, Math.max(64, x(hoveredPoint.index) - 46)) : 0;
+  const tooltipY = hoveredPoint ? Math.max(8, y(hoveredValues[hoveredPoint.index]) - 50) : 0;
 
   return <div className="stock-analysis-chart">
-    {selected.length ? <svg viewBox="0 0 560 225" role="img" aria-label="Projected cumulative profit and expenses over the year">
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={196 - ratio * 154} y2={196 - ratio * 154} /><text x="49" y={200 - ratio * 154} textAnchor="end">{formatRwf(maxValue * ratio)}</text></g>)}
-      <line className="stock-axis" x1="58" x2="526" y1="196" y2="196" />
-      {months.map((month, index) => <text x={x(index)} y="211" textAnchor="middle" key={month}>{month}</text>)}
-      <text className="stock-axis-label" x="14" y="119" textAnchor="middle" transform="rotate(-90 14 119)">RWF</text>
-      <g className="profit-series"><polyline points={profit.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{profit.map((value, index) => <circle cx={x(index)} cy={y(value)} r="3" key={months[index]}><title>{`Profit ${months[index]}: ${formatRwf(value)} RWF`}</title></circle>)}</g>
-      <g className="expense-series"><polyline points={expenses.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{expenses.map((value, index) => <circle cx={x(index)} cy={y(value)} r="3" key={months[index]}><title>{`Expenses ${months[index]}: ${formatRwf(value)} RWF`}</title></circle>)}</g>
+    {selected.length ? <svg viewBox="0 0 560 225" role="img" aria-label={`Projected profit and expenses from ${formatDate(start)} to ${formatDate(end)}`} onMouseLeave={() => setHoveredPoint(null)}>
+      <defs>
+        <linearGradient id="profit-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#35b866" stopOpacity="0.2" /><stop offset="1" stopColor="#35b866" stopOpacity="0" /></linearGradient>
+        <linearGradient id="expense-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ef6a70" stopOpacity="0.18" /><stop offset="1" stopColor="#ef6a70" stopOpacity="0" /></linearGradient>
+      </defs>
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 150} y2={190 - ratio * 150} /><text x="49" y={194 - ratio * 150} textAnchor="end">{formatRwf(maxValue * ratio)}</text></g>)}
+      {dates.map((date, index) => <line className="stock-vertical-grid" x1={x(index)} x2={x(index)} y1="40" y2="190" key={`grid-${index}-${date.toISOString()}`} />)}
+      <line className="stock-axis" x1="58" x2="526" y1="190" y2="190" />
+      {dates.map((date, index) => <text x={x(index)} y="209" textAnchor="middle" key={`label-${index}-${date.toISOString()}`}>{formatDate(date)}</text>)}
+      <text className="stock-axis-label" x="14" y="116" textAnchor="middle" transform="rotate(-90 14 116)">RWF</text>
+      <polygon className="stock-chart-area" fill="url(#profit-area)" points={`58,190 ${profit.map((value, index) => `${x(index)},${y(value)}`).join(" ")} 526,190`} />
+      <polygon className="stock-chart-area" fill="url(#expense-area)" points={`58,190 ${expenses.map((value, index) => `${x(index)},${y(value)}`).join(" ")} 526,190`} />
+      <g className="profit-series"><polyline points={profit.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{profit.map((value, index) => <g className="stock-chart-point" key={`profit-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Profit" })}><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
+      <g className="expense-series"><polyline points={expenses.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{expenses.map((value, index) => <g className="stock-chart-point" key={`expenses-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Expenses" })}><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
+      {hoveredPoint && <g className="stock-chart-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="92" height="39" rx="5" /><text x={tooltipX + 8} y={tooltipY + 15}>{formatDate(dates[hoveredPoint.index])}</text><text className="value" x={tooltipX + 8} y={tooltipY + 30}>{hoveredPoint.series}: {formatRwf(hoveredValues[hoveredPoint.index])}</text></g>}
     </svg> : <div className="stock-analysis-empty">No products in this category yet.</div>}
   </div>;
 }
@@ -71,22 +107,32 @@ export function StockProductTable() {
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedAnalysisProductId, setSelectedAnalysisProductId] = useState("all");
+  const [analysisStartDate, setAnalysisStartDate] = useState(oneYearAgo);
+  const [analysisEndDate, setAnalysisEndDate] = useState(() => dateInputValue(new Date()));
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     Promise.all([
       inventoryFetch("/api/products", { signal: controller.signal }),
       inventoryFetch("/api/categories", { signal: controller.signal }),
     ]).then(async ([productResponse, categoryResponse]) => {
       if (!productResponse.ok || !categoryResponse.ok) throw new Error("Unable to load stock products.");
       const [productBody, categoryBody] = await Promise.all([productResponse.json(), categoryResponse.json()]);
+      if (!active) return;
       setProducts(Array.isArray(productBody.products) ? productBody.products : []);
       setCategories(Array.isArray(categoryBody.categories) ? categoryBody.categories : []);
     }).catch((reason) => {
+      if (!active) return;
       if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError(reason instanceof Error ? reason.message : "Unable to load stock products.");
-    }).finally(() => setLoading(false));
-    return () => controller.abort();
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, []);
 
   const visibleProducts = useMemo(() => {
@@ -214,21 +260,24 @@ export function StockProductTable() {
     const selectedProductName = selectedAnalysisProductId === "all" ? selectedCategoryName : products.find((product) => product.id === selectedAnalysisProductId)?.name ?? selectedCategoryName;
     return <div className="stock-analysis-replacement" id="stock-analysis">
       <section className="stock-profit-section" aria-labelledby="stock-analysis-title">
-        <header><div><h2 id="stock-analysis-title">Projected profit and expenses</h2><p>{selectedProductName} · Annual projection in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
-        <div className="stock-analysis-legend"><span className="profit">Profit</span><span className="expenses">Expenses</span></div>
-        <StockAnalysisChart products={products} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} />
+        <header><div><h2 id="stock-analysis-title">Projected profit and expenses</h2><p>{selectedProductName} · Projection in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
+        <div className="stock-analysis-meta">
+          <div className="stock-analysis-legend"><span className="profit">Profit</span><span className="expenses">Expenses</span></div>
+          <div className="stock-date-range" aria-label="Graph date range"><span>Date range</span><label><span className="sr-only">Start date</span><input required type="date" value={analysisStartDate} max={analysisEndDate} onChange={(event) => { if (event.target.value) setAnalysisStartDate(event.target.value); }} /></label><span aria-hidden="true">–</span><label><span className="sr-only">End date</span><input required type="date" value={analysisEndDate} min={analysisStartDate} onChange={(event) => { if (event.target.value) setAnalysisEndDate(event.target.value); }} /></label></div>
+        </div>
+        <StockAnalysisChart products={products} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} startDate={analysisStartDate} endDate={analysisEndDate} />
       </section>
       <aside className="stock-product-section" aria-labelledby="product-analysis-title">
         <header><h2 id="product-analysis-title">Products</h2><p>Choose what to show on the graph.</p></header>
         <div className="stock-product-choice">
           <button className={selectedAnalysisProductId === "all" ? "active" : ""} type="button" onClick={() => setSelectedAnalysisProductId("all")}><span>All in {selectedCategoryName}</span><small>{categoryProducts.length}</small></button>
-          {categoryProducts.map((product) => <button className={selectedAnalysisProductId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setSelectedAnalysisProductId(product.id)}><span>{product.name}</span><small>{product.quantity} left</small></button>)}
+          {categoryProducts.map((product) => <button className={selectedAnalysisProductId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setSelectedAnalysisProductId(product.id)}><span>{product.name}</span><small>{availableQuantity(product)} left</small></button>)}
         </div>
       </aside>
       <aside className="stock-category-section" aria-labelledby="category-analysis-title">
         <header><h2 id="category-analysis-title">Categories</h2><p>Choose a category to analyze.</p></header>
         <div className="stock-category-list">
-          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>All categories</span><small>{products.length} products</small></button>
+          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>All categories</span><small>{products.length} {products.length === 1 ? "product" : "products"}</small></button>
           {categories.map((category) => {
             const count = products.filter((product) => product.categoryId === category.id).length;
             return <button className={selectedCategoryId === category.id ? "active" : ""} type="button" key={category.id} onClick={() => { setSelectedCategoryId(category.id); setSelectedAnalysisProductId("all"); }}><span>{category.name}</span><small>{count} {count === 1 ? "product" : "products"}</small></button>;
