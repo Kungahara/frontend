@@ -3,6 +3,8 @@
 import { Plus, TrendingDown, TrendingUp, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
+import { CustomSelect } from "@/components/custom-select";
+
 type CurrencyPosition = {
   id: number;
   pair: string;
@@ -44,6 +46,8 @@ function movementAlert(currency: CurrencyPosition): CurrencyAlert | null {
 export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?: (alert: CurrencyAlert) => void }) {
   const [currencies, setCurrencies] = useState(initialCurrencies);
   const [adding, setAdding] = useState(false);
+  const [baseCurrency, setBaseCurrency] = useState("USD");
+  const [quoteCurrency, setQuoteCurrency] = useState("RWF");
   const alertedRates = useRef(new Set<string>());
   const trackedPairs = currencies.map((currency) => `${currency.id}:${currency.pair}`).join("|");
 
@@ -123,8 +127,8 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
         <p>Choose two currencies. Kungahara will fetch and monitor their exchange rate automatically.</p>
         <form onSubmit={addCurrency}>
           <div className="currency-form-row">
-            <label>Currency<select name="base" defaultValue="USD" required>{currencyOptions.map((code) => <option key={code}>{code}</option>)}</select></label>
-            <label>Compared with<select name="quote" defaultValue="RWF" required>{currencyOptions.map((code) => <option key={code}>{code}</option>)}</select></label>
+            <CustomSelect label="Currency" name="base" value={baseCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setBaseCurrency} />
+            <CustomSelect label="Compared with" name="quote" value={quoteCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setQuoteCurrency} />
           </div>
           <button className="currency-dialog-submit" type="submit">Start monitoring</button>
         </form>

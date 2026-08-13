@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
+import { CustomSelect } from "@/components/custom-select";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = {
@@ -23,7 +24,12 @@ type EditProduct = Product & { quantityText: string; lowStockLevelText: string }
 type EditableField = "name" | "categoryId" | "size" | "costPrice" | "sellingPrice" | "quantityText" | "lowStockLevelText";
 type NewProduct = { name: string; categoryId: string; categoryName: string; size: string; quantity: string; costPrice: string; sellingPrice: string; lowStockLevel: string };
 
-const emptyProduct: NewProduct = { name: "", categoryId: "", categoryName: "", size: "", quantity: "", costPrice: "", sellingPrice: "", lowStockLevel: "15" };
+const emptyProduct: NewProduct = { name: "", categoryId: "", categoryName: "", size: "", quantity: "", costPrice: "", sellingPrice: "", lowStockLevel: "0" };
+const newCategoryValue = "__new__";
+
+function lowStockThreshold(quantity: string | number) {
+  return Math.ceil(Math.max(0, Number(quantity) || 0) * 0.2);
+}
 
 function stockPercentage(product: Product) {
   if (product.quantity <= 0) return 0;
@@ -35,58 +41,103 @@ function availableQuantity(product: Product) {
   return Math.max(0, Number(product.quantity) || 0);
 }
 
-function dateInputValue(date: Date) {
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+type AnalysisPeriod = "1W" | "1M" | "1Y";
+
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function oneYearAgo() {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 1);
-  return dateInputValue(date);
+function monthParts(value: string) {
+  const [year, month] = value.split("-").map(Number);
+  return { year, monthIndex: month - 1 };
 }
 
-function StockAnalysisChart({ products, categoryId, productId, startDate, endDate }: { products: Product[]; categoryId: string; productId: string; startDate: string; endDate: string }) {
+function monthWeekRanges(value: string) {
+  const { year, monthIndex } = monthParts(value);
+  const days = new Date(year, monthIndex + 1, 0).getDate();
+  return Array.from({ length: Math.ceil(days / 7) }, (_, index) => {
+    const startDay = index * 7 + 1;
+    const endDay = Math.min(days, startDay + 6);
+    return { startDay, endDay, label: `${new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
+  });
+}
+
+function smoothLinePath(points: Array<[number, number]>) {
+  if (!points.length) return "";
+  if (points.length === 1) return `M ${points[0][0]} ${points[0][1]}`;
+  return points.slice(0, -1).reduce((path, point, index) => {
+    const previous = points[index - 1] ?? point;
+    const next = points[index + 1];
+    const afterNext = points[index + 2] ?? next;
+    const controlOneX = point[0] + (next[0] - previous[0]) / 6;
+    const controlOneY = point[1] + (next[1] - previous[1]) / 6;
+    const controlTwoX = next[0] - (afterNext[0] - point[0]) / 6;
+    const controlTwoY = next[1] - (afterNext[1] - point[1]) / 6;
+    return `${path} C ${controlOneX} ${controlOneY}, ${controlTwoX} ${controlTwoY}, ${next[0]} ${next[1]}`;
+  }, `M ${points[0][0]} ${points[0][1]}`);
+}
+
+function niceAxisMaximum(value: number) {
+  if (value <= 0) return 4;
+  const roughStep = (value * 1.15) / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const normalized = roughStep / magnitude;
+  const niceStep = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10;
+  return niceStep * magnitude * 4;
+}
+
+function StockAnalysisChart({ products, categoryId, productId, period, year, month, weekIndex }: { products: Product[]; categoryId: string; productId: string; period: AnalysisPeriod; year: number; month: string; weekIndex: number }) {
   const [hoveredPoint, setHoveredPoint] = useState<{ index: number; series: "Profit" | "Expenses" } | null>(null);
   const categoryProducts = categoryId === "all" ? products : products.filter((product) => product.categoryId === categoryId);
   const selected = productId === "all" ? categoryProducts : categoryProducts.filter((product) => product.id === productId);
   const annualExpenses = selected.reduce((total, product) => total + availableQuantity(product) * Number(product.costPrice), 0);
   const annualProfit = selected.reduce((total, product) => total + availableQuantity(product) * Math.max(0, Number(product.sellingPrice) - Number(product.costPrice)), 0);
-  const start = new Date(`${startDate}T00:00:00`);
-  const requestedEnd = new Date(`${endDate}T00:00:00`);
-  const end = requestedEnd >= start ? requestedEnd : start;
-  const rangeDays = Math.max(1, (end.getTime() - start.getTime()) / 86_400_000);
-  const rangeScale = rangeDays / 365;
-  const pointCount = 7;
-  const dates = Array.from({ length: pointCount }, (_, index) => new Date(start.getTime() + ((end.getTime() - start.getTime()) * index) / (pointCount - 1)));
-  const profitPattern = [0.62, 0.8, 0.56, 1, 0.74, 0.65, 0.84];
-  const expensePattern = [0.78, 0.66, 0.82, 0.7, 0.88, 0.76, 0.68];
-  const profit = profitPattern.map((ratio) => annualProfit * rangeScale * ratio);
-  const expenses = expensePattern.map((ratio) => annualExpenses * rangeScale * ratio);
-  const maxValue = Math.max(1, ...expenses, ...profit);
+  const { year: selectedMonthYear, monthIndex } = monthParts(month);
+  const weekRanges = monthWeekRanges(month);
+  const selectedWeek = weekRanges[Math.min(weekIndex, weekRanges.length - 1)] ?? weekRanges[0];
+  const dates = period === "1Y"
+    ? Array.from({ length: 12 }, (_, index) => new Date(year, index, 1))
+    : period === "1M"
+      ? monthWeekRanges(month).map((range) => new Date(selectedMonthYear, monthIndex, range.startDay))
+      : Array.from({ length: selectedWeek.endDay - selectedWeek.startDay + 1 }, (_, index) => new Date(selectedMonthYear, monthIndex, selectedWeek.startDay + index));
+  const pointCount = dates.length;
+  const rangeScale = period === "1Y" ? 1 : period === "1M" ? 1 / 12 : pointCount / 365;
+  const profitPattern = [0.08, 0.29, 0.38, 0.47, 0.51, 0.58, 0.62, 0.76, 0.91, 1.01, 1.06, 1.04];
+  const expensePattern = [0.05, 0.25, 0.32, 0.43, 0.56, 0.63, 0.61, 0.6, 0.68, 0.83, 0.94, 0.86];
+  const projectionBase = Math.max(1, (annualProfit + annualExpenses) / 2) * rangeScale;
+  const profit = profitPattern.slice(0, pointCount).map((ratio) => projectionBase * ratio);
+  const expenses = expensePattern.slice(0, pointCount).map((ratio) => projectionBase * ratio);
+  const axisMaximum = niceAxisMaximum(Math.max(...expenses, ...profit));
   const x = (index: number) => 58 + (index / (pointCount - 1)) * 468;
-  const y = (value: number) => 190 - (value / maxValue) * 150;
+  const y = (value: number) => 190 - (value / axisMaximum) * 150;
+  const profitPoints = profit.map((value, index) => [x(index), y(value)] as [number, number]);
+  const expensePoints = expenses.map((value, index) => [x(index), y(value)] as [number, number]);
+  const profitPath = smoothLinePath(profitPoints);
+  const expensePath = smoothLinePath(expensePoints);
   const formatRwf = (value: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
-  const formatDate = (date: Date) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: rangeDays > 370 ? "2-digit" : undefined }).format(date);
+  const formatDate = (date: Date) => period === "1W"
+    ? `${new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)} ${date.getDate()}`
+    : new Intl.DateTimeFormat("en", period === "1Y" ? { month: "short" } : { month: "short", day: "numeric" }).format(date);
   const hoveredValues = hoveredPoint?.series === "Profit" ? profit : expenses;
   const tooltipX = hoveredPoint ? Math.min(438, Math.max(64, x(hoveredPoint.index) - 46)) : 0;
   const tooltipY = hoveredPoint ? Math.max(8, y(hoveredValues[hoveredPoint.index]) - 50) : 0;
 
   return <div className="stock-analysis-chart">
-    {selected.length ? <svg viewBox="0 0 560 225" role="img" aria-label={`Projected profit and expenses from ${formatDate(start)} to ${formatDate(end)}`} onMouseLeave={() => setHoveredPoint(null)}>
+    {selected.length ? <svg viewBox="0 0 560 225" role="img" aria-label={`Projected profit and expenses for the selected ${period === "1Y" ? "year" : period === "1M" ? "month" : "week"}`} onMouseLeave={() => setHoveredPoint(null)}>
       <defs>
         <linearGradient id="profit-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#35b866" stopOpacity="0.2" /><stop offset="1" stopColor="#35b866" stopOpacity="0" /></linearGradient>
         <linearGradient id="expense-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ef6a70" stopOpacity="0.18" /><stop offset="1" stopColor="#ef6a70" stopOpacity="0" /></linearGradient>
       </defs>
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 150} y2={190 - ratio * 150} /><text x="49" y={194 - ratio * 150} textAnchor="end">{formatRwf(maxValue * ratio)}</text></g>)}
-      {dates.map((date, index) => <line className="stock-vertical-grid" x1={x(index)} x2={x(index)} y1="40" y2="190" key={`grid-${index}-${date.toISOString()}`} />)}
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 150} y2={190 - ratio * 150} /><text x="49" y={194 - ratio * 150} textAnchor="end">{formatRwf(axisMaximum * ratio)}</text></g>)}
+      <line className="stock-axis" x1="58" x2="58" y1="40" y2="190" />
       <line className="stock-axis" x1="58" x2="526" y1="190" y2="190" />
       {dates.map((date, index) => <text x={x(index)} y="209" textAnchor="middle" key={`label-${index}-${date.toISOString()}`}>{formatDate(date)}</text>)}
       <text className="stock-axis-label" x="14" y="116" textAnchor="middle" transform="rotate(-90 14 116)">RWF</text>
-      <polygon className="stock-chart-area" fill="url(#profit-area)" points={`58,190 ${profit.map((value, index) => `${x(index)},${y(value)}`).join(" ")} 526,190`} />
-      <polygon className="stock-chart-area" fill="url(#expense-area)" points={`58,190 ${expenses.map((value, index) => `${x(index)},${y(value)}`).join(" ")} 526,190`} />
-      <g className="profit-series"><polyline points={profit.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{profit.map((value, index) => <g className="stock-chart-point" key={`profit-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Profit" })}><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
-      <g className="expense-series"><polyline points={expenses.map((value, index) => `${x(index)},${y(value)}`).join(" ")} />{expenses.map((value, index) => <g className="stock-chart-point" key={`expenses-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Expenses" })}><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
+      <path className="stock-chart-area" fill="url(#profit-area)" d={`${profitPath} L 526 190 L 58 190 Z`} />
+      <path className="stock-chart-area" fill="url(#expense-area)" d={`${expensePath} L 526 190 L 58 190 Z`} />
+      <g className="profit-series"><path className="stock-chart-line" d={profitPath} />{profit.map((value, index) => <g className="stock-chart-point" key={`profit-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Profit" })} onMouseLeave={() => setHoveredPoint(null)}><circle className="stock-chart-point-hit" cx={x(index)} cy={y(value)} r="10" /><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
+      <g className="expense-series"><path className="stock-chart-line" d={expensePath} />{expenses.map((value, index) => <g className="stock-chart-point" key={`expenses-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Expenses" })} onMouseLeave={() => setHoveredPoint(null)}><circle className="stock-chart-point-hit" cx={x(index)} cy={y(value)} r="10" /><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
       {hoveredPoint && <g className="stock-chart-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="92" height="39" rx="5" /><text x={tooltipX + 8} y={tooltipY + 15}>{formatDate(dates[hoveredPoint.index])}</text><text className="value" x={tooltipX + 8} y={tooltipY + 30}>{hoveredPoint.series}: {formatRwf(hoveredValues[hoveredPoint.index])}</text></g>}
     </svg> : <div className="stock-analysis-empty">No products in this category yet.</div>}
   </div>;
@@ -103,12 +154,15 @@ export function StockProductTable() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>(emptyProduct);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedAnalysisProductId, setSelectedAnalysisProductId] = useState("all");
-  const [analysisStartDate, setAnalysisStartDate] = useState(oneYearAgo);
-  const [analysisEndDate, setAnalysisEndDate] = useState(() => dateInputValue(new Date()));
+  const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>("1Y");
+  const [analysisYear, setAnalysisYear] = useState(() => new Date().getFullYear());
+  const [analysisMonth, setAnalysisMonth] = useState(currentMonthValue);
+  const [analysisWeekIndex, setAnalysisWeekIndex] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -158,6 +212,7 @@ export function StockProductTable() {
     setError("");
     const original = products.find((product) => product.id === editing.id);
     const quantity = Number(editing.quantityText);
+    const calculatedLowStockLevel = lowStockThreshold(quantity);
     const response = await inventoryFetch(`/api/products/${editing.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -167,7 +222,7 @@ export function StockProductTable() {
         size: editing.size,
         costPrice: editing.costPrice,
         sellingPrice: editing.sellingPrice,
-        lowStockLevel: Number(editing.lowStockLevelText),
+        lowStockLevel: calculatedLowStockLevel,
         quantityAdjustment: quantity - (original?.quantity ?? quantity),
       }),
     });
@@ -182,7 +237,7 @@ export function StockProductTable() {
       ...product, name: editing.name, categoryId: editing.categoryId,
       categoryName: category?.name ?? product.categoryName, size: editing.size,
       costPrice: editing.costPrice, sellingPrice: editing.sellingPrice,
-      lowStockLevel: Number(editing.lowStockLevelText), quantity,
+      lowStockLevel: calculatedLowStockLevel, quantity,
     } : product));
     setQuery("");
     setEditing(null);
@@ -212,7 +267,7 @@ export function StockProductTable() {
     setBusy(true);
     setError("");
     let categoryId = newProduct.categoryId;
-    if (!categoryId) {
+    if (!categoryId || categoryId === newCategoryValue) {
       const categoryResponse = await inventoryFetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -235,7 +290,7 @@ export function StockProductTable() {
         categoryId,
         sku: `SKU-${Date.now()}`,
         quantity: Number(newProduct.quantity),
-        lowStockLevel: Number(newProduct.lowStockLevel),
+        lowStockLevel: lowStockThreshold(newProduct.quantity),
       }),
     });
     const body = await response.json().catch(() => null);
@@ -258,14 +313,22 @@ export function StockProductTable() {
     const selectedCategoryName = selectedCategoryId === "all" ? "All categories" : categories.find((category) => category.id === selectedCategoryId)?.name ?? "Category";
     const categoryProducts = selectedCategoryId === "all" ? products : products.filter((product) => product.categoryId === selectedCategoryId);
     const selectedProductName = selectedAnalysisProductId === "all" ? selectedCategoryName : products.find((product) => product.id === selectedAnalysisProductId)?.name ?? selectedCategoryName;
+    const weekRanges = monthWeekRanges(analysisMonth);
     return <div className="stock-analysis-replacement" id="stock-analysis">
       <section className="stock-profit-section" aria-labelledby="stock-analysis-title">
         <header><div><h2 id="stock-analysis-title">Projected profit and expenses</h2><p>{selectedProductName} · Projection in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
         <div className="stock-analysis-meta">
           <div className="stock-analysis-legend"><span className="profit">Profit</span><span className="expenses">Expenses</span></div>
-          <div className="stock-date-range" aria-label="Graph date range"><span>Date range</span><label><span className="sr-only">Start date</span><input required type="date" value={analysisStartDate} max={analysisEndDate} onChange={(event) => { if (event.target.value) setAnalysisStartDate(event.target.value); }} /></label><span aria-hidden="true">–</span><label><span className="sr-only">End date</span><input required type="date" value={analysisEndDate} min={analysisStartDate} onChange={(event) => { if (event.target.value) setAnalysisEndDate(event.target.value); }} /></label></div>
+          <div className="stock-period-controls">
+            {analysisPeriod === "1Y" && <label className="stock-period-field"><span>Year</span><input type="number" min="2000" max="2100" value={analysisYear} onChange={(event) => setAnalysisYear(Number(event.target.value) || new Date().getFullYear())} /></label>}
+            {analysisPeriod !== "1Y" && <label className="stock-period-field"><span>Month</span><input type="month" value={analysisMonth} onChange={(event) => { if (event.target.value) { setAnalysisMonth(event.target.value); setAnalysisWeekIndex(0); } }} /></label>}
+            {analysisPeriod === "1W" && <CustomSelect className="stock-period-field" label="Week" value={String(analysisWeekIndex)} options={weekRanges.map((range, index) => ({ label: range.label, value: String(index) }))} onChange={(value) => setAnalysisWeekIndex(Number(value))} />}
+            <div className="stock-period-buttons" aria-label="Graph period">
+              {(["1W", "1M", "1Y"] as AnalysisPeriod[]).map((period) => <button className={analysisPeriod === period ? "active" : ""} type="button" aria-pressed={analysisPeriod === period} key={period} onClick={() => setAnalysisPeriod(period)}>{{ "1W": "Week", "1M": "Month", "1Y": "Year" }[period]}</button>)}
+            </div>
+          </div>
         </div>
-        <StockAnalysisChart products={products} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} startDate={analysisStartDate} endDate={analysisEndDate} />
+        <StockAnalysisChart products={products} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} period={analysisPeriod} year={analysisYear} month={analysisMonth} weekIndex={analysisWeekIndex} />
       </section>
       <aside className="stock-product-section" aria-labelledby="product-analysis-title">
         <header><h2 id="product-analysis-title">Products</h2><p>Choose what to show on the graph.</p></header>
@@ -292,7 +355,7 @@ export function StockProductTable() {
       <h2 id="stock-products-title">Stock products</h2>
       <div className="stock-product-toolbar-actions">
         <label className="stock-product-search"><span className="sr-only">Search stock products</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label>
-        <button className="stock-add-product" type="button" onClick={() => { setError(""); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? "" }); setAdding(true); }}><Plus aria-hidden="true" />Add product</button>
+        <button className="stock-add-product" type="button" onClick={() => { setError(""); setCategoryPickerOpen(false); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true); }}><Plus aria-hidden="true" />Add product</button>
       </div>
     </header>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
@@ -309,10 +372,10 @@ export function StockProductTable() {
               <td>{`${new Intl.NumberFormat("en-RW").format(Number(product.costPrice))} RWF`}</td>
               <td>{`${new Intl.NumberFormat("en-RW").format(Number(product.sellingPrice))} RWF`}</td>
               <td><span className={`stock-status-pill${percentage <= 25 ? " danger" : percentage <= 60 ? " warning" : ""}`}>{percentage}%</span></td>
-              <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(product.lowStockLevel || 15) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
+              <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
             </tr>;
           })}
-          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={7}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={() => { setError(""); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? "" }); setAdding(true); }}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
+          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={7}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={() => { setError(""); setCategoryPickerOpen(false); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true); }}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
           {loading && <tr><td className="stock-product-empty" colSpan={7}>Loading stock products…</td></tr>}
         </tbody>
       </table>
@@ -328,15 +391,23 @@ export function StockProductTable() {
     </div>}
     {adding && <div className="stock-delete-backdrop" role="presentation">
       <form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="add-product-title" onSubmit={(event) => { event.preventDefault(); void addProduct(); }}>
-        <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => setAdding(false)}><X aria-hidden="true" /></button>
+        <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => { setCategoryPickerOpen(false); setAdding(false); }}><X aria-hidden="true" /></button>
         <h3 id="add-product-title">Add product</h3>
         <div className="stock-add-grid">
           <label className="stock-form-wide">Product name<input required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label>
-          {categories.length ? <label>Category<select required value={newProduct.categoryId} onChange={(event) => setNewProduct((current) => ({ ...current, categoryId: event.target.value }))}><option value="" disabled>Select category</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label> : <label>Category<input required value={newProduct.categoryName} onChange={(event) => setNewProduct((current) => ({ ...current, categoryName: event.target.value }))} placeholder="e.g. Clothing" /></label>}
+          <div className="stock-form-field stock-category-picker">
+            <span>Category</span>
+            <button className="stock-category-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded={categoryPickerOpen} onClick={() => setCategoryPickerOpen((current) => !current)}><span>{newProduct.categoryId === newCategoryValue ? "Create new category" : categories.find((category) => category.id === newProduct.categoryId)?.name ?? "Choose category"}</span><ChevronDown aria-hidden="true" /></button>
+            {categoryPickerOpen && <div className="stock-category-picker-menu" role="listbox" aria-label="Product category">
+              {categories.map((category) => <button className={newProduct.categoryId === category.id ? "selected" : ""} type="button" role="option" aria-selected={newProduct.categoryId === category.id} key={category.id} onClick={() => { setNewProduct((current) => ({ ...current, categoryId: category.id, categoryName: "" })); setCategoryPickerOpen(false); }}><span>{category.name}</span>{newProduct.categoryId === category.id && <Check aria-hidden="true" />}</button>)}
+              <button className={`new-category${newProduct.categoryId === newCategoryValue ? " selected" : ""}`} type="button" role="option" aria-selected={newProduct.categoryId === newCategoryValue} onClick={() => { setNewProduct((current) => ({ ...current, categoryId: newCategoryValue })); setCategoryPickerOpen(false); }}><Plus aria-hidden="true" /><span>Create new category</span></button>
+            </div>}
+          </div>
+          {newProduct.categoryId === newCategoryValue && <label>New category name<input required value={newProduct.categoryName} onChange={(event) => setNewProduct((current) => ({ ...current, categoryName: event.target.value }))} placeholder="e.g. Clothing" /></label>}
           <label>Size<input value={newProduct.size} onChange={(event) => setNewProduct((current) => ({ ...current, size: event.target.value }))} placeholder="S, M, L…" /></label>
-          <label>Quantity<input required type="number" min="0" value={newProduct.quantity} onChange={(event) => setNewProduct((current) => ({ ...current, quantity: event.target.value }))} /></label>
+          <label>Quantity<input required type="number" min="0" value={newProduct.quantity} onChange={(event) => { const quantity = event.target.value; setNewProduct((current) => ({ ...current, quantity, lowStockLevel: String(lowStockThreshold(quantity)) })); }} /></label>
           <label>Price bought for<input required type="number" min="0" step="0.01" value={newProduct.costPrice} onChange={(event) => setNewProduct((current) => ({ ...current, costPrice: event.target.value }))} /></label>
-          <label>Low-stock level<input required type="number" min="0" step="1" value={newProduct.lowStockLevel} onChange={(event) => setNewProduct((current) => ({ ...current, lowStockLevel: event.target.value }))} /></label>
+          <label>Low-stock alert (20%)<input readOnly type="number" value={newProduct.lowStockLevel} title="Calculated automatically as 20% of the entered quantity" /></label>
           <label>Sold for<input required type="number" min="0" step="0.01" value={newProduct.sellingPrice} onChange={(event) => setNewProduct((current) => ({ ...current, sellingPrice: event.target.value }))} /></label>
         </div>
         <button className="stock-add-submit" disabled={busy}>{busy ? "Adding…" : "Add product"}</button>
@@ -348,11 +419,11 @@ export function StockProductTable() {
         <h3 id="edit-product-title">Edit product</h3>
         <div className="stock-add-grid">
           <label className="stock-form-wide">Product name<input required value={editing.name} onChange={(event) => change("name", event.target.value)} /></label>
-          <label>Category<select required value={editing.categoryId} onChange={(event) => change("categoryId", event.target.value)}>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label>
+          <CustomSelect label="Category" value={editing.categoryId} options={categories.map((category) => ({ label: category.name, value: category.id }))} onChange={(value) => change("categoryId", value)} />
           <label>Size<input value={editing.size} onChange={(event) => change("size", event.target.value)} placeholder="S, M, L…" /></label>
-          <label>Quantity<input required type="number" min="0" step="1" value={editing.quantityText} onChange={(event) => change("quantityText", event.target.value)} /></label>
+          <label>Quantity<input required type="number" min="0" step="1" value={editing.quantityText} onChange={(event) => { const quantity = event.target.value; setEditing((current) => current ? { ...current, quantityText: quantity, lowStockLevelText: String(lowStockThreshold(quantity)) } : current); }} /></label>
           <label>Price bought for<input required type="number" min="0" step="0.01" value={editing.costPrice} onChange={(event) => change("costPrice", event.target.value)} /></label>
-          <label>Low-stock level<input required type="number" min="0" step="1" value={editing.lowStockLevelText} onChange={(event) => change("lowStockLevelText", event.target.value)} /></label>
+          <label>Low-stock alert (20%)<input readOnly type="number" value={editing.lowStockLevelText} title="Calculated automatically as 20% of the entered quantity" /></label>
           <label>Sold for<input required type="number" min="0" step="0.01" value={editing.sellingPrice} onChange={(event) => change("sellingPrice", event.target.value)} /></label>
         </div>
         <button className="stock-add-submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>

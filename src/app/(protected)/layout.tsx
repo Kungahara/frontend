@@ -81,11 +81,22 @@ const sidebarSlides = [
   },
 ];
 
+const themeStorageKey = "kungahara:dashboard-theme";
+
+function savedDarkTheme() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(themeStorageKey) === "dark";
+  } catch {
+    return false;
+  }
+}
+
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(savedDarkTheme);
   const [sidebarSlide, setSidebarSlide] = useState(0);
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -95,6 +106,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
+
+  function toggleTheme() {
+    setDark((current) => {
+      const next = !current;
+      window.localStorage.setItem(themeStorageKey, next ? "dark" : "light");
+      return next;
+    });
+  }
 
   useEffect(() => {
     // React Strict Mode invokes effects twice in development. Refresh tokens
@@ -159,7 +178,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   if (!user) {
-    return <main className="dashboard-page-loading"><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
+    return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`} suppressHydrationWarning><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
   }
 
   const pageTitle = pageTitles[pathname] ?? "Kungahara";
@@ -216,8 +235,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
           <div className="dashboard-topbar-actions">
             <div className="dashboard-theme-toggle" aria-label="Theme">
-              <button className={!dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={!dark} title="Toggle theme" onClick={() => setDark((current) => !current)}><Sun aria-hidden="true" /></button>
-              <button className={dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={dark} title="Toggle theme" onClick={() => setDark((current) => !current)}><Moon aria-hidden="true" /></button>
+              <button className={!dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={!dark} title="Toggle theme" onClick={toggleTheme}><Sun aria-hidden="true" /></button>
+              <button className={dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={dark} title="Toggle theme" onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications" ref={notificationsRef}>
               <button type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
