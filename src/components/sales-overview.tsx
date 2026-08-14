@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { SalesHistoryTable } from "@/components/sales-history-table";
+import { SalesAnalytics } from "@/components/sales-analytics";
 import { SalesTodayTable } from "@/components/sales-today-table";
 import { StockSummaryCard } from "@/components/stock-summary-card";
 
@@ -31,7 +32,7 @@ export function SalesOverview() {
       {view !== "history" && navigation}
       {view === "history" ? <SalesHistoryTable navigation={navigation} /> : <div className="sales-view-content">
         {view === "today" && <SalesTodayTable onSettled={finishTable} />}
-        {view === "analytics" && <section className="sales-view-placeholder"><strong>Sales analytics</strong><p>This section will be built next.</p></section>}
+        {view === "analytics" && <SalesAnalytics />}
       </div>}
     </div>
     {!ready && <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>Loading sales data…</strong><small>Please wait while we prepare your sales workspace.</small></div>}

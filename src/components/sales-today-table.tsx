@@ -45,6 +45,8 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     onSettled?.();
   }, [onSettled]);
 
+  // Initial loading synchronizes this client table with the sales API.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
 
   const todaySales = useMemo(() => {
@@ -91,7 +93,11 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
       return;
     }
     if (body?.product) setProducts((current) => current.map((item) => item.id === product.id ? body.product : item));
-    if (body?.sale) setSales((current) => [body.sale, ...current]);
+    if (body?.sale) setSales((current) => body.merged
+      ? current.some((sale) => sale.id === body.sale.id)
+        ? current.map((sale) => sale.id === body.sale.id ? body.sale : sale)
+        : [body.sale, ...current]
+      : [body.sale, ...current]);
     setSelling(false);
     setBusy(false);
     window.dispatchEvent(new Event("kungahara:inventory-changed"));
