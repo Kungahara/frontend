@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 
+import { SalesHistoryTable } from "@/components/sales-history-table";
 import { SalesTodayTable } from "@/components/sales-today-table";
 import { StockSummaryCard } from "@/components/stock-summary-card";
 
@@ -20,17 +21,18 @@ export function SalesOverview() {
   const finishSummary = useCallback(() => setSummaryReady(true), []);
   const finishTable = useCallback(() => setTableReady(true), []);
   const ready = summaryReady && tableReady;
+  const navigation = <nav className="sales-view-tabs" aria-label="Sales views">
+    {salesViews.map((item) => <button className={view === item.id ? "active" : ""} type="button" aria-pressed={view === item.id} key={item.id} onClick={() => setView(item.id)}>{item.label}</button>)}
+  </nav>;
 
   return <>
     <div className={`sales-page-content${ready ? " ready" : ""}`} aria-hidden={!ready}>
-      <StockSummaryCard variant="sales" onSettled={finishSummary} />
-      <nav className="sales-view-tabs" aria-label="Sales views">
-        {salesViews.map((item) => <button className={view === item.id ? "active" : ""} type="button" aria-pressed={view === item.id} key={item.id} onClick={() => setView(item.id)}>{item.label}</button>)}
-      </nav>
-      <div className="sales-view-content">
+      {view !== "history" && <StockSummaryCard variant="sales" onSettled={finishSummary} />}
+      {view !== "history" && navigation}
+      {view === "history" ? <SalesHistoryTable navigation={navigation} /> : <div className="sales-view-content">
         {view === "today" && <SalesTodayTable onSettled={finishTable} />}
-        {view !== "today" && <section className="sales-view-placeholder"><strong>{view === "history" ? "Historical sales" : "Sales analytics"}</strong><p>This section will be built next.</p></section>}
-      </div>
+        {view === "analytics" && <section className="sales-view-placeholder"><strong>Sales analytics</strong><p>This section will be built next.</p></section>}
+      </div>}
     </div>
     {!ready && <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>Loading sales data…</strong><small>Please wait while we prepare your sales workspace.</small></div>}
   </>;

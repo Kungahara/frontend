@@ -5,6 +5,7 @@ export type AuthUser = {
   email: string;
   role: "owner" | "admin" | "member";
   businessId: string | null;
+  businessName: string | null;
   emailVerified: boolean;
   profileImageUrl: string | null;
 };

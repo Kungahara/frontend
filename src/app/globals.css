@@ -681,6 +681,10 @@ a {
 
 .dashboard-sidebar .brand { padding-inline: 0.55rem; font-family: var(--font-sans); font-size: 1.1rem; }
 .dashboard-sidebar .brand-mark { color: #315fe4; background: white; }
+.dashboard-sidebar .brand-with-subtitle { align-items: center; }
+.brand-copy { display: grid; min-width: 0; gap: 0.08rem; }
+.brand-copy > span { line-height: 1.15; }
+.dashboard-sidebar .brand-copy small { overflow: hidden; max-width: 10.5rem; color: rgb(255 255 255 / 65%); font-size: 0.62rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-nav-label { margin: 3rem 0 0.7rem; padding-inline: 0.65rem; color: rgb(255 255 255 / 55%); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; }
 .dashboard-nav, .dashboard-secondary-nav { display: grid; gap: 0.3rem; }
 .dashboard-nav a, .dashboard-secondary-nav a, .back-to-frontend { display: flex; min-height: 2.8rem; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; color: rgb(255 255 255 / 70%); font-size: 0.82rem; border-radius: 0.75rem; transition: color 150ms ease, background 150ms ease; }
@@ -703,6 +707,29 @@ a {
 .dashboard-account > span:last-child { display: grid; gap: 0.1rem; min-width: 8.5rem; }
 .dashboard-account strong { font-size: 0.75rem; }
 .dashboard-account small { color: #8b94a3; font-size: 0.62rem; }
+
+.profile-page { width: min(100%, 48rem); margin: 0 auto; padding: 1rem; }
+.profile-page > header h1 { margin-top: 0.2rem; color: #202632; font-size: 1.7rem; }
+.profile-page > header > p:last-child { margin-top: 0.35rem; color: #7b8492; font-size: 0.78rem; }
+.profile-card { display: grid; gap: 1rem; margin-top: 1.4rem; padding: 1.3rem; background: white; border: 1px solid #e6e9ef; border-radius: 1rem; box-shadow: 0 8px 24px rgb(34 48 76 / 6%); }
+.profile-card-heading { display: flex; align-items: center; gap: 0.75rem; }
+.profile-card-heading > span { display: grid; width: 2.6rem; height: 2.6rem; place-items: center; color: #315fe4; background: #edf2ff; border-radius: 0.75rem; }
+.profile-card-heading svg { width: 1.15rem; }
+.profile-card-heading h2 { color: #252c37; font-size: 0.9rem; }
+.profile-card-heading p { margin-top: 0.15rem; color: #89919d; font-size: 0.65rem; }
+.profile-card > label { display: grid; gap: 0.4rem; color: #4d5664; font-size: 0.68rem; font-weight: 650; }
+.profile-card input { width: 100%; padding: 0.72rem 0.8rem; color: #29313d; background: #fafbfc; border: 1px solid #dfe3ea; border-radius: 0.65rem; outline: none; }
+.profile-card input:focus { border-color: #5579e9; box-shadow: 0 0 0 3px rgb(49 95 228 / 10%); }
+.profile-card button { display: inline-flex; width: fit-content; align-items: center; gap: 0.45rem; padding: 0.7rem 1rem; color: white; font-size: 0.68rem; font-weight: 700; background: #315fe4; border: 0; border-radius: 0.65rem; cursor: pointer; }
+.profile-card button:disabled { cursor: not-allowed; opacity: 0.55; }
+.profile-card button svg { width: 0.85rem; }
+.profile-form-note, .profile-form-error, .profile-form-success { font-size: 0.65rem; }
+.profile-form-note { color: #7b8492; }
+.profile-form-error { color: #b74640; }
+.profile-form-success { color: #27824d; }
+.dashboard-theme-dark .profile-page > header h1, .dashboard-theme-dark .profile-card-heading h2 { color: #f2f5fa; }
+.dashboard-theme-dark .profile-card { background: #151b2a; border-color: #263044; }
+.dashboard-theme-dark .profile-card input { color: #e8edf5; background: #111827; border-color: #334057; }
 
 .dashboard-workspace { min-width: 0; padding: 0; background: #f6f7f9; border: 1px solid #eef0f4; border-radius: 1.1rem; overflow: hidden; }
 .dashboard-content { display: grid; height: 100%; min-height: 0; grid-template-rows: auto minmax(0, 1fr); padding: clamp(1rem, 2vw, 1.5rem); }
@@ -1072,6 +1099,17 @@ a {
 .profile-menu-hint { display: flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.6rem 0.1rem; color: #9aa0aa; font-size: 0.52rem; line-height: 1.35; }
 .profile-menu-hint svg { width: 0.72rem; height: 0.72rem; flex: 0 0 auto; }
 .profile-menu-error { margin-top: 0.45rem; padding: 0.5rem 0.6rem; color: #a33f39; font-size: 0.56rem; line-height: 1.4; background: #fff0ef; border-radius: 0.5rem; }
+.profile-menu-action > span { display: grid; min-width: 0; flex: 1; gap: 0.08rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-menu-action > span small { color: #9199a5; font-size: 0.5rem; font-weight: 550; }
+.profile-menu-action > svg:last-child { margin-left: auto; }
+.profile-business-form { display: flex; align-items: end; gap: 0.4rem; margin-top: 0.45rem; padding: 0.55rem; background: #f5f7fb; border-radius: 0.55rem; }
+.profile-business-form label { display: grid; min-width: 0; flex: 1; gap: 0.2rem; color: #68717e; font-size: 0.52rem; font-weight: 650; }
+.profile-business-form input { width: 100%; min-width: 0; padding: 0.48rem 0.52rem; color: #303844; font-size: 0.62rem; background: white; border: 1px solid #dbe0e8; border-radius: 0.42rem; outline: none; }
+.profile-business-form input:focus { border-color: #6f8ded; box-shadow: 0 0 0 2px rgb(49 95 228 / 10%); }
+.profile-business-form > div { display: flex; gap: 0.25rem; }
+.profile-business-form button { display: grid; width: 1.75rem; height: 1.75rem; place-items: center; color: #315fe4; background: #e8eeff; border: 0; border-radius: 0.4rem; cursor: pointer; }
+.profile-business-form button:last-child { color: #7c8490; background: #e9ecf1; }
+.profile-business-form button svg { width: 0.75rem; }
 .dashboard-theme-dark .dashboard-topbar-actions {
   background: #171f2f;
   border: 1px solid #283348;
@@ -1223,7 +1261,7 @@ a {
 .stock-product-table-wrap { width: 100%; min-height: 0; flex: 1; padding: 0.45rem 0.65rem 0.65rem; overflow-x: auto; overflow-y: hidden; }
 .stock-product-table { display: flex; width: 100%; min-width: 56rem; height: 100%; flex-direction: column; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .stock-product-table thead { display: block; flex: 0 0 auto; padding-right: 0.5rem; }
-.stock-product-table tbody { display: block; min-height: 0; flex: 1; overflow-y: auto; scrollbar-color: #98a0ad transparent; scrollbar-width: thin; }
+.stock-product-table tbody { display: block; min-height: 0; flex: 1; overflow-y: auto; scrollbar-color: #98a0ad transparent; scrollbar-gutter: stable; scrollbar-width: thin; }
 .stock-product-table tbody::-webkit-scrollbar { width: 0.5rem; }
 .stock-product-table tbody::-webkit-scrollbar-track { background: transparent; }
 .stock-product-table tbody::-webkit-scrollbar-thumb { background: #98a0ad; border-radius: 999px; }
@@ -1419,6 +1457,41 @@ a {
 .stock-add-submit { width: 100%; min-height: 2.3rem; margin-top: 0.8rem; color: white; font-size: 0.65rem; font-weight: 650; background: #3864e8; border: 0; border-radius: 0.52rem; cursor: pointer; }
 .stock-add-submit:disabled { cursor: not-allowed; opacity: 0.48; }
 .sales-product-panel { min-height: 0; flex: 1; margin-top: 0.85rem; }
+.sales-history-view { display: flex; min-height: 0; flex: 1; flex-direction: column; overflow: hidden; }
+.sales-history-analysis { flex: 0 0 auto; padding: 0.85rem; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); }
+.sales-history-analysis > header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.65rem; }
+.sales-history-analysis h2 { color: #252b35; font-size: 0.85rem; }
+.sales-history-analysis header p { margin-top: 0.15rem; color: #9299a4; font-size: 0.62rem; }
+.sales-history-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; margin-top: 0.75rem; }
+.sales-history-summary article { display: flex; min-width: 0; align-items: center; gap: 0.55rem; padding: 0.65rem; background: #f7f9fd; border: 1px solid #edf0f5; border-radius: 0.65rem; }
+.sales-history-summary-icon { display: grid; width: 2.35rem; height: 2.35rem; flex: 0 0 auto; place-items: center; color: white; background: #4aa9f5; border-radius: 50%; }
+.sales-history-summary-icon svg { width: 1.05rem; height: 1.05rem; stroke-width: 1.7; }
+.sales-history-summary-icon.highest { background: #42c66a; }
+.sales-history-summary-icon.count { background: #f06a70; }
+.sales-history-summary article > span { display: grid; min-width: 0; gap: 0.12rem; }
+.sales-history-summary small { color: #8a929e; font-size: 0.55rem; }
+.sales-history-summary strong { overflow: hidden; color: #27303c; font-size: 0.68rem; text-overflow: ellipsis; white-space: nowrap; }
+.sales-history-chart { display: flex; height: 10rem; align-items: flex-end; gap: clamp(0.3rem, 1vw, 0.8rem); margin-top: 0.7rem; padding: 1.6rem 0.75rem 1.6rem; border-bottom: 1px solid #dfe4eb; }
+.sales-history-bar { position: relative; display: flex; height: 100%; min-width: 0; flex: 1; align-items: center; justify-content: flex-end; flex-direction: column; }
+.sales-history-bar i { width: min(2.2rem, 70%); min-height: 1px; background: linear-gradient(180deg, #567df0, #315fe4); border-radius: 0.35rem 0.35rem 0 0; box-shadow: 0 4px 9px rgb(49 95 228 / 18%); }
+.sales-history-bar small { position: absolute; top: calc(100% + 0.4rem); color: #7e8794; font-size: 0.52rem; white-space: nowrap; }
+.sales-history-bar-value { position: absolute; bottom: calc(100% + 0.25rem); color: #56606d; font-size: 0.48rem; white-space: nowrap; }
+.historical-sales-table { min-height: 18rem; margin-top: 0.85rem; }
+.sales-history-toolbar { flex-wrap: wrap; gap: 0.65rem; }
+.sales-history-search-row { display: flex; justify-content: flex-end; padding: 0.7rem 0.75rem 0; }
+.historical-sales-table > .sales-history-summary { margin: 0.75rem; }
+.historical-summary-grid { flex: 0 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.historical-summary-grid .stock-summary-card { width: 100%; }
+.historical-card-note { color: rgb(255 255 255 / 86%); font-size: 0.62rem; }
+.historical-card-value strong { max-width: calc(100% - 0.5rem); overflow: hidden; font-size: 1.05rem; text-overflow: ellipsis; white-space: nowrap; }
+.historical-count-icon { background: #f06a70; }
+.sales-history-view > .sales-view-tabs { margin-top: 0.85rem; }
+.sales-history-toolbar-actions { display: flex; align-items: flex-end; gap: 0.75rem; }
+.historical-sales-table .sales-product-table th:last-child, .historical-sales-table .sales-product-table td:last-child { text-align: center; }
+.dashboard-theme-dark .sales-history-analysis { background: #151b2a; border-color: #263044; }
+.dashboard-theme-dark .sales-history-analysis h2, .dashboard-theme-dark .sales-history-summary strong { color: #edf1f8; }
+.dashboard-theme-dark .sales-history-summary article, .dashboard-theme-dark .profile-business-form { background: #111827; border-color: #29354a; }
+.dashboard-theme-dark .profile-business-form input { color: #e8edf5; background: #182131; border-color: #344158; }
 .sales-product-panel .stock-product-empty { height: 100% !important; }
 .sales-empty-state { min-height: 15rem; }
 .sales-product-panel .stock-category-pill { cursor: default; }

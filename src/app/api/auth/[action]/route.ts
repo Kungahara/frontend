@@ -27,8 +27,8 @@ export async function POST(request: Request, context: RouteContext<"/api/auth/[a
 export async function GET(_request: Request, context: RouteContext<"/api/auth/[action]">) {
   const { action } = await context.params;
   if (action !== "me") return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
-  let { access, refresh } = await tokenCookies();
-  let response = access ? await backendRequest("auth/me/", { headers: { Authorization: `Bearer ${access}` } }) : null;
+  const { access, refresh } = await tokenCookies();
+  const response = access ? await backendRequest("auth/me/", { headers: { Authorization: `Bearer ${access}` } }) : null;
   if ((!response || response.status === 401) && refresh) {
     const refreshed = await backendRequest("auth/refresh/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken: refresh }) });
     if (!refreshed.ok) return clearSession(NextResponse.json(await readJson(refreshed), { status: 401 }));
@@ -36,4 +36,18 @@ export async function GET(_request: Request, context: RouteContext<"/api/auth/[a
   }
   if (!response?.ok) return clearSession(NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 }));
   return NextResponse.json(await readJson(response));
+}
+
+export async function PATCH(request: Request, context: RouteContext<"/api/auth/[action]">) {
+  const { action } = await context.params;
+  if (action !== "me") return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
+  const { access } = await tokenCookies();
+  if (!access) return NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 });
+  const body = await request.json().catch(() => ({}));
+  const response = await backendRequest("auth/me/", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return NextResponse.json(await readJson(response), { status: response.status });
 }

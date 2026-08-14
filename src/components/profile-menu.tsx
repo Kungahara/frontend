@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, Trash2, Upload } from "lucide-react";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { Building2, Camera, Check, Pencil, Trash2, Upload, X } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
-import type { AuthUser } from "@/lib/api/client";
+import { authRequest, type AuthUser } from "@/lib/api/client";
 
 export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChange: (user: AuthUser) => void }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [editingBusiness, setEditingBusiness] = useState(false);
+  const [businessName, setBusinessName] = useState(user.businessName ?? "");
   const rootRef = useRef<HTMLDivElement>(null);
   const name = `${user.firstName} ${user.lastName}`.trim();
   const initials = `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase();
@@ -48,6 +50,23 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     setBusy(false);
   }
 
+  async function saveBusiness(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const result = await authRequest<{ user: AuthUser }>("me", { method: "PATCH", body: JSON.stringify({ businessName }) });
+      onUserChange(result.user);
+      window.dispatchEvent(new CustomEvent("kungahara:user-changed", { detail: result.user }));
+      setBusinessName(result.user.businessName ?? "");
+      setEditingBusiness(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to update the business name.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return <div className="dashboard-profile-control" ref={rootRef}>
     <button className="dashboard-account" type="button" aria-label="Open profile options" aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
       <span className={`dashboard-account-mark${user.profileImageUrl ? " has-image" : ""}`} aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
@@ -58,6 +77,10 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
         <span className={`profile-menu-avatar${user.profileImageUrl ? " has-image" : ""}`}>{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={72} height={72} unoptimized /> : initials}</span>
         <span><strong>{name}</strong><small>{user.email}</small></span>
       </div>
+      {editingBusiness ? <form className="profile-business-form" onSubmit={saveBusiness}>
+        <label>Business name<input autoFocus required maxLength={200} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label>
+        <div><button type="submit" aria-label="Save business name" disabled={busy || !businessName.trim()}><Check aria-hidden="true" /></button><button type="button" aria-label="Cancel editing business name" onClick={() => { setEditingBusiness(false); setBusinessName(user.businessName ?? ""); }}><X aria-hidden="true" /></button></div>
+      </form> : <button className="profile-menu-action" type="button" disabled={!['owner', 'admin'].includes(user.role)} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>Business name</small>{user.businessName ?? "Not set"}</span><Pencil aria-hidden="true" /></button>}
       <label className={`profile-menu-action${busy ? " disabled" : ""}`}>
         <Upload aria-hidden="true" /><span>{busy ? "Uploading…" : user.profileImageUrl ? "Change profile picture" : "Upload profile picture"}</span>
         <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} />

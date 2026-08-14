@@ -9,7 +9,7 @@ type Product = { id: string; name: string; quantity: number; costPrice: string; 
 type StockMovement = { productId: string; type: "stock_in" | "adjustment"; quantity: number; createdAt: string };
 type SaleRecord = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 
-function StockStatusIcon() {
+export function StockStatusIcon() {
   return <svg viewBox="0 0 27.948 27.948" fill="currentColor" aria-hidden="true">
     <path d="M9.689 19.484h15.503v1.936H8.133L4.99 7.153H.69V5.218h5.854l3.145 14.266Zm1.761 3.224a2.62 2.62 0 1 0 0 5.24 2.62 2.62 0 0 0 0-5.24Zm10.8 0a2.62 2.62 0 1 0 0 5.24 2.62 2.62 0 0 0 0-5.24Zm-11.582-4.673L8.37 6.133h3.76L20.463 0l3.729 5.064-.161 1.069h3.227l-2.687 11.902H10.668Zm12.916-12.558-.892.656h.794l.098-.656Zm-10.546.655h1.958l-.117-.16.379-.279.324.439h.48l-.492-.669.38-.279.697.948h.544l-.89-1.207.381-.279 1.095 1.486h.626l-1.301-1.768.379-.28 1.507 2.048h.544l-1.697-2.308.379-.278 1.902 2.586h1.668l1.639-1.205-3.07-4.176-7.315 5.381Zm8.712-.827-2.088-2.839-.382.279 2.089 2.839.381-.279Zm-.73.54-2.09-2.84-.379.279 2.092 2.839.377-.278Z" />
   </svg>;

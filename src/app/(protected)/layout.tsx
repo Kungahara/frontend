@@ -127,6 +127,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   useEffect(() => {
+    function updateUser(event: Event) {
+      setUser((event as CustomEvent<AuthUser>).detail);
+    }
+    window.addEventListener("kungahara:user-changed", updateUser);
+    return () => window.removeEventListener("kungahara:user-changed", updateUser);
+  }, []);
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       setSidebarSlide((current) => (current + 1) % sidebarSlides.length);
     }, 4500);
@@ -174,6 +182,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [notificationsOpen]);
 
   useEffect(() => {
+    // Route completion is an external navigation event reflected by usePathname.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRouteLoading(false);
   }, [pathname]);
 
@@ -193,7 +203,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}`}>
     <aside className="dashboard-sidebar">
-      <Brand />
+      <Brand subtitle={user.businessName} />
       <p className="dashboard-nav-label">Menu</p>
       <nav className="dashboard-nav" aria-label="Menu">
         {menuItems.map(({ href, label, icon: Icon }) => (
