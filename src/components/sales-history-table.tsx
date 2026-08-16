@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeDollarSign, ClipboardList, Search, WalletCards } from "lucide-react";
+import { BadgeDollarSign, ClipboardList, Coins, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
@@ -98,7 +98,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
 
   return <div className="sales-history-view">
     <div className="stock-summary-grid historical-summary-grid">
-      <article className="stock-summary-card stock-value-card" aria-label="Money made in selected period"><span className="stock-summary-title">Money made</span><span className="stock-summary-icon stock-value-icon"><WalletCards aria-hidden="true" /></span><div className={`stock-value-amount${loading ? " sales-value-loading" : ""}`}>{loading ? "Loading…" : money(analysis.total)}</div><span className="historical-card-note">In the selected {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
+      <article className="stock-summary-card stock-value-card" aria-label="Money made in selected period"><span className="stock-summary-title">Money made</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className={`stock-value-amount${loading ? " sales-value-loading" : ""}`}>{loading ? "Loading…" : money(analysis.total)}</div><span className="historical-card-note">In the selected {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
       <article className="stock-summary-card selling-summary-card best" aria-label="Highest sales period"><span className="stock-summary-title">Highest sales {period === "1D" ? "hour" : period === "1W" ? "day" : period === "1M" ? "week" : "month"}</span><span className="stock-summary-icon selling-summary-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row historical-card-value"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "Loading…" : money(analysis.top.value)}</strong></div><span className="stock-summary-previous">{loading ? "Fetching sales" : analysis.top.label}</span></article>
       <article className="stock-summary-card" aria-label="Items sold"><span className="stock-summary-title">Items sold</span><span className="stock-summary-icon stock-status-icon"><StockStatusIcon /></span><div className="stock-summary-value-row"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "…" : itemsSold}</strong></div><span className="stock-summary-previous">Units sold in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
       <article className="stock-summary-card" aria-label="Sales recorded"><span className="stock-summary-title">Sales recorded</span><span className="stock-summary-icon historical-count-icon"><ClipboardList aria-hidden="true" /></span><div className="stock-summary-value-row"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "…" : analysis.selected.length}</strong></div><span className="stock-summary-previous">Transactions in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>

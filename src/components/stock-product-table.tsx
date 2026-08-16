@@ -23,9 +23,11 @@ type Category = { id: string; name: string };
 type EditProduct = Product & { quantityText: string; lowStockLevelText: string };
 type EditableField = "name" | "categoryId" | "size" | "costPrice" | "sellingPrice" | "quantityText" | "lowStockLevelText";
 type NewProduct = { name: string; categoryId: string; categoryName: string; size: string; quantity: string; costPrice: string; sellingPrice: string; lowStockLevel: string };
+type AddMode = "existing" | "new";
 
 const emptyProduct: NewProduct = { name: "", categoryId: "", categoryName: "", size: "", quantity: "", costPrice: "", sellingPrice: "", lowStockLevel: "0" };
 const newCategoryValue = "__new__";
+const newItemValue = "__new_item__";
 
 function lowStockThreshold(quantity: string | number) {
   return Math.ceil(Math.max(0, Number(quantity) || 0) * 0.2);
@@ -148,6 +150,9 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [addMode, setAddMode] = useState<AddMode>("existing");
+  const [existingProductId, setExistingProductId] = useState("");
+  const [existingQuantity, setExistingQuantity] = useState("");
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>(emptyProduct);
   const [analysisOpen, setAnalysisOpen] = useState(false);
@@ -341,6 +346,28 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
     setBusy(false);
   }
 
+  function openAddDialog() {
+    setError(""); setCategoryPickerOpen(false); setExistingQuantity("");
+    setExistingProductId(products[0]?.id ?? ""); setAddMode(products.length ? "existing" : "new");
+    setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true);
+  }
+
+  async function addExistingStock() {
+    const quantity = Number(existingQuantity);
+    if (!existingProductId || !Number.isInteger(quantity) || quantity < 1) { setError("Choose an item and enter a quantity of at least 1."); return; }
+    setBusy(true); setError("");
+    const response = await inventoryFetch(`/api/products/${existingProductId}/stock-in`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity, note: "Quantity re-added through Add product" }),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) { setError(body?.error?.message ?? "Unable to add this quantity."); setBusy(false); return; }
+    setProducts((current) => current.map((product) => product.id === existingProductId ? body.product : product));
+    setAdding(false); setExistingQuantity(""); setQuery(""); setBusy(false);
+    window.dispatchEvent(new Event("kungahara:inventory-changed"));
+    window.dispatchEvent(new Event("kungahara:data-changed"));
+  }
+
   if (analysisOpen) {
     const selectedCategoryName = selectedCategoryId === "all" ? "All categories" : categories.find((category) => category.id === selectedCategoryId)?.name ?? "Category";
     const categoryProducts = selectedCategoryId === "all" ? products : products.filter((product) => product.categoryId === selectedCategoryId);
@@ -387,7 +414,7 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
       <h2 id="stock-products-title">Stock products</h2>
       <div className="stock-product-toolbar-actions">
         <label className="stock-product-search"><span className="sr-only">Search stock products</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label>
-        <button className="stock-add-product" type="button" onClick={() => { setError(""); setCategoryPickerOpen(false); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true); }}><Plus aria-hidden="true" />Add product</button>
+        <button className="stock-add-product" type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add product</button>
       </div>
     </header>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
@@ -407,7 +434,7 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
               <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
             </tr>;
           })}
-          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={() => { setError(""); setCategoryPickerOpen(false); setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true); }}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
+          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
           {loading && <tr><td className="stock-product-empty" colSpan={6}>Loading stock products…</td></tr>}
         </tbody>
       </table>
@@ -422,11 +449,19 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
       </div>
     </div>}
     {adding && <div className="stock-delete-backdrop" role="presentation">
-      <form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="add-product-title" onSubmit={(event) => { event.preventDefault(); void addProduct(); }}>
+      <form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="add-product-title" onSubmit={(event) => { event.preventDefault(); void (addMode === "existing" ? addExistingStock() : addProduct()); }}>
         <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => { setCategoryPickerOpen(false); setAdding(false); }}><X aria-hidden="true" /></button>
         <h3 id="add-product-title">Add product</h3>
         <div className="stock-add-grid">
-          <label>Product name<input required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label>
+          {products.length > 0 && (addMode === "new" ? <label>Product name<input autoFocus required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label> : <CustomSelect className="stock-add-product-selector" label="Product name" value={existingProductId} options={[...products.map((product) => ({ value: product.id, label: `${product.name} · ${product.size || "No size"} · ${product.quantity} in stock` })), { value: newItemValue, label: "+ New item" }]} onChange={(value) => { setError(""); if (value === newItemValue) { setAddMode("new"); setExistingProductId(""); setNewProduct((current) => ({ ...current, name: "" })); } else { setAddMode("existing"); setExistingProductId(value); } }} />)}
+          {addMode === "existing" && products.length > 0 ? <>
+            <label>Category<input readOnly value={products.find((product) => product.id === existingProductId)?.categoryName ?? ""} /></label>
+            <label>Size<input readOnly value={products.find((product) => product.id === existingProductId)?.size ?? ""} /></label>
+            <label>Quantity to add<input required type="number" min="1" step="1" value={existingQuantity} onChange={(event) => setExistingQuantity(event.target.value)} /></label>
+            <label>Price bought for<input readOnly value={products.find((product) => product.id === existingProductId)?.costPrice ?? ""} /></label>
+            <label>Current stock<input readOnly value={products.find((product) => product.id === existingProductId)?.quantity ?? 0} /></label>
+          </> : <>
+          {products.length === 0 && <label>Product name<input required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label>}
           <div className="stock-form-field stock-category-picker">
             <span>Category</span>
             <button className="stock-category-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded={categoryPickerOpen} onClick={() => setCategoryPickerOpen((current) => !current)}><span>{newProduct.categoryId === newCategoryValue ? "Create new category" : categories.find((category) => category.id === newProduct.categoryId)?.name ?? "Choose category"}</span><ChevronDown aria-hidden="true" /></button>
@@ -440,9 +475,10 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
           <label>Quantity<input required type="number" min="0" value={newProduct.quantity} onChange={(event) => { const quantity = event.target.value; setNewProduct((current) => ({ ...current, quantity, lowStockLevel: String(lowStockThreshold(quantity)) })); }} /></label>
           <label>Price bought for<input required type="number" min="0" step="0.01" value={newProduct.costPrice} onChange={(event) => setNewProduct((current) => ({ ...current, costPrice: event.target.value }))} /></label>
           <label>Low-stock alert (20%)<input readOnly type="number" value={newProduct.lowStockLevel} title="Calculated automatically as 20% of the entered quantity" /></label>
+          </>}
         </div>
         {error && <p className="stock-add-note" role="alert">{error}</p>}
-        <button className="stock-add-submit" disabled={busy}>{busy ? "Adding…" : "Add product"}</button>
+        <button className="stock-add-submit" disabled={busy}>{busy ? "Adding…" : addMode === "existing" && products.length ? "Add quantity" : "Add product"}</button>
       </form>
     </div>}
     {editing && <div className="stock-delete-backdrop" role="presentation">

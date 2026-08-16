@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  Banknote,
   Bell,
+  CircleDollarSign,
   FileText,
   LayoutDashboard,
   Moon,
+  PackageX,
   Rocket,
   ShoppingCart,
   Sparkles,
@@ -19,6 +22,7 @@ import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monit
 import { LogoutButton } from "@/components/logout-button";
 import { ProfileMenu } from "@/components/profile-menu";
 import { authRequest, type AuthUser } from "@/lib/api/client";
+import { inventoryFetch } from "@/lib/inventory-client";
 
 function StockIcon(props: SVGProps<SVGSVGElement>) {
   return <svg {...props} className="stock-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -46,6 +50,20 @@ function HelpIcon(props: SVGProps<SVGSVGElement>) {
     <circle cx="12" cy="12" r="9.5" />
     <path className="nav-icon-detail" d="M9.8 9a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.2.9-1.2 1.8M12 16.8h.01" />
   </svg>;
+}
+
+function NotificationIcon({ id }: { id: string }) {
+  if (id.startsWith("loan-")) return <Banknote aria-hidden="true" />;
+  if (id.startsWith("empty-stock-")) return <PackageX aria-hidden="true" />;
+  if (id.startsWith("no-sales-")) return <ShoppingCart aria-hidden="true" />;
+  return <CircleDollarSign aria-hidden="true" />;
+}
+
+function notificationTone(id: string) {
+  if (id.startsWith("loan-")) return "loan";
+  if (id.startsWith("empty-stock-")) return "stock";
+  if (id.startsWith("no-sales-")) return "sales";
+  return "currency";
 }
 
 const menuItems = [
@@ -106,6 +124,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
+  const alertsDate = useRef(new Date().toISOString().slice(0, 10));
 
   function toggleTheme() {
     setDark((current) => {
@@ -148,6 +167,43 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     setNotificationsUnread(true);
   }, []);
 
+  const refreshBusinessAlerts = useCallback(async () => {
+    try {
+      const [productsResponse, salesResponse, loansResponse] = await Promise.all([
+        inventoryFetch("/api/products"), inventoryFetch("/api/sales"), inventoryFetch("/api/loans"),
+      ]);
+      if (!productsResponse.ok || !salesResponse.ok || !loansResponse.ok) return;
+      const [productsBody, salesBody, loansBody] = await Promise.all([productsResponse.json(), salesResponse.json(), loansResponse.json()]);
+      const dateKey = new Date().toISOString().slice(0, 10);
+      const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const alerts: CurrencyAlert[] = [];
+      if (!(salesBody.sales ?? []).some((sale: { createdAt: string }) => new Date(sale.createdAt) >= startOfToday)) alerts.push({ id: `no-sales-${dateKey}`, title: "No sales added today", message: "No sale has been recorded today. Add sales to keep income and profit accurate." });
+      const emptyItems = (productsBody.products ?? []).filter((product: { quantity: number }) => product.quantity === 0);
+      if (emptyItems.length) alerts.push({ id: `empty-stock-${dateKey}`, title: "Items out of stock", message: `${emptyItems.length} item${emptyItems.length === 1 ? " is" : "s are"} at 0 quantity and need restocking.` });
+      (loansBody.loans ?? []).forEach((loan: { id: string; source: string; borrowedOn: string; deadline: string }) => {
+        const day = 86_400_000;
+        const borrowed = new Date(`${loan.borrowedOn}T00:00:00`);
+        const deadline = new Date(`${loan.deadline}T00:00:00`);
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const totalDays = Math.max(1, Math.round((deadline.getTime() - borrowed.getTime()) / day));
+        const daysLeft = Math.round((deadline.getTime() - today.getTime()) / day);
+        const reminderDays = new Set<number>([0, 1]);
+        for (let remaining = Math.floor(totalDays / 2); remaining > 1; remaining = Math.floor(remaining / 2)) reminderDays.add(remaining);
+        if (daysLeft >= 0 && reminderDays.has(daysLeft)) alerts.push({ id: `loan-${loan.id}-${daysLeft}-${dateKey}`, title: "Loan payment reminder", message: daysLeft === 0 ? `${loan.source} is due today.` : `${loan.source} is due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}, on ${deadline.toLocaleDateString("en-GB")}.` });
+      });
+      alerts.forEach(receiveCurrencyAlert);
+    } catch { /* Notifications should never block the workspace. */ }
+  }, [receiveCurrencyAlert]);
+
+  useEffect(() => {
+    if (!user || !alertsHydrated) return;
+    void refreshBusinessAlerts();
+    const timer = window.setInterval(refreshBusinessAlerts, 60_000);
+    window.addEventListener("kungahara:data-changed", refreshBusinessAlerts);
+    return () => { window.clearInterval(timer); window.removeEventListener("kungahara:data-changed", refreshBusinessAlerts); };
+  }, [alertsHydrated, refreshBusinessAlerts, user]);
+
   useEffect(() => {
     const key = `kungahara:currency-alerts:${new Date().toISOString().slice(0, 10)}`;
     const timer = window.setTimeout(() => {
@@ -171,6 +227,19 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     window.localStorage.setItem(key, JSON.stringify(currencyAlerts));
     window.localStorage.setItem(`${key}:unread`, String(notificationsUnread));
   }, [alertsHydrated, currencyAlerts, notificationsUnread]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const currentDateKey = new Date().toISOString().slice(0, 10);
+      if (currentDateKey === alertsDate.current) return;
+      alertsDate.current = currentDateKey;
+      currencyAlertIds.current.clear();
+      setCurrencyAlerts([]);
+      setNotificationsUnread(false);
+      void refreshBusinessAlerts();
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [refreshBusinessAlerts]);
 
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -252,14 +321,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
               <button type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
               {notificationsOpen && <div className="notification-popover">
                 <strong>Today&apos;s notifications</strong>
-                {currencyAlerts.length ? currencyAlerts.map((alert) => <article key={alert.id}><b>{alert.title}</b><p>{alert.message}</p></article>) : <p>No new notifications.</p>}
+                {currencyAlerts.length ? currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div></article>) : <p>No new notifications.</p>}
               </div>}
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
           </div>
         </div>
       </header>
-      <main className={`dashboard-workspace${pathname === "/stock" || pathname === "/sales" ? " data-page-workspace" : ""}`}>
+      <main className={`dashboard-workspace${pathname === "/stock" || pathname === "/sales" || pathname === "/finance" || pathname === "/documents" ? " data-page-workspace" : ""}`}>
         {children}
         {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
           <span className="route-loading-spinner" aria-hidden="true" />
