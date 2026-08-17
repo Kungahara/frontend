@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Sparkles,
   Sun,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -100,6 +101,16 @@ const sidebarSlides = [
 ];
 
 const themeStorageKey = "kungahara:dashboard-theme";
+const businessClock = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Kigali", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", hourCycle: "h23" });
+
+function businessTime(date = new Date()) {
+  const parts = Object.fromEntries(businessClock.formatToParts(date).map((part) => [part.type, part.value]));
+  return { dateKey: `${parts.year}-${parts.month}-${parts.day}`, weekday: parts.weekday, hour: Number(parts.hour) };
+}
+
+function notificationStorageKey(userId: string, date = new Date()) {
+  return `kungahara:notifications:${userId}:${businessTime(date).dateKey}`;
+}
 
 function savedDarkTheme() {
   if (typeof window === "undefined") return false;
@@ -120,11 +131,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsUnread, setNotificationsUnread] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [alertsHydrated, setAlertsHydrated] = useState(false);
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
-  const alertsDate = useRef(new Date().toISOString().slice(0, 10));
+  const alertsDate = useRef(businessTime().dateKey);
 
   function toggleTheme() {
     setDark((current) => {
@@ -132,6 +144,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       window.localStorage.setItem(themeStorageKey, next ? "dark" : "light");
       return next;
     });
+  }
+
+  function dismissNotification(id: string) {
+    setCurrencyAlerts((current) => current.filter((alert) => alert.id !== id));
   }
 
   useEffect(() => {
@@ -143,6 +159,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     authRequest<{ user: AuthUser }>("me")
       .then((result) => setUser(result.user))
       .catch(() => router.replace("/login"));
+  }, [router]);
+
+  useEffect(() => {
+    [...menuItems.map((item) => item.href), "/settings", "/profile"].forEach((href) => router.prefetch(href));
   }, [router]);
 
   useEffect(() => {
@@ -174,11 +194,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       ]);
       if (!productsResponse.ok || !salesResponse.ok || !loansResponse.ok) return;
       const [productsBody, salesBody, loansBody] = await Promise.all([productsResponse.json(), salesResponse.json(), loansResponse.json()]);
-      const dateKey = new Date().toISOString().slice(0, 10);
-      const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
       const now = new Date();
+      const { dateKey, weekday, hour } = businessTime(now);
       const alerts: CurrencyAlert[] = [];
-      if (!(salesBody.sales ?? []).some((sale: { createdAt: string }) => new Date(sale.createdAt) >= startOfToday)) alerts.push({ id: `no-sales-${dateKey}`, title: "No sales added today", message: "No sale has been recorded today. Add sales to keep income and profit accurate." });
+      const isWorkingDay = !["Sat", "Sun"].includes(weekday);
+      const hasSalesToday = (salesBody.sales ?? []).some((sale: { createdAt: string }) => businessTime(new Date(sale.createdAt)).dateKey === dateKey);
+      if (isWorkingDay && !hasSalesToday) {
+        if (hour >= 12 && hour < 20) alerts.push({ id: `no-sales-1200-${dateKey}`, title: "Midday sales reminder", message: "It is after 12:00 and no sale has been recorded today. Add any sales made so your income and profit stay accurate." });
+        if (hour >= 20) alerts.push({ id: `no-sales-2000-${dateKey}`, title: "Evening sales reminder", message: "It is after 20:00 and no sale has been recorded today. Add any sales made before closing your records for the day." });
+      }
       const emptyItems = (productsBody.products ?? []).filter((product: { quantity: number }) => product.quantity === 0);
       if (emptyItems.length) alerts.push({ id: `empty-stock-${dateKey}`, title: "Items out of stock", message: `${emptyItems.length} item${emptyItems.length === 1 ? " is" : "s are"} at 0 quantity and need restocking.` });
       (loansBody.loans ?? []).forEach((loan: { id: string; source: string; borrowedOn: string; deadline: string }) => {
@@ -205,11 +229,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [alertsHydrated, refreshBusinessAlerts, user]);
 
   useEffect(() => {
-    const key = `kungahara:currency-alerts:${new Date().toISOString().slice(0, 10)}`;
+    if (!user) return;
+    const key = notificationStorageKey(user.id);
     const timer = window.setTimeout(() => {
       try {
         const saved = JSON.parse(window.localStorage.getItem(key) ?? "[]") as CurrencyAlert[];
-        const alerts = Array.isArray(saved) ? saved : [];
+        const alerts = Array.isArray(saved) ? saved.filter((alert) => !alert.id.startsWith("no-sales-") || alert.id.startsWith("no-sales-1200-") || alert.id.startsWith("no-sales-2000-")) : [];
         currencyAlertIds.current = new Set(alerts.map((alert) => alert.id));
         setCurrencyAlerts(alerts);
         setNotificationsUnread(window.localStorage.getItem(`${key}:unread`) === "true");
@@ -219,18 +244,18 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       setAlertsHydrated(true);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!alertsHydrated) return;
-    const key = `kungahara:currency-alerts:${new Date().toISOString().slice(0, 10)}`;
+    if (!alertsHydrated || !user) return;
+    const key = notificationStorageKey(user.id);
     window.localStorage.setItem(key, JSON.stringify(currencyAlerts));
     window.localStorage.setItem(`${key}:unread`, String(notificationsUnread));
-  }, [alertsHydrated, currencyAlerts, notificationsUnread]);
+  }, [alertsHydrated, currencyAlerts, notificationsUnread, user]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      const currentDateKey = new Date().toISOString().slice(0, 10);
+      const currentDateKey = businessTime().dateKey;
       if (currentDateKey === alertsDate.current) return;
       alertsDate.current = currentDateKey;
       currencyAlertIds.current.clear();
@@ -254,13 +279,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     // Route completion is an external navigation event reflected by usePathname.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRouteLoading(false);
+    setPendingPath(null);
   }, [pathname]);
 
   if (!user) {
     return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`} suppressHydrationWarning><span aria-hidden="true" /><p>The workspace is still loading…</p></main>;
   }
 
-  const pageTitle = pageTitles[pathname] ?? "Kungahara";
+  const displayedPath = pendingPath ?? pathname;
+  const pageTitle = pageTitles[displayedPath] ?? "Kungahara";
   const activeSlide = sidebarSlides[sidebarSlide];
   const SlideIcon = activeSlide.icon;
   const currentDate = new Intl.DateTimeFormat("en-GB", {
@@ -276,7 +303,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <p className="dashboard-nav-label">Menu</p>
       <nav className="dashboard-nav" aria-label="Menu">
         {menuItems.map(({ href, label, icon: Icon }) => (
-          <Link className={pathname === href ? "active" : ""} href={href} key={href} onClick={() => { if (pathname !== href) setRouteLoading(true); }}>
+          <Link className={displayedPath === href ? "active" : ""} href={href} key={href} onClick={() => { if (pathname !== href) { setPendingPath(href); setRouteLoading(true); } }}>
             <Icon aria-hidden="true" />
             <span>{label}</span>
           </Link>
@@ -301,8 +328,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <div className="dashboard-general">
         <p className="dashboard-nav-label">General</p>
         <nav className="dashboard-secondary-nav" aria-label="General">
-          <Link className={pathname.startsWith("/settings") ? "active" : ""} href="/settings" onClick={() => { if (!pathname.startsWith("/settings")) setRouteLoading(true); }}><SettingsIcon aria-hidden="true" /><span>Settings</span></Link>
-          <Link className={pathname.startsWith("/profile") ? "active" : ""} href="/profile" onClick={() => { if (!pathname.startsWith("/profile")) setRouteLoading(true); }}><HelpIcon aria-hidden="true" /><span>Help</span></Link>
+          <Link className={displayedPath.startsWith("/settings") ? "active" : ""} href="/settings" onClick={() => { if (!pathname.startsWith("/settings")) { setPendingPath("/settings"); setRouteLoading(true); } }}><SettingsIcon aria-hidden="true" /><span>Settings</span></Link>
+          <Link className={displayedPath.startsWith("/profile") ? "active" : ""} href="/profile" onClick={() => { if (!pathname.startsWith("/profile")) { setPendingPath("/profile"); setRouteLoading(true); } }}><HelpIcon aria-hidden="true" /><span>Help</span></Link>
           <LogoutButton className="dashboard-sidebar-signout" showIcon />
         </nav>
       </div>
@@ -312,23 +339,23 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         <div className="dashboard-page-identity"><strong>{pageTitle}</strong><small>{currentDate}</small></div>
         <div className="dashboard-topbar-right">
           <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
-          <div className="dashboard-topbar-actions">
+          <div className="dashboard-topbar-actions" ref={notificationsRef}>
             <div className="dashboard-theme-toggle" aria-label="Theme">
               <button className={!dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={!dark} title="Toggle theme" onClick={toggleTheme}><Sun aria-hidden="true" /></button>
               <button className={dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={dark} title="Toggle theme" onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
-            <div className="dashboard-notifications" ref={notificationsRef}>
+            <div className="dashboard-notifications">
               <button type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
-              {notificationsOpen && <div className="notification-popover">
-                <strong>Today&apos;s notifications</strong>
-                {currencyAlerts.length ? currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div></article>) : <p>No new notifications.</p>}
-              </div>}
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
+            {notificationsOpen && <div className="notification-popover">
+              <div className="notification-popover-header"><strong>Today&apos;s notifications</strong></div>
+              {currencyAlerts.length ? currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div><button className="notification-dismiss" type="button" aria-label={`Dismiss ${alert.title}`} onClick={() => dismissNotification(alert.id)}><X aria-hidden="true" /></button></article>) : <p>No new notifications.</p>}
+            </div>}
           </div>
         </div>
       </header>
-      <main className={`dashboard-workspace${pathname === "/stock" || pathname === "/sales" || pathname === "/finance" || pathname === "/documents" ? " data-page-workspace" : ""}`}>
+      <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}`}>
         {children}
         {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
           <span className="route-loading-spinner" aria-hidden="true" />

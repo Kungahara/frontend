@@ -31,17 +31,20 @@ function monthWeekRanges(value: string) {
 function smoothLinePath(points: Array<[number, number]>) {
   if (!points.length) return "";
   if (points.length === 1) return `M ${points[0][0]} ${points[0][1]}`;
+  const widths = points.slice(0, -1).map((point, index) => points[index + 1][0] - point[0]);
+  const slopes = widths.map((width, index) => (points[index + 1][1] - points[index][1]) / width);
+  const tangents = points.map((_, index) => {
+    if (index === 0) return slopes[0];
+    if (index === points.length - 1) return slopes[slopes.length - 1];
+    const left = slopes[index - 1], right = slopes[index];
+    if (left === 0 || right === 0 || Math.sign(left) !== Math.sign(right)) return 0;
+    const leftWeight = 2 * widths[index] + widths[index - 1];
+    const rightWeight = widths[index] + 2 * widths[index - 1];
+    return (leftWeight + rightWeight) / (leftWeight / left + rightWeight / right);
+  });
   return points.slice(0, -1).reduce((path, point, index) => {
-    const previous = points[index - 1] ?? point;
-    const next = points[index + 1];
-    const afterNext = points[index + 2] ?? next;
-    const controlOneX = point[0] + (next[0] - previous[0]) / 6;
-    const minimumY = Math.min(point[1], next[1]);
-    const maximumY = Math.max(point[1], next[1]);
-    const controlOneY = Math.min(maximumY, Math.max(minimumY, point[1] + (next[1] - previous[1]) / 6));
-    const controlTwoX = next[0] - (afterNext[0] - point[0]) / 6;
-    const controlTwoY = Math.min(maximumY, Math.max(minimumY, next[1] - (afterNext[1] - point[1]) / 6));
-    return `${path} C ${controlOneX} ${controlOneY}, ${controlTwoX} ${controlTwoY}, ${next[0]} ${next[1]}`;
+    const next = points[index + 1], width = widths[index];
+    return `${path} C ${point[0] + width / 3} ${point[1] + tangents[index] * width / 3}, ${next[0] - width / 3} ${next[1] - tangents[index + 1] * width / 3}, ${next[0]} ${next[1]}`;
   }, `M ${points[0][0]} ${points[0][1]}`);
 }
 
@@ -110,8 +113,8 @@ export function SalesAnalytics() {
   const coordinates = points.map((point, index) => [x(index), y(point.value)] as [number, number]);
   const line = smoothLinePath(coordinates);
   const hoveredPoint = hoveredIndex === null ? null : points[hoveredIndex];
-  const tooltipX = hoveredIndex === null ? 0 : Math.min(432, Math.max(62, x(hoveredIndex) - 48));
-  const tooltipY = hoveredPoint ? Math.max(8, y(hoveredPoint.value) - 52) : 0;
+  const tooltipX = hoveredIndex === null ? 0 : Math.min(390, Math.max(62, x(hoveredIndex) - 68));
+  const tooltipY = hoveredPoint ? Math.max(6, y(hoveredPoint.value) - 66) : 0;
 
   const selectedProductName = productId === "all" ? categoryName === "all" ? "All items" : `All in ${categoryName}` : products.find((product) => product.id === productId)?.name ?? "Selected item";
 
@@ -132,8 +135,8 @@ export function SalesAnalytics() {
       {points.map((point, index) => <text x={x(index)} y="209" textAnchor="middle" key={point.label}>{point.label}</text>)}
       <text className="stock-axis-label" x="14" y="116" textAnchor="middle" transform="rotate(-90 14 116)">Items sold</text>
       <path className="sales-items-area" d={`${line} L 526 190 L 58 190 Z`} /><path className="stock-chart-line sales-items-line" d={line} />
-      {points.map((point, index) => <g className={`sales-items-point-group${hoveredIndex === index ? " active" : ""}`} key={`point-${point.label}`} onMouseEnter={() => setHoveredIndex(index)}><circle className="sales-items-point-hit" cx={x(index)} cy={y(point.value)} r="12" /><circle className="sales-items-point-ring" cx={x(index)} cy={y(point.value)} r="5.5" /><circle className="sales-items-point" cx={x(index)} cy={y(point.value)} r="2.5" /></g>)}
-      {hoveredPoint && <g className="stock-chart-tooltip sales-items-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="96" height="40" rx="6" /><text x={tooltipX + 8} y={tooltipY + 15}>{hoveredPoint.label}</text><text className="value" x={tooltipX + 8} y={tooltipY + 30}>{hoveredPoint.value} items sold</text></g>}
+      {points.map((point, index) => <g className="sales-items-point-group" key={`point-${point.label}`} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)}><circle className="sales-items-point-hit" cx={x(index)} cy={y(point.value)} r="15" /><circle className="sales-items-point-ring" cx={x(index)} cy={y(point.value)} r="5.5" /><circle className="sales-items-point-core" cx={x(index)} cy={y(point.value)} r="2.5" /></g>)}
+      {hoveredPoint && <g className="stock-chart-tooltip sales-items-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="136" height="52" rx="8" /><text x={tooltipX + 11} y={tooltipY + 20}>{hoveredPoint.label}</text><text className="value" x={tooltipX + 11} y={tooltipY + 40}>{hoveredPoint.value} items sold</text></g>}
     </svg></div>
     </section>
     <aside className="stock-product-section" aria-labelledby="sales-items-title"><header><h2 id="sales-items-title">Items</h2><p>Choose what to show on the graph.</p></header><div className="stock-product-choice">

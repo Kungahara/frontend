@@ -88,7 +88,11 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
     return { ...product, soldToday: quantity, moneyToday: productSales.reduce((total, sale) => total + saleValue(sale), 0) };
   });
   const mostSelling = [...todayByProduct].sort((first, second) => second.soldToday - first.soldToday)[0];
-  const leastStockProduct = [...products].sort((first, second) => first.quantity - second.quantity)[0];
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lossThisMonth = sales.filter((sale) => new Date(sale.createdAt) >= startOfMonth).reduce((total, sale) => {
+    const product = products.find((item) => item.id === sale.productId);
+    return total + Math.max(0, Number(product?.costPrice ?? 0) - Number(sale.unitPrice)) * sale.quantity;
+  }, 0);
   const formatMoney = (value: number) => `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)}`;
 
   return <div className="stock-summary-grid sales-summary-grid">
@@ -110,7 +114,12 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
       <div className="stock-summary-value-row"><strong>{new Intl.NumberFormat("en").format(soldQuantity)}</strong></div>
       <span className="stock-summary-previous">Items sold today</span>
     </article>
-    <LeastStockCard product={leastStockProduct} />
+    <article className="stock-summary-card least-stock-card sales-loss-card" aria-label="Losses suffered this month">
+      <span className="stock-summary-title">Losses suffered</span>
+      <span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span>
+      <div className="stock-value-amount">{formatMoney(lossThisMonth)}</div>
+      <span className="least-stock-remaining">Money lost this month</span>
+    </article>
   </div>;
 }
 

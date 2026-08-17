@@ -20,6 +20,7 @@ type Product = {
 };
 
 type Category = { id: string; name: string };
+type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 type EditProduct = Product & { quantityText: string; lowStockLevelText: string };
 type EditableField = "name" | "categoryId" | "size" | "costPrice" | "sellingPrice" | "quantityText" | "lowStockLevelText";
 type NewProduct = { name: string; categoryId: string; categoryName: string; size: string; quantity: string; costPrice: string; sellingPrice: string; lowStockLevel: string };
@@ -62,15 +63,20 @@ function monthWeekRanges(value: string) {
 function smoothLinePath(points: Array<[number, number]>) {
   if (!points.length) return "";
   if (points.length === 1) return `M ${points[0][0]} ${points[0][1]}`;
+  const widths = points.slice(0, -1).map((point, index) => points[index + 1][0] - point[0]);
+  const slopes = widths.map((width, index) => (points[index + 1][1] - points[index][1]) / width);
+  const tangents = points.map((_, index) => {
+    if (index === 0) return slopes[0];
+    if (index === points.length - 1) return slopes[slopes.length - 1];
+    const left = slopes[index - 1], right = slopes[index];
+    if (left === 0 || right === 0 || Math.sign(left) !== Math.sign(right)) return 0;
+    const leftWeight = 2 * widths[index] + widths[index - 1];
+    const rightWeight = widths[index] + 2 * widths[index - 1];
+    return (leftWeight + rightWeight) / (leftWeight / left + rightWeight / right);
+  });
   return points.slice(0, -1).reduce((path, point, index) => {
-    const previous = points[index - 1] ?? point;
-    const next = points[index + 1];
-    const afterNext = points[index + 2] ?? next;
-    const controlOneX = point[0] + (next[0] - previous[0]) / 6;
-    const controlOneY = point[1] + (next[1] - previous[1]) / 6;
-    const controlTwoX = next[0] - (afterNext[0] - point[0]) / 6;
-    const controlTwoY = next[1] - (afterNext[1] - point[1]) / 6;
-    return `${path} C ${controlOneX} ${controlOneY}, ${controlTwoX} ${controlTwoY}, ${next[0]} ${next[1]}`;
+    const next = points[index + 1], width = widths[index];
+    return `${path} C ${point[0] + width / 3} ${point[1] + tangents[index] * width / 3}, ${next[0] - width / 3} ${next[1] - tangents[index + 1] * width / 3}, ${next[0]} ${next[1]}`;
   }, `M ${points[0][0]} ${points[0][1]}`);
 }
 
@@ -83,12 +89,12 @@ function niceAxisMaximum(value: number) {
   return niceStep * magnitude * 4;
 }
 
-function StockAnalysisChart({ products, categoryId, productId, period, year, month, weekIndex }: { products: Product[]; categoryId: string; productId: string; period: AnalysisPeriod; year: number; month: string; weekIndex: number }) {
-  const [hoveredPoint, setHoveredPoint] = useState<{ index: number; series: "Profit" | "Expenses" } | null>(null);
+function StockAnalysisChart({ products, sales, categoryId, productId, period, year, month, weekIndex }: { products: Product[]; sales: Sale[]; categoryId: string; productId: string; period: AnalysisPeriod; year: number; month: string; weekIndex: number }) {
+  const [hoveredPoint, setHoveredPoint] = useState<{ index: number; series: "Income" | "Expenses" } | null>(null);
   const categoryProducts = categoryId === "all" ? products : products.filter((product) => product.categoryId === categoryId);
   const selected = productId === "all" ? categoryProducts : categoryProducts.filter((product) => product.id === productId);
-  const annualExpenses = selected.reduce((total, product) => total + availableQuantity(product) * Number(product.costPrice), 0);
-  const annualProfit = selected.reduce((total, product) => total + availableQuantity(product) * Math.max(0, Number(product.sellingPrice) - Number(product.costPrice)), 0);
+  const selectedIds = new Set(selected.map((product) => product.id));
+  const costs = new Map(selected.map((product) => [product.id, Number(product.costPrice)]));
   const { year: selectedMonthYear, monthIndex } = monthParts(month);
   const weekRanges = monthWeekRanges(month);
   const selectedWeek = weekRanges[Math.min(weekIndex, weekRanges.length - 1)] ?? weekRanges[0];
@@ -97,32 +103,42 @@ function StockAnalysisChart({ products, categoryId, productId, period, year, mon
     : period === "1M"
       ? monthWeekRanges(month).map((range) => new Date(selectedMonthYear, monthIndex, range.startDay))
       : Array.from({ length: selectedWeek.endDay - selectedWeek.startDay + 1 }, (_, index) => new Date(selectedMonthYear, monthIndex, selectedWeek.startDay + index));
+  const series = dates.map((date, index) => {
+    const end = period === "1Y"
+      ? new Date(year, index + 1, 1)
+      : period === "1M"
+        ? new Date(selectedMonthYear, monthIndex, weekRanges[index].endDay + 1)
+        : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    const records = sales.filter((sale) => selectedIds.has(sale.productId) && new Date(sale.createdAt) >= date && new Date(sale.createdAt) < end);
+    return {
+      income: records.reduce((total, sale) => total + sale.quantity * Number(sale.unitPrice), 0),
+      expenses: records.reduce((total, sale) => total + sale.quantity * (costs.get(sale.productId) ?? 0), 0),
+      hasRecords: records.length > 0,
+    };
+  });
   const pointCount = dates.length;
-  const rangeScale = period === "1Y" ? 1 : period === "1M" ? 1 / 12 : pointCount / 365;
-  const profitPattern = [0.08, 0.29, 0.38, 0.47, 0.51, 0.58, 0.62, 0.76, 0.91, 1.01, 1.06, 1.04];
-  const expensePattern = [0.05, 0.25, 0.32, 0.43, 0.56, 0.63, 0.61, 0.6, 0.68, 0.83, 0.94, 0.86];
-  const projectionBase = Math.max(1, (annualProfit + annualExpenses) / 2) * rangeScale;
-  const profit = profitPattern.slice(0, pointCount).map((ratio) => projectionBase * ratio);
-  const expenses = expensePattern.slice(0, pointCount).map((ratio) => projectionBase * ratio);
-  const axisMaximum = niceAxisMaximum(Math.max(...expenses, ...profit));
+  const income = series.map((point) => point.income);
+  const expenses = series.map((point) => point.expenses);
+  const hasRecordedSales = series.some((point) => point.hasRecords);
+  const axisMaximum = niceAxisMaximum(Math.max(...expenses, ...income));
   const x = (index: number) => 58 + (index / (pointCount - 1)) * 468;
   const y = (value: number) => 190 - (value / axisMaximum) * 150;
-  const profitPoints = profit.map((value, index) => [x(index), y(value)] as [number, number]);
+  const incomePoints = income.map((value, index) => [x(index), y(value)] as [number, number]);
   const expensePoints = expenses.map((value, index) => [x(index), y(value)] as [number, number]);
-  const profitPath = smoothLinePath(profitPoints);
+  const incomePath = smoothLinePath(incomePoints);
   const expensePath = smoothLinePath(expensePoints);
   const formatRwf = (value: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
   const formatDate = (date: Date) => period === "1W"
     ? `${new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)} ${date.getDate()}`
     : new Intl.DateTimeFormat("en", period === "1Y" ? { month: "short" } : { month: "short", day: "numeric" }).format(date);
-  const hoveredValues = hoveredPoint?.series === "Profit" ? profit : expenses;
+  const hoveredValues = hoveredPoint?.series === "Income" ? income : expenses;
   const tooltipX = hoveredPoint ? Math.min(438, Math.max(64, x(hoveredPoint.index) - 46)) : 0;
   const tooltipY = hoveredPoint ? Math.max(8, y(hoveredValues[hoveredPoint.index]) - 50) : 0;
 
   return <div className="stock-analysis-chart">
-    {selected.length ? <svg viewBox="0 0 560 225" role="img" aria-label={`Projected profit and expenses for the selected ${period === "1Y" ? "year" : period === "1M" ? "month" : "week"}`} onMouseLeave={() => setHoveredPoint(null)}>
+    {selected.length ? hasRecordedSales ? <svg viewBox="0 0 560 225" role="img" aria-label={`Recorded income and expenses for the selected ${period === "1Y" ? "year" : period === "1M" ? "month" : "week"}`} onMouseLeave={() => setHoveredPoint(null)}>
       <defs>
-        <linearGradient id="profit-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#35b866" stopOpacity="0.2" /><stop offset="1" stopColor="#35b866" stopOpacity="0" /></linearGradient>
+        <linearGradient id="income-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#35b866" stopOpacity="0.2" /><stop offset="1" stopColor="#35b866" stopOpacity="0" /></linearGradient>
         <linearGradient id="expense-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ef6a70" stopOpacity="0.18" /><stop offset="1" stopColor="#ef6a70" stopOpacity="0" /></linearGradient>
       </defs>
       {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 150} y2={190 - ratio * 150} /><text x="49" y={194 - ratio * 150} textAnchor="end">{formatRwf(axisMaximum * ratio)}</text></g>)}
@@ -130,18 +146,19 @@ function StockAnalysisChart({ products, categoryId, productId, period, year, mon
       <line className="stock-axis" x1="58" x2="526" y1="190" y2="190" />
       {dates.map((date, index) => <text x={x(index)} y="209" textAnchor="middle" key={`label-${index}-${date.toISOString()}`}>{formatDate(date)}</text>)}
       <text className="stock-axis-label" x="14" y="116" textAnchor="middle" transform="rotate(-90 14 116)">RWF</text>
-      <path className="stock-chart-area" fill="url(#profit-area)" d={`${profitPath} L 526 190 L 58 190 Z`} />
+      <path className="stock-chart-area" fill="url(#income-area)" d={`${incomePath} L 526 190 L 58 190 Z`} />
       <path className="stock-chart-area" fill="url(#expense-area)" d={`${expensePath} L 526 190 L 58 190 Z`} />
-      <g className="profit-series"><path className="stock-chart-line" d={profitPath} />{profit.map((value, index) => <g className="stock-chart-point" key={`profit-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Profit" })} onMouseLeave={() => setHoveredPoint(null)}><circle className="stock-chart-point-hit" cx={x(index)} cy={y(value)} r="10" /><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
+      <g className="income-series"><path className="stock-chart-line" d={incomePath} />{income.map((value, index) => <g className="stock-chart-point" key={`income-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Income" })} onMouseLeave={() => setHoveredPoint(null)}><circle className="stock-chart-point-hit" cx={x(index)} cy={y(value)} r="10" /><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
       <g className="expense-series"><path className="stock-chart-line" d={expensePath} />{expenses.map((value, index) => <g className="stock-chart-point" key={`expenses-${index}`} onMouseEnter={() => setHoveredPoint({ index, series: "Expenses" })} onMouseLeave={() => setHoveredPoint(null)}><circle className="stock-chart-point-hit" cx={x(index)} cy={y(value)} r="10" /><circle className="stock-chart-point-ring" cx={x(index)} cy={y(value)} r="5" /><circle className="stock-chart-point-core" cx={x(index)} cy={y(value)} r="2.35" /></g>)}</g>
       {hoveredPoint && <g className="stock-chart-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="92" height="39" rx="5" /><text x={tooltipX + 8} y={tooltipY + 15}>{formatDate(dates[hoveredPoint.index])}</text><text className="value" x={tooltipX + 8} y={tooltipY + 30}>{hoveredPoint.series}: {formatRwf(hoveredValues[hoveredPoint.index])}</text></g>}
-    </svg> : <div className="stock-analysis-empty">No products in this category yet.</div>}
+    </svg> : <div className="stock-analysis-empty">No recorded sales for this selection and period.</div> : <div className="stock-analysis-empty">No products in this category yet.</div>}
   </div>;
 }
 
 export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<EditProduct | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
@@ -169,12 +186,14 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
     Promise.all([
       inventoryFetch("/api/products", { signal: controller.signal }),
       inventoryFetch("/api/categories", { signal: controller.signal }),
-    ]).then(async ([productResponse, categoryResponse]) => {
-      if (!productResponse.ok || !categoryResponse.ok) throw new Error("Unable to load stock products.");
-      const [productBody, categoryBody] = await Promise.all([productResponse.json(), categoryResponse.json()]);
+      inventoryFetch("/api/sales", { signal: controller.signal }),
+    ]).then(async ([productResponse, categoryResponse, salesResponse]) => {
+      if (!productResponse.ok || !categoryResponse.ok || !salesResponse.ok) throw new Error("Unable to load stock products.");
+      const [productBody, categoryBody, salesBody] = await Promise.all([productResponse.json(), categoryResponse.json(), salesResponse.json()]);
       if (!active) return;
       setProducts(Array.isArray(productBody.products) ? productBody.products : []);
       setCategories(Array.isArray(categoryBody.categories) ? categoryBody.categories : []);
+      setSales(Array.isArray(salesBody.sales) ? salesBody.sales : []);
     }).catch((reason) => {
       if (!active) return;
       if (reason instanceof DOMException && reason.name === "AbortError") return;
@@ -375,9 +394,9 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
     const weekRanges = monthWeekRanges(analysisMonth);
     return <div className="stock-analysis-replacement" id="stock-analysis">
       <section className="stock-profit-section" aria-labelledby="stock-analysis-title">
-        <header><div><h2 id="stock-analysis-title">Projected profit and expenses</h2><p>{selectedProductName} · Projection in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
+        <header><div><h2 id="stock-analysis-title">Income and expenses</h2><p>{selectedProductName} · Recorded sales in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
         <div className="stock-analysis-meta">
-          <div className="stock-analysis-legend"><span className="profit">Profit</span><span className="expenses">Expenses</span></div>
+          <div className="stock-analysis-legend"><span className="income">Income</span><span className="expenses">Expenses</span></div>
           <div className="stock-period-controls">
             {analysisPeriod === "1Y" && <label className="stock-period-field"><span>Year</span><input type="number" min="2000" max="2100" value={analysisYear} onChange={(event) => setAnalysisYear(Number(event.target.value) || new Date().getFullYear())} /></label>}
             {analysisPeriod !== "1Y" && <label className="stock-period-field"><span>Month</span><input type="month" value={analysisMonth} onChange={(event) => { if (event.target.value) { setAnalysisMonth(event.target.value); setAnalysisWeekIndex(0); } }} /></label>}
@@ -387,7 +406,7 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
             </div>
           </div>
         </div>
-        <StockAnalysisChart products={products} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} period={analysisPeriod} year={analysisYear} month={analysisMonth} weekIndex={analysisWeekIndex} />
+        <StockAnalysisChart products={products} sales={sales} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} period={analysisPeriod} year={analysisYear} month={analysisMonth} weekIndex={analysisWeekIndex} />
       </section>
       <aside className="stock-product-section" aria-labelledby="product-analysis-title">
         <header><h2 id="product-analysis-title">Products</h2><p>Choose what to show on the graph.</p></header>
