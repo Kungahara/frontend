@@ -115,7 +115,8 @@ function notificationStorageKey(userId: string, date = new Date()) {
 function savedDarkTheme() {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(themeStorageKey) === "dark";
+    const theme = window.localStorage.getItem(themeStorageKey);
+    return theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   } catch {
     return false;
   }
@@ -142,6 +143,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     setDark((current) => {
       const next = !current;
       window.localStorage.setItem(themeStorageKey, next ? "dark" : "light");
+      try {
+        const settings = JSON.parse(window.localStorage.getItem("kungahara:settings") ?? "{}") as Record<string, unknown>;
+        window.localStorage.setItem("kungahara:settings", JSON.stringify({ ...settings, theme: next ? "dark" : "light" }));
+      } catch { /* Theme still works when other saved settings are invalid. */ }
       return next;
     });
   }
@@ -174,6 +179,20 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    function applySavedTheme() { setDark(savedDarkTheme()); }
+    function applySettings(event: Event) {
+      const theme = (event as CustomEvent<{ theme?: string }>).detail?.theme;
+      if (theme === "dark") setDark(true);
+      else if (theme === "light") setDark(false);
+      else if (theme === "system") setDark(media.matches);
+    }
+    media.addEventListener("change", applySavedTheme);
+    window.addEventListener("kungahara:settings-changed", applySettings);
+    return () => { media.removeEventListener("change", applySavedTheme); window.removeEventListener("kungahara:settings-changed", applySettings); };
+  }, []);
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       setSidebarSlide((current) => (current + 1) % sidebarSlides.length);
     }, 4500);
@@ -197,15 +216,17 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       const now = new Date();
       const { dateKey, weekday, hour } = businessTime(now);
       const alerts: CurrencyAlert[] = [];
-      const isWorkingDay = !["Sat", "Sun"].includes(weekday);
+      let reminderSettings = { salesReminders: true, noonReminder: true, eveningReminder: true, loanReminders: true, workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"] };
+      try { reminderSettings = { ...reminderSettings, ...JSON.parse(window.localStorage.getItem("kungahara:settings") ?? "{}") }; } catch { /* Keep defaults. */ }
+      const isWorkingDay = reminderSettings.workingDays.includes(weekday);
       const hasSalesToday = (salesBody.sales ?? []).some((sale: { createdAt: string }) => businessTime(new Date(sale.createdAt)).dateKey === dateKey);
-      if (isWorkingDay && !hasSalesToday) {
-        if (hour >= 12 && hour < 20) alerts.push({ id: `no-sales-1200-${dateKey}`, title: "Midday sales reminder", message: "It is after 12:00 and no sale has been recorded today. Add any sales made so your income and profit stay accurate." });
-        if (hour >= 20) alerts.push({ id: `no-sales-2000-${dateKey}`, title: "Evening sales reminder", message: "It is after 20:00 and no sale has been recorded today. Add any sales made before closing your records for the day." });
+      if (reminderSettings.salesReminders && isWorkingDay && !hasSalesToday) {
+        if (reminderSettings.noonReminder && hour >= 12 && hour < 20) alerts.push({ id: `no-sales-1200-${dateKey}`, title: "Midday sales reminder", message: "It is after 12:00 and no sale has been recorded today. Add any sales made so your income and profit stay accurate." });
+        if (reminderSettings.eveningReminder && hour >= 20) alerts.push({ id: `no-sales-2000-${dateKey}`, title: "Evening sales reminder", message: "It is after 20:00 and no sale has been recorded today. Add any sales made before closing your records for the day." });
       }
       const emptyItems = (productsBody.products ?? []).filter((product: { quantity: number }) => product.quantity === 0);
       if (emptyItems.length) alerts.push({ id: `empty-stock-${dateKey}`, title: "Items out of stock", message: `${emptyItems.length} item${emptyItems.length === 1 ? " is" : "s are"} at 0 quantity and need restocking.` });
-      (loansBody.loans ?? []).forEach((loan: { id: string; source: string; borrowedOn: string; deadline: string }) => {
+      if (reminderSettings.loanReminders) (loansBody.loans ?? []).forEach((loan: { id: string; source: string; borrowedOn: string; deadline: string }) => {
         const day = 86_400_000;
         const borrowed = new Date(`${loan.borrowedOn}T00:00:00`);
         const deadline = new Date(`${loan.deadline}T00:00:00`);
@@ -225,7 +246,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     void refreshBusinessAlerts();
     const timer = window.setInterval(refreshBusinessAlerts, 60_000);
     window.addEventListener("kungahara:data-changed", refreshBusinessAlerts);
-    return () => { window.clearInterval(timer); window.removeEventListener("kungahara:data-changed", refreshBusinessAlerts); };
+    window.addEventListener("kungahara:settings-changed", refreshBusinessAlerts);
+    return () => { window.clearInterval(timer); window.removeEventListener("kungahara:data-changed", refreshBusinessAlerts); window.removeEventListener("kungahara:settings-changed", refreshBusinessAlerts); };
   }, [alertsHydrated, refreshBusinessAlerts, user]);
 
   useEffect(() => {

@@ -9,13 +9,17 @@ import { inventoryFetch } from "@/lib/inventory-client";
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 type Movement = { productId: string; type: string; quantity: number; createdAt: string };
+type DashboardScope = "today" | "month" | "year";
 
 const financeMoney = (value: number) => `${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)} RWF`;
 const salesMoney = (value: number) => `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)}`;
 
-function thisMonth(value: string) {
+function inDashboardScope(value: string, scope: DashboardScope) {
   const date = new Date(value), now = new Date();
-  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  if (date.getFullYear() !== now.getFullYear()) return false;
+  if (scope === "year") return true;
+  if (date.getMonth() !== now.getMonth()) return false;
+  return scope === "month" || date.getDate() === now.getDate();
 }
 
 function SellingItemCard({ title, product, percentage, tone }: { title: string; product?: Product; percentage: number; tone: "best" | "least" }) {
@@ -111,6 +115,11 @@ export function DashboardSummaryCards() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [scope, setScope] = useState<DashboardScope>(() => {
+    if (typeof window === "undefined") return "month";
+    const saved = window.localStorage.getItem("kungahara:dashboard-scope");
+    return saved === "today" || saved === "year" ? saved : "month";
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -134,20 +143,29 @@ export function DashboardSummaryCards() {
     return () => { active = false; controller.abort(); window.removeEventListener("kungahara:inventory-changed", load); window.removeEventListener("kungahara:data-changed", load); };
   }, []);
 
+  useEffect(() => {
+    function updateScope(event: Event) {
+      const next = (event as CustomEvent<{ scope?: DashboardScope }>).detail?.scope;
+      if (next === "today" || next === "month" || next === "year") setScope(next);
+    }
+    window.addEventListener("kungahara:settings-changed", updateScope);
+    return () => window.removeEventListener("kungahara:settings-changed", updateScope);
+  }, []);
+
   if (loading) return <section className="stock-data-body dashboard-summary-body dashboard-summary-loading"><div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>Loading finance data…</strong><small>Calculating your business finances.</small></div></section>;
   if (error) return <section className="stock-data-body dashboard-summary-body dashboard-summary-loading"><div className="sales-page-loading" role="alert"><strong>Unable to load the dashboard.</strong><small>{error}</small></div></section>;
 
   const costs = new Map(products.map((product) => [product.id, Number(product.costPrice)]));
-  const selectedSales = sales.filter((sale) => thisMonth(sale.createdAt));
-  const invested = movements.filter((movement) => movement.type === "stock_in" && movement.quantity > 0 && thisMonth(movement.createdAt)).reduce((total, movement) => total + movement.quantity * (costs.get(movement.productId) ?? 0), 0);
+  const selectedSales = sales.filter((sale) => inDashboardScope(sale.createdAt, scope));
+  const invested = movements.filter((movement) => movement.type === "stock_in" && movement.quantity > 0 && inDashboardScope(movement.createdAt, scope)).reduce((total, movement) => total + movement.quantity * (costs.get(movement.productId) ?? 0), 0);
   const income = selectedSales.reduce((total, sale) => total + sale.quantity * Number(sale.unitPrice), 0);
   const costOfSales = selectedSales.reduce((total, sale) => total + sale.quantity * (costs.get(sale.productId) ?? 0), 0);
   const profit = income - costOfSales;
   const losses = selectedSales.reduce((total, sale) => total + Math.max(0, (costs.get(sale.productId) ?? 0) - Number(sale.unitPrice)) * sale.quantity, 0);
   const stockValue = products.reduce((total, product) => total + product.quantity * Number(product.costPrice), 0);
   const expectedIncome = products.reduce((total, product) => total + product.quantity * Number(product.sellingPrice), 0);
-  const movementValueThisMonth = movements.filter((movement) => thisMonth(movement.createdAt)).reduce((total, movement) => total + movement.quantity * (costs.get(movement.productId) ?? 0), 0);
-  const lastMonthStockValue = Math.max(0, stockValue - movementValueThisMonth);
+  const scopedMovementValue = movements.filter((movement) => inDashboardScope(movement.createdAt, scope)).reduce((total, movement) => total + movement.quantity * (costs.get(movement.productId) ?? 0), 0);
+  const lastMonthStockValue = Math.max(0, stockValue - scopedMovementValue);
   const stockValueChange = lastMonthStockValue ? ((stockValue - lastMonthStockValue) / lastMonthStockValue) * 100 : stockValue > 0 ? 100 : 0;
   const StockValueChangeIcon = stockValueChange >= 0 ? TrendingUp : TrendingDown;
   const rankedProducts = products.map((product) => {
@@ -157,13 +175,14 @@ export function DashboardSummaryCards() {
   }).sort((first, second) => second.sold - first.sold);
   const mostSelling = rankedProducts[0];
   const leastSelling = rankedProducts.length > 1 ? rankedProducts[rankedProducts.length - 1] : rankedProducts[0];
+  const scopeWords = scope === "today" ? "today" : scope === "year" ? "this year" : "this month";
 
   return <section className="stock-data-body dashboard-summary-body" aria-label="Dashboard financial summary">
     <div className="finance-summary-grid">
-      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested this month</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount">{financeMoney(invested)}</div><span className="historical-card-note">Stock purchased</span></article>
-      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income this month</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(income)}</strong></div><span className="stock-summary-previous">Money from sales</span></article>
-      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit this month</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(profit)}</strong></div><span className="stock-summary-previous">Profit made this month</span></article>
-      <article className="stock-summary-card finance-summary-card least-stock-card sales-loss-card"><span className="stock-summary-title">Losses suffered</span><span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span><div className="stock-value-amount">{salesMoney(losses)}</div><span className="least-stock-remaining">Money lost this month</span></article>
+      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount">{financeMoney(invested)}</div><span className="historical-card-note">Stock purchased</span></article>
+      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(income)}</strong></div><span className="stock-summary-previous">Money from sales</span></article>
+      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(profit)}</strong></div><span className="stock-summary-previous">Profit made {scopeWords}</span></article>
+      <article className="stock-summary-card finance-summary-card least-stock-card sales-loss-card"><span className="stock-summary-title">Losses suffered</span><span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span><div className="stock-value-amount">{salesMoney(losses)}</div><span className="least-stock-remaining">Money lost {scopeWords}</span></article>
     </div>
     <div className="dashboard-lower-content">
     <DashboardGraph products={products} sales={sales} />

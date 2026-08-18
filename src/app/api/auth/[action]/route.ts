@@ -51,3 +51,13 @@ export async function PATCH(request: Request, context: RouteContext<"/api/auth/[
   });
   return NextResponse.json(await readJson(response), { status: response.status });
 }
+
+export async function DELETE(_request: Request, context: RouteContext<"/api/auth/[action]">) {
+  const { action } = await context.params;
+  if (action !== "me") return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
+  const { access } = await tokenCookies();
+  if (!access) return NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 });
+  const response = await backendRequest("auth/me/", { method: "DELETE", headers: { Authorization: `Bearer ${access}` } });
+  if (!response.ok) return NextResponse.json(await readJson(response), { status: response.status });
+  return clearSession();
+}
