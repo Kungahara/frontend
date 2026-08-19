@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, Camera, Check, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Building2, Camera, Check, CloudUpload, Pencil, Trash2, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 import { authRequest, type AuthUser } from "@/lib/api/client";
@@ -82,7 +82,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
         <div><button type="submit" aria-label="Save business name" disabled={busy || !businessName.trim()}><Check aria-hidden="true" /></button><button type="button" aria-label="Cancel editing business name" onClick={() => { setEditingBusiness(false); setBusinessName(user.businessName ?? ""); }}><X aria-hidden="true" /></button></div>
       </form> : <button className="profile-menu-action" type="button" disabled={!['owner', 'admin'].includes(user.role)} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>Business name</small>{user.businessName ?? "Not set"}</span><Pencil aria-hidden="true" /></button>}
       <label className={`profile-menu-action${busy ? " disabled" : ""}`}>
-        <Upload aria-hidden="true" /><span>{busy ? "Uploading…" : user.profileImageUrl ? "Change profile picture" : "Upload profile picture"}</span>
+        <CloudUpload aria-hidden="true" /><span>{busy ? "Uploading…" : user.profileImageUrl ? "Change profile picture" : "Upload profile picture"}</span>
         <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} />
       </label>
       {user.profileImageUrl && <button className="profile-menu-action danger" type="button" disabled={busy} onClick={remove}><Trash2 aria-hidden="true" /><span>Remove profile picture</span></button>}

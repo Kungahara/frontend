@@ -377,7 +377,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}`}>
+      <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}${displayedPath === "/profile" ? " help-page-workspace" : ""}`}>
         {children}
         {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
           <span className="route-loading-spinner" aria-hidden="true" />

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, Camera, Database, Download, KeyRound, MonitorCog, ShieldAlert, UserRound } from "lucide-react";
+import { Bell, CloudUpload, Database, Download, KeyRound, MonitorCog, ShieldAlert, Upload, UserRound, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
@@ -31,6 +31,7 @@ function Switch({ checked, disabled = false, label, onChange }: { checked: boole
 export function SettingsContent() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [preferences, setPreferences] = useState<Preferences>(() => {
     if (typeof window === "undefined") return defaultPreferences;
     try {
@@ -53,10 +54,22 @@ export function SettingsContent() {
   const [error, setError] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  async function loadProfile() {
+    setProfileLoading(true); setError("");
+    try {
+      const { user: current } = await authRequest<{ user: AuthUser }>("me");
+      setUser(current); setFirstName(current.firstName); setLastName(current.lastName); setBusinessName(current.businessName ?? "");
+    } catch (reason) {
+      setUser(null); setError(reason instanceof Error ? reason.message : "Unable to load settings.");
+    } finally { setProfileLoading(false); }
+  }
+
   useEffect(() => {
     authRequest<{ user: AuthUser }>("me").then(({ user: current }) => {
       setUser(current); setFirstName(current.firstName); setLastName(current.lastName); setBusinessName(current.businessName ?? "");
-    }).catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load settings."));
+    }).catch((reason) => {
+      setUser(null); setError(reason instanceof Error ? reason.message : "Unable to load settings.");
+    }).finally(() => setProfileLoading(false));
   }, []);
 
   function savePreferences(next: Preferences) {
@@ -119,11 +132,13 @@ export function SettingsContent() {
   }
 
   const initials = `${user?.firstName[0] ?? ""}${user?.lastName[0] ?? ""}`.toUpperCase();
+  if (profileLoading) return <div className="settings-initial-state" role="status" aria-live="polite"><span className="settings-loading-spinner" aria-hidden="true" /><strong>Loading your settings…</strong><small>Getting your profile and business details.</small></div>;
+  if (!user) return <div className="settings-initial-state error" role="alert"><strong>Settings could not be loaded</strong><small>{error || "Unable to load your profile and business details."}</small><button type="button" onClick={() => void loadProfile()}>Try again</button></div>;
   return <div className="settings-page">
-    {(message || error) && <p className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}>{error || message}</p>}
+    {(message || error) && <div className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}><span>{error || message}</span><button type="button" aria-label="Dismiss notification" onClick={() => { setMessage(""); setError(""); }}><X aria-hidden="true" /></button></div>}
 
     <section className="settings-section" aria-labelledby="profile-settings"><header><span><UserRound /></span><div><h2 id="profile-settings">Profile &amp; business</h2><p>Your identity and the business name shown throughout the workspace.</p></div></header>
-      <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Camera />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button">{busy === "picture" ? "Uploading…" : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
+      <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Upload aria-hidden="true" />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button"><CloudUpload aria-hidden="true" />{busy === "picture" ? "Uploading…" : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
       <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={!!user && !["owner", "admin"].includes(user.role)} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? "Saving…" : "Save details"}</button></form>
     </section>
 

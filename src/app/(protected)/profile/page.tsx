@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ProtectedPlaceholder } from "@/components/protected-placeholder";
+import { HelpContent } from "@/components/help-content";
 
-export const metadata: Metadata = { title: "Profile" };
+export const metadata: Metadata = { title: "Help" };
 
 export default function ProfilePage() {
-  return <ProtectedPlaceholder eyebrow="Support" title="Help" description="Guides and support for using your Kungahara workspace will be available here." />;
+  return <HelpContent />;
 }
