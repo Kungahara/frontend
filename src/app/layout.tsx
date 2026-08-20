@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
+      <head><link rel="preload" href="/images/kungahara-logo-optimized.png" as="image" type="image/png" /></head>
       <body>{children}</body>
     </html>
   );

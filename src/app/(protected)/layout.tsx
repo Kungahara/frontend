@@ -82,7 +82,7 @@ const pageTitles: Record<string, string> = {
   "/finance": "Finance",
   "/documents": "Your Docs",
   "/settings": "Settings",
-  "/profile": "Help",
+  "/help": "Help",
 };
 
 const sidebarSlides = [
@@ -167,7 +167,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   useEffect(() => {
-    [...menuItems.map((item) => item.href), "/settings", "/profile"].forEach((href) => router.prefetch(href));
+    [...menuItems.map((item) => item.href), "/settings", "/help"].forEach((href) => router.prefetch(href));
   }, [router]);
 
   useEffect(() => {
@@ -351,7 +351,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         <p className="dashboard-nav-label">General</p>
         <nav className="dashboard-secondary-nav" aria-label="General">
           <Link className={displayedPath.startsWith("/settings") ? "active" : ""} href="/settings" onClick={() => { if (!pathname.startsWith("/settings")) { setPendingPath("/settings"); setRouteLoading(true); } }}><SettingsIcon aria-hidden="true" /><span>Settings</span></Link>
-          <Link className={displayedPath.startsWith("/profile") ? "active" : ""} href="/profile" onClick={() => { if (!pathname.startsWith("/profile")) { setPendingPath("/profile"); setRouteLoading(true); } }}><HelpIcon aria-hidden="true" /><span>Help</span></Link>
+          <Link className={displayedPath.startsWith("/help") ? "active" : ""} href="/help" onClick={() => { if (!pathname.startsWith("/help")) { setPendingPath("/help"); setRouteLoading(true); } }}><HelpIcon aria-hidden="true" /><span>Help</span></Link>
           <LogoutButton className="dashboard-sidebar-signout" showIcon />
         </nav>
       </div>
@@ -377,7 +377,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}${displayedPath === "/profile" ? " help-page-workspace" : ""}`}>
+      <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}${displayedPath === "/help" ? " help-page-workspace" : ""}`}>
         {children}
         {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
           <span className="route-loading-spinner" aria-hidden="true" />

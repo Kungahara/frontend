@@ -73,7 +73,7 @@ export function HelpContent() {
           <textarea id="help-feedback" rows={2} maxLength={1000} value={feedback} placeholder="Type your message here…" onChange={(event) => { setFeedback(event.target.value); setSent(false); }} />
           <button type="submit" disabled={!feedback.trim() || sending}><Send aria-hidden="true" /><span>{sending ? "Sending…" : "Send"}</span></button>
         </form>
-        {sent && <p className="help-feedback-sent" role="status">Your message was sent to Kungahara support.</p>}
+        {sent && <p className="help-feedback-sent" role="status">Your message was emailed to Kungahara support.</p>}
         {sendError && <p className="help-feedback-error" role="alert">{sendError}</p>}
       </article>
     </div>

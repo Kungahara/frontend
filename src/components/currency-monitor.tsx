@@ -33,13 +33,15 @@ function formatPrice(value: number) {
 function movementAlert(currency: CurrencyPosition): CurrencyAlert | null {
   if (currency.lastPrice === null || currency.currentPrice === null) return null;
   if (currency.pair.split("/")[1] !== "RWF") return null;
+  if (currency.lastPrice === 0) return null;
   const change = currency.currentPrice - currency.lastPrice;
-  if (Math.abs(change) < 15) return null;
+  const percentageChange = (change / currency.lastPrice) * 100;
+  if (Math.abs(percentageChange) < 0.15) return null;
   const direction = change > 0 ? "increased" : "decreased";
   return {
     id: `${currency.id}-${currency.currentPrice}`,
     title: `${currency.pair} moved significantly`,
-    message: `${currency.pair} ${direction} by ${formatPrice(Math.abs(change))} RWF, from ${formatPrice(currency.lastPrice)} to ${formatPrice(currency.currentPrice)}.`,
+    message: `${currency.pair} ${direction} by ${Math.abs(percentageChange).toFixed(2)}% (${formatPrice(Math.abs(change))} RWF), from ${formatPrice(currency.lastPrice)} to ${formatPrice(currency.currentPrice)}.`,
   };
 }
 

@@ -108,19 +108,26 @@ export function SettingsContent() {
     finally { setBusy(""); }
   }
 
-  async function exportData(kind: "sales" | "stock" | "loans" | "documents") {
-    setBusy(`export-${kind}`); setError("");
+  async function exportData(kind: "sales" | "stock" | "loans") {
+    setBusy(`export-${kind}`); setError(""); setMessage("");
     try {
-      const urls = kind === "stock" ? ["/api/products"] : kind === "documents" ? ["/api/document-folders", "/api/document-photos"] : [`/api/${kind}`];
-      const responses = await Promise.all(urls.map((url) => fetch(url)));
-      if (responses.some((response) => !response.ok)) throw new Error(`Unable to export ${kind}.`);
-      const values = await Promise.all(responses.map((response) => response.json()));
-      const content = kind === "documents" ? { folders: values[0].folders ?? [], documents: values[1].photos ?? [] } : values[0];
-      const url = URL.createObjectURL(new Blob([JSON.stringify(content, null, 2)], { type: "application/json" }));
-      const link = document.createElement("a"); link.href = url; link.download = `kungahara-${kind}-${new Date().toISOString().slice(0, 10)}.json`; link.click(); URL.revokeObjectURL(url);
-      setMessage(`${kind[0].toUpperCase()}${kind.slice(1)} export downloaded.`);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : `Unable to export ${kind}.`); }
-    finally { setBusy(""); }
+      const session = await fetch("/api/auth/me", { cache: "no-store" });
+      if (!session.ok) {
+        const body = await session.json().catch(() => null);
+        throw new Error(body?.error?.message ?? "Your session has expired. Please sign in again.");
+      }
+      const date = new Date().toISOString().slice(0, 10);
+      const counterKey = `kungahara:export-copy:${kind}:${date}`;
+      const savedCounter = Number.parseInt(window.localStorage.getItem(counterKey) ?? "1", 10);
+      const copyNumber = Number.isFinite(savedCounter) && savedCounter > 0 ? savedCounter : 1;
+      window.localStorage.setItem(counterKey, String(copyNumber + 1));
+      window.open(`/api/exports/${kind}?copy=${copyNumber}`, "_self");
+      setMessage(`${kind[0].toUpperCase()}${kind.slice(1)} PDF download started.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : `Unable to export ${kind}.`);
+    } finally {
+      setBusy("");
+    }
   }
 
   async function deleteAccount() {
@@ -160,7 +167,7 @@ export function SettingsContent() {
     <section className="settings-section" aria-labelledby="security-settings"><header><span><KeyRound /></span><div><h2 id="security-settings">Security</h2><p>Protect access to your Kungahara account.</p></div></header><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? "Sending…" : "Send change link"}</button></div></section>
 
     <section className="settings-section" aria-labelledby="data-settings"><header><span><Database /></span><div><h2 id="data-settings">Data &amp; account</h2><p>Download your records or permanently remove your account.</p></div></header>
-      <div className="settings-export-grid">{(["sales", "stock", "loans", "documents"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download JSON</small></span></button>)}</div>
+      <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>
       <div className="settings-danger-row"><span><ShieldAlert /></span><div><strong>Delete account</strong><small>This permanently removes your account and cannot be undone.</small></div><button type="button" onClick={() => setDeleteOpen(true)}>Delete account</button></div>
     </section>
 
