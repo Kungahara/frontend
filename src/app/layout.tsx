@@ -7,6 +7,14 @@ export const metadata: Metadata = {
     template: "%s · Kungahara",
   },
   description: "A dependable digital marketplace for Rwanda's agricultural community.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "256x256" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -25,6 +25,16 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 ** unit).toFixed(unit ? 1 : 0)} ${units[unit]}`;
 }
 
+function preloadDocumentImages(urls: string[]) {
+  return Promise.all(urls.map((url) => new Promise<void>((resolve) => {
+    const image = new window.Image();
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = url;
+    if (image.complete) resolve();
+  })));
+}
+
 export function DocumentsOverview() {
   const [folders, setFolders] = useState<DocumentFolder[]>([]);
   const [photos, setPhotos] = useState<DocumentPhoto[]>([]);
@@ -64,8 +74,11 @@ export function DocumentsOverview() {
       const [folderBody, photoBody] = await Promise.all([folderResponse.json().catch(() => ({})), photoResponse.json().catch(() => ({}))]);
       if (!folderResponse.ok) throw new Error(folderBody?.error?.message ?? "Could not load folders.");
       if (!photoResponse.ok) throw new Error(photoBody?.error?.message ?? "Could not load photos.");
+      const loadedPhotos = (photoBody.photos ?? []) as DocumentPhoto[];
+      await preloadDocumentImages(loadedPhotos.map((photo) => photo.imageUrl));
+      if (!active) return;
       setFolders(folderBody.folders ?? []);
-      setPhotos(photoBody.photos ?? []);
+      setPhotos(loadedPhotos);
     }).catch((error) => { if (error?.name !== "AbortError") setFolderError(error instanceof Error ? error.message : "Could not load documents."); })
       .finally(() => { if (active) setDocumentsLoading(false); });
     return () => { active = false; controller.abort(); };
@@ -100,6 +113,7 @@ export function DocumentsOverview() {
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body?.error?.message ?? "Could not upload the photo.");
       const photo = body.photo as DocumentPhoto;
+      await preloadDocumentImages([photo.imageUrl]);
       setPhotos((current) => [photo, ...current]);
       if (photo.folderId) setFolders((current) => current.map((folder) => folder.id === photo.folderId ? { ...folder, documentCount: folder.documentCount + 1, sizeBytes: folder.sizeBytes + photo.fileSize } : folder));
       setPhotoFile(null); setPhotoDescription(""); setAddingPhoto(false);
