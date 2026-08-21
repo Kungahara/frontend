@@ -8,9 +8,7 @@ import {
   LayoutDashboard,
   Moon,
   PackageX,
-  Rocket,
   ShoppingCart,
-  Sparkles,
   Sun,
   X,
 } from "lucide-react";
@@ -87,16 +85,25 @@ const pageTitles: Record<string, string> = {
 
 const sidebarSlides = [
   {
-    title: "Future",
-    description: "Build a smarter business, one clear decision at a time.",
-    points: ["Plan what comes next", "Grow with confidence"],
-    icon: Rocket,
+    title: "Stock",
+    heading: "Never run out unexpectedly.",
+    description: "Track quantities and identify products that need restocking.",
+    points: ["Monitor stock levels", "Restock at the right time"],
+    icon: StockIcon,
   },
   {
-    title: "Features",
-    description: "Everything you need to keep daily work moving smoothly.",
-    points: ["Simple business tools", "Insights in one place"],
-    icon: Sparkles,
+    title: "Sales",
+    heading: "Understand what drives your income.",
+    description: "See your best-selling products and follow daily sales.",
+    points: ["Discover top products", "Track revenue clearly"],
+    icon: ShoppingCart,
+  },
+  {
+    title: "Finance",
+    heading: "Keep your business financially healthy.",
+    description: "Monitor profit, expenses, and upcoming loan deadlines.",
+    points: ["Understand your profit", "Never miss a payment"],
+    icon: Banknote,
   },
 ];
 
@@ -137,7 +144,9 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
+  const sidebarSlideChangedAt = useRef(0);
   const alertsDate = useRef(businessTime().dateKey);
+  const deliveryAttemptIds = useRef(new Set<string>());
 
   function toggleTheme() {
     setDark((current) => {
@@ -193,9 +202,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    sidebarSlideChangedAt.current = Date.now();
     const timer = window.setInterval(() => {
+      const now = Date.now();
+      if (now - sidebarSlideChangedAt.current < 5000) return;
+      sidebarSlideChangedAt.current = now;
       setSidebarSlide((current) => (current + 1) % sidebarSlides.length);
-    }, 4500);
+    }, 250);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -276,11 +289,33 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [alertsHydrated, currencyAlerts, notificationsUnread, user]);
 
   useEffect(() => {
+    if (!alertsHydrated || !user || currencyAlerts.length === 0) return;
+    let deliveryEnabled = false;
+    try {
+      const settings = JSON.parse(window.localStorage.getItem("kungahara:settings") ?? "{}") as { emailDelivery?: boolean; browserPushDelivery?: boolean };
+      deliveryEnabled = Boolean(settings.emailDelivery || settings.browserPushDelivery);
+    } catch { /* Server preferences still protect delivery if local settings are invalid. */ }
+    if (!deliveryEnabled) return;
+    currencyAlerts.forEach((alert) => {
+      if (deliveryAttemptIds.current.has(alert.id)) return;
+      deliveryAttemptIds.current.add(alert.id);
+      void inventoryFetch("/api/notifications/deliver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(alert),
+      }).then((response) => {
+        if (!response.ok) deliveryAttemptIds.current.delete(alert.id);
+      }).catch(() => deliveryAttemptIds.current.delete(alert.id));
+    });
+  }, [alertsHydrated, currencyAlerts, user]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       const currentDateKey = businessTime().dateKey;
       if (currentDateKey === alertsDate.current) return;
       alertsDate.current = currentDateKey;
       currencyAlertIds.current.clear();
+      deliveryAttemptIds.current.clear();
       setCurrencyAlerts([]);
       setNotificationsUnread(false);
       void refreshBusinessAlerts();
@@ -338,12 +373,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="sidebar-promo-copy" key={activeSlide.title}>
           <p>{activeSlide.title}</p>
-          <strong>{activeSlide.description}</strong>
+          <strong>{activeSlide.heading}</strong>
+          <span>{activeSlide.description}</span>
           <ul>{activeSlide.points.map((point) => <li key={point}>{point}</li>)}</ul>
         </div>
         <div className="sidebar-promo-dots" aria-label="Choose highlight">
           {sidebarSlides.map((slide, index) => (
-            <button className={sidebarSlide === index ? "active" : ""} type="button" aria-label={`Show ${slide.title}`} aria-pressed={sidebarSlide === index} key={slide.title} onClick={() => setSidebarSlide(index)} />
+            <button className={sidebarSlide === index ? "active" : ""} type="button" aria-label={`Show ${slide.title}`} aria-pressed={sidebarSlide === index} key={slide.title} onClick={() => { sidebarSlideChangedAt.current = Date.now(); setSidebarSlide(index); }} />
           ))}
         </div>
       </section>

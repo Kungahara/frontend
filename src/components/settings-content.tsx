@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, CloudUpload, Database, Download, KeyRound, MonitorCog, ShieldAlert, Upload, UserRound, X } from "lucide-react";
+import { CloudUpload, Download, ShieldAlert, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
 import { authRequest, type AuthUser } from "@/lib/api/client";
+import { browserPushSupported, disableBrowserPush, enableBrowserPush } from "@/lib/browser-push";
+import { inventoryFetch } from "@/lib/inventory-client";
 
 type ThemeMode = "light" | "dark" | "system";
 type Scope = "today" | "month" | "year";
@@ -18,10 +20,19 @@ type Preferences = {
   eveningReminder: boolean;
   loanReminders: boolean;
   workingDays: string[];
+  emailDelivery: boolean;
+  browserPushDelivery: boolean;
+};
+
+type NotificationPreferences = {
+  emailEnabled: boolean;
+  browserPushEnabled: boolean;
+  browserPushSupported: boolean;
+  vapidPublicKey: string;
 };
 
 const preferenceKey = "kungahara:settings";
-const defaultPreferences: Preferences = { theme: "light", scope: "month", salesReminders: true, noonReminder: true, eveningReminder: true, loanReminders: true, workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"] };
+const defaultPreferences: Preferences = { theme: "light", scope: "month", salesReminders: true, noonReminder: true, eveningReminder: true, loanReminders: true, workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"], emailDelivery: false, browserPushDelivery: false };
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function Switch({ checked, disabled = false, label, onChange }: { checked: boolean; disabled?: boolean; label: string; onChange: (checked: boolean) => void }) {
@@ -53,6 +64,7 @@ export function SettingsContent() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [vapidPublicKey, setVapidPublicKey] = useState("");
 
   async function loadProfile() {
     setProfileLoading(true); setError("");
@@ -65,8 +77,17 @@ export function SettingsContent() {
   }
 
   useEffect(() => {
-    authRequest<{ user: AuthUser }>("me").then(({ user: current }) => {
+    authRequest<{ user: AuthUser }>("me").then(async ({ user: current }) => {
       setUser(current); setFirstName(current.firstName); setLastName(current.lastName); setBusinessName(current.businessName ?? "");
+      const response = await inventoryFetch("/api/notifications/preferences", { cache: "no-store" });
+      const body = await response.json().catch(() => null) as NotificationPreferences | null;
+      if (!response.ok || !body) throw new Error("Unable to load notification delivery settings.");
+      setVapidPublicKey(body.vapidPublicKey);
+      setPreferences((current) => {
+        const next = { ...current, emailDelivery: body.emailEnabled, browserPushDelivery: body.browserPushEnabled };
+        window.localStorage.setItem(preferenceKey, JSON.stringify(next));
+        return next;
+      });
     }).catch((reason) => {
       setUser(null); setError(reason instanceof Error ? reason.message : "Unable to load settings.");
     }).finally(() => setProfileLoading(false));
@@ -78,6 +99,39 @@ export function SettingsContent() {
     window.localStorage.setItem("kungahara:dashboard-theme", next.theme);
     window.localStorage.setItem("kungahara:dashboard-scope", next.scope);
     window.dispatchEvent(new CustomEvent("kungahara:settings-changed", { detail: next }));
+  }
+
+  async function updateDelivery(channel: "email" | "browser", enabled: boolean) {
+    setBusy(`delivery-${channel}`); setError(""); setMessage("");
+    try {
+      if (channel === "email") {
+        const response = await inventoryFetch("/api/notifications/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ emailEnabled: enabled }) });
+        const body = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(body?.error?.message ?? "Unable to update email delivery.");
+        savePreferences({ ...preferences, emailDelivery: enabled });
+        setMessage(`Email notifications ${enabled ? "enabled" : "disabled"}.`);
+        return;
+      }
+
+      if (enabled) {
+        if (!browserPushSupported()) throw new Error("Browser push is not supported by this browser.");
+        if (!vapidPublicKey) throw new Error("Browser push is not configured yet. Refresh the page and try again.");
+        const subscription = await enableBrowserPush(vapidPublicKey);
+        const subscriptionResponse = await inventoryFetch("/api/notifications/subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(subscription) });
+        const subscriptionBody = await subscriptionResponse.json().catch(() => null);
+        if (!subscriptionResponse.ok) throw new Error(subscriptionBody?.error?.message ?? "Unable to save the browser subscription.");
+      } else {
+        const endpoint = await disableBrowserPush();
+        if (endpoint) await inventoryFetch("/api/notifications/subscription", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint }) });
+      }
+      const response = await inventoryFetch("/api/notifications/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ browserPushEnabled: enabled }) });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to update browser push delivery.");
+      savePreferences({ ...preferences, browserPushDelivery: enabled });
+      setMessage(`Browser push notifications ${enabled ? "enabled" : "disabled"}.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to update notification delivery.");
+    } finally { setBusy(""); }
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
@@ -144,29 +198,29 @@ export function SettingsContent() {
   return <div className="settings-page">
     {(message || error) && <div className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}><span>{error || message}</span><button type="button" aria-label="Dismiss notification" onClick={() => { setMessage(""); setError(""); }}><X aria-hidden="true" /></button></div>}
 
-    <section className="settings-section" aria-labelledby="profile-settings"><header><span><UserRound /></span><div><h2 id="profile-settings">Profile &amp; business</h2><p>Your identity and the business name shown throughout the workspace.</p></div></header>
+    <section className="settings-section" aria-label="Profile and business settings">
       <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Upload aria-hidden="true" />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button"><CloudUpload aria-hidden="true" />{busy === "picture" ? "Uploading…" : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
       <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={!!user && !["owner", "admin"].includes(user.role)} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? "Saving…" : "Save details"}</button></form>
     </section>
 
-    <section className="settings-section" aria-labelledby="appearance-settings"><header><span><MonitorCog /></span><div><h2 id="appearance-settings">Dashboard &amp; appearance</h2><p>Choose the default dashboard view and visual theme.</p></div></header>
+    <section className="settings-section settings-appearance-section" aria-label="Dashboard and appearance settings">
       <div className="settings-row"><div><strong>Dashboard time scope</strong><small>Default period used by dashboard summaries.</small></div><div className="settings-choice-group">{(["today", "month", "year"] as Scope[]).map((scope) => <button className={preferences.scope === scope ? "active" : ""} type="button" key={scope} onClick={() => savePreferences({ ...preferences, scope })}>{scope === "today" ? "Today" : scope === "month" ? "This month" : "This year"}</button>)}</div></div>
       <div className="settings-row"><div><strong>Theme</strong><small>Use a light, dark, or system-matched workspace.</small></div><div className="settings-choice-group">{(["light", "dark", "system"] as ThemeMode[]).map((theme) => <button className={preferences.theme === theme ? "active" : ""} type="button" key={theme} onClick={() => savePreferences({ ...preferences, theme })}>{theme[0].toUpperCase() + theme.slice(1)}</button>)}</div></div>
-      <div className="settings-row"><div><strong>Language</strong><small>Kinyarwanda is visible but is not available yet.</small></div><CustomSelect className="settings-language-select" label="Language" value="en" options={[{ label: "English", value: "en" }, { label: "Kinyarwanda — coming soon", value: "rw", disabled: true }]} onChange={() => undefined} /></div>
+      <div className="settings-row settings-language-row"><div><strong>Language</strong><small>English is the current application language.</small></div><CustomSelect className="settings-language-select" label="Language" value="en" options={[{ label: "English", value: "en" }]} onChange={() => undefined} /></div>
     </section>
 
-    <section className="settings-section" aria-labelledby="notification-settings"><header><span><Bell /></span><div><h2 id="notification-settings">Notifications &amp; reminders</h2><p>Control the reminders that appear while you work.</p></div></header>
+    <section className="settings-section" aria-label="Notification and reminder settings">
       <div className="settings-row"><div><strong>Sales reminders</strong><small>Notify you when no sale has been recorded on a working day.</small></div><Switch label="Sales reminders" checked={preferences.salesReminders} onChange={(salesReminders) => savePreferences({ ...preferences, salesReminders })} /></div>
       <div className="settings-row nested"><div><strong>Noon reminder</strong><small>Shown after 12:00 PM.</small></div><Switch label="Noon reminder" disabled={!preferences.salesReminders} checked={preferences.salesReminders && preferences.noonReminder} onChange={(noonReminder) => savePreferences({ ...preferences, noonReminder })} /></div>
       <div className="settings-row nested"><div><strong>Evening reminder</strong><small>Shown after 8:00 PM.</small></div><Switch label="8 PM reminder" disabled={!preferences.salesReminders} checked={preferences.salesReminders && preferences.eveningReminder} onChange={(eveningReminder) => savePreferences({ ...preferences, eveningReminder })} /></div>
       <div className="settings-row working-days"><div><strong>Working days</strong><small>Sales reminders only appear on selected days.</small></div><div className="settings-day-picker">{days.map((day) => <button className={preferences.workingDays.includes(day) ? "active" : ""} type="button" aria-pressed={preferences.workingDays.includes(day)} key={day} onClick={() => savePreferences({ ...preferences, workingDays: preferences.workingDays.includes(day) ? preferences.workingDays.filter((item) => item !== day) : [...preferences.workingDays, day] })}>{day}</button>)}</div></div>
       <div className="settings-row"><div><strong>Loan deadline reminders</strong><small>Keep the existing reminders for upcoming loan repayment dates.</small></div><Switch label="Loan reminders" checked={preferences.loanReminders} onChange={(loanReminders) => savePreferences({ ...preferences, loanReminders })} /></div>
-      <div className="settings-row"><div><strong>Delivery</strong><small>In-app notifications are currently supported.</small></div><div className="settings-delivery"><span className="available">In-app</span><span>Email · coming soon</span><span>Browser push · coming soon</span></div></div>
+      <div className="settings-row"><div><strong>Delivery</strong><small>Choose where stock, sales, and loan alerts should reach you.</small></div><div className="settings-delivery"><span className="available">In-app · on</span><button type="button" className={preferences.emailDelivery ? "active" : ""} aria-pressed={preferences.emailDelivery} disabled={!!busy} onClick={() => void updateDelivery("email", !preferences.emailDelivery)}>Email · {busy === "delivery-email" ? "saving…" : preferences.emailDelivery ? "on" : "off"}</button><button type="button" className={preferences.browserPushDelivery ? "active" : ""} aria-pressed={preferences.browserPushDelivery} disabled={!!busy || !browserPushSupported()} onClick={() => void updateDelivery("browser", !preferences.browserPushDelivery)}>Browser push · {busy === "delivery-browser" ? "saving…" : preferences.browserPushDelivery ? "on" : "off"}</button></div></div>
     </section>
 
-    <section className="settings-section" aria-labelledby="security-settings"><header><span><KeyRound /></span><div><h2 id="security-settings">Security</h2><p>Protect access to your Kungahara account.</p></div></header><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? "Sending…" : "Send change link"}</button></div></section>
+    <section className="settings-section" aria-label="Security settings"><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? "Sending…" : "Send change link"}</button></div></section>
 
-    <section className="settings-section" aria-labelledby="data-settings"><header><span><Database /></span><div><h2 id="data-settings">Data &amp; account</h2><p>Download your records or permanently remove your account.</p></div></header>
+    <section className="settings-section" aria-label="Data and account settings">
       <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>
       <div className="settings-danger-row"><span><ShieldAlert /></span><div><strong>Delete account</strong><small>This permanently removes your account and cannot be undone.</small></div><button type="button" onClick={() => setDeleteOpen(true)}>Delete account</button></div>
     </section>
