@@ -155,7 +155,7 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
   </div>;
 }
 
-export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
+export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { initialAnalysisOpen?: boolean; onSettled?: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -172,7 +172,7 @@ export function StockProductTable({ onSettled }: { onSettled?: () => void }) {
   const [existingQuantity, setExistingQuantity] = useState("");
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>(emptyProduct);
-  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(initialAnalysisOpen);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedAnalysisProductId, setSelectedAnalysisProductId] = useState("all");
   const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>("1Y");

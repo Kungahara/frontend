@@ -15,8 +15,8 @@ const salesViews: Array<{ id: SalesView; label: string }> = [
   { id: "analytics", label: "Sales analytics" },
 ];
 
-export function SalesOverview() {
-  const [view, setView] = useState<SalesView>("today");
+export function SalesOverview({ initialView = "today" }: { initialView?: SalesView }) {
+  const [view, setView] = useState<SalesView>(initialView);
   const [summaryReady, setSummaryReady] = useState(false);
   const [tableReady, setTableReady] = useState(false);
   const finishSummary = useCallback(() => setSummaryReady(true), []);
