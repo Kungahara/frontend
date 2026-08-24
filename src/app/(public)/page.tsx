@@ -4,10 +4,11 @@ import {
   BarChart3,
   ChevronRight,
   FileText,
+  Focus,
   Mail,
   PackageCheck,
+  Send,
   ShoppingCart,
-  Sparkles,
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import { cookies } from "next/headers";
 import { Brand } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
 import { MarketingNavigation } from "@/components/marketing-navigation";
+import { MarketingFaqList } from "@/components/marketing-faq-list";
 import { TrackedAuthLink } from "@/components/tracked-auth-link";
 import { AuthModalHost } from "@/components/auth-modal-host";
 
@@ -41,7 +43,7 @@ const faqs = [
   ["Can I use Rwandan francs?", "Yes. RWF is supported as the main working currency, and you can monitor additional currencies when your business needs them."],
   ["Are my documents kept together with my business data?", "Yes. Your Docs gives you a dedicated place for receipts, agreements, invoices, and other business files."],
   ["Can I access Kungahara on a phone?", "Yes. The landing page and application are responsive, so you can use the core experience across desktop, tablet, and mobile screens."],
-];
+] as const;
 
 export default async function HomePage() {
   const hasSession = (await cookies()).has("kungahara_session");
@@ -130,7 +132,7 @@ export default async function HomePage() {
       <div className="marketing-about-visual">
         <div className="marketing-about-card main"><p>Built for the way growing businesses really work.</p><strong>Clarity for every business day.</strong></div>
         <div className="marketing-about-card stat"><strong>5</strong><span>connected workspaces</span></div>
-        <div className="marketing-about-card note"><Sparkles aria-hidden="true" /><span>Designed with simplicity at the center.</span></div>
+        <div className="marketing-about-card note"><Focus aria-hidden="true" /><span>Designed with simplicity at the center.</span></div>
       </div>
       <div className="marketing-about-copy">
         <p className="marketing-kicker marketing-trust marketing-about-trust"><span className="marketing-trust-dot" aria-hidden="true" />About Kungahara</p>
@@ -143,27 +145,25 @@ export default async function HomePage() {
 
     <section className="marketing-section marketing-faq" id="faq">
       <div className="marketing-section-heading">
-        <p className="marketing-kicker">Questions, answered</p>
         <h2>Everything you need<br /><em>to get started.</em></h2>
       </div>
-      <div className="marketing-faq-list">{faqs.map(([question, answer], index) => <details open={index === 0} key={question}>
-        <summary><span>{question}</span><i>+</i></summary><p>{answer}</p>
-      </details>)}</div>
+      <MarketingFaqList items={faqs} />
     </section>
 
     <section className="marketing-section marketing-contact" id="contact">
       <div className="marketing-contact-copy">
-        <p className="marketing-kicker">Contact us</p>
+        <p className="marketing-kicker marketing-trust marketing-contact-trust"><span className="marketing-trust-dot" aria-hidden="true" />Contact us</p>
         <h2>Let&apos;s build a clearer<br /><em>business together.</em></h2>
         <p>Have a question, need help getting started, or want to learn whether Kungahara fits your business? Send us a message.</p>
-        <a href="mailto:hello@kungahara.com"><Mail aria-hidden="true" /> hello@kungahara.com</a>
+        <a href="mailto:hervendizeye0@gmail.com"><Mail aria-hidden="true" /> hervendizeye0@gmail.com</a>
       </div>
       <form className="marketing-contact-form">
-        <div><label htmlFor="contact-name">Your name</label><input id="contact-name" name="name" placeholder="Enter your name" /></div>
+        <div><label htmlFor="contact-first-name">First name</label><input id="contact-first-name" name="firstName" autoComplete="given-name" placeholder="Enter your first name" /></div>
+        <div><label htmlFor="contact-last-name">Last name</label><input id="contact-last-name" name="lastName" autoComplete="family-name" placeholder="Enter your last name" /></div>
         <div><label htmlFor="contact-email">Email address</label><input id="contact-email" name="email" type="email" placeholder="you@example.com" /></div>
-        <div><label htmlFor="contact-business">Business name</label><input id="contact-business" name="business" placeholder="Your business" /></div>
+        <div><label htmlFor="contact-business">Business name</label><input id="contact-business" name="business" autoComplete="organization" placeholder="Enter your business name" /></div>
         <div><label htmlFor="contact-message">How can we help?</label><textarea id="contact-message" name="message" rows={4} placeholder="Tell us what you need" /></div>
-        <button type="submit">Send message<ArrowRight aria-hidden="true" /></button>
+        <button type="submit">Send message<Send aria-hidden="true" /></button>
       </form>
     </section>
 

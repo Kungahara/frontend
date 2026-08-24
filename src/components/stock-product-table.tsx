@@ -493,13 +493,17 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
           {products.length === 0 && <label>Product name<input required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label>}
           <div className="stock-form-field stock-category-picker">
             <span>Category</span>
-            <button className="stock-category-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded={categoryPickerOpen} onClick={() => setCategoryPickerOpen((current) => !current)}><span>{newProduct.categoryId === newCategoryValue ? "Create new category" : categories.find((category) => category.id === newProduct.categoryId)?.name ?? "Choose category"}</span><ChevronDown aria-hidden="true" /></button>
-            {categoryPickerOpen && <div className="stock-category-picker-menu" role="listbox" aria-label="Product category">
-              {categories.map((category) => <button className={newProduct.categoryId === category.id ? "selected" : ""} type="button" role="option" aria-selected={newProduct.categoryId === category.id} key={category.id} onClick={() => { setNewProduct((current) => ({ ...current, categoryId: category.id, categoryName: "" })); setCategoryPickerOpen(false); }}><span>{category.name}</span>{newProduct.categoryId === category.id && <Check aria-hidden="true" />}</button>)}
-              <button className={`new-category${newProduct.categoryId === newCategoryValue ? " selected" : ""}`} type="button" role="option" aria-selected={newProduct.categoryId === newCategoryValue} onClick={() => { setNewProduct((current) => ({ ...current, categoryId: newCategoryValue })); setCategoryPickerOpen(false); }}><Plus aria-hidden="true" /><span>Create new category</span></button>
-            </div>}
+            {newProduct.categoryId === newCategoryValue ? <div className="stock-new-category-input">
+              <input autoFocus required aria-label="New category name" value={newProduct.categoryName} onChange={(event) => setNewProduct((current) => ({ ...current, categoryName: event.target.value }))} placeholder="Enter category name" />
+              <button type="button" aria-label="Choose an existing category" onClick={() => { setNewProduct((current) => ({ ...current, categoryId: categories[0]?.id ?? "", categoryName: "" })); setCategoryPickerOpen(true); }}><ChevronDown aria-hidden="true" /></button>
+            </div> : <>
+              <button className="stock-category-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded={categoryPickerOpen} onClick={() => setCategoryPickerOpen((current) => !current)}><span>{categories.find((category) => category.id === newProduct.categoryId)?.name ?? "Choose category"}</span><ChevronDown aria-hidden="true" /></button>
+              {categoryPickerOpen && <div className="stock-category-picker-menu" role="listbox" aria-label="Product category">
+                {categories.map((category) => <button className={newProduct.categoryId === category.id ? "selected" : ""} type="button" role="option" aria-selected={newProduct.categoryId === category.id} key={category.id} onClick={() => { setNewProduct((current) => ({ ...current, categoryId: category.id, categoryName: "" })); setCategoryPickerOpen(false); }}><span>{category.name}</span>{newProduct.categoryId === category.id && <Check aria-hidden="true" />}</button>)}
+                <button className="new-category" type="button" role="option" aria-selected="false" onClick={() => { setNewProduct((current) => ({ ...current, categoryId: newCategoryValue })); setCategoryPickerOpen(false); }}><Plus aria-hidden="true" /><span>Create new category</span></button>
+              </div>}
+            </>}
           </div>
-          {newProduct.categoryId === newCategoryValue && <label>New category name<input required value={newProduct.categoryName} onChange={(event) => setNewProduct((current) => ({ ...current, categoryName: event.target.value }))} placeholder="e.g. Clothing" /></label>}
           <label>Size<input required value={newProduct.size} onChange={(event) => setNewProduct((current) => ({ ...current, size: event.target.value }))} placeholder="S, M, L…" /></label>
           <label>Quantity<input required type="number" min="0" value={newProduct.quantity} onChange={(event) => { const quantity = event.target.value; setNewProduct((current) => ({ ...current, quantity, lowStockLevel: String(lowStockThreshold(quantity)) })); }} /></label>
           <label>Price bought for<input required type="number" min="0" step="0.01" value={newProduct.costPrice} onChange={(event) => setNewProduct((current) => ({ ...current, costPrice: event.target.value }))} /></label>

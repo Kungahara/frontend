@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { authRequest } from "@/lib/api/client";
+import { ApiError, authRequest } from "@/lib/api/client";
 import { OAuthButtons } from "./oauth-buttons";
 
 export function LoginForm() {
@@ -13,10 +13,22 @@ export function LoginForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setBusy(true);
     const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") ?? "").trim();
     try {
-      await authRequest("login", { method: "POST", body: JSON.stringify({ email: data.get("email"), password: data.get("password"), rememberMe: data.get("rememberMe") === "on" }) });
+      await authRequest("login", { method: "POST", body: JSON.stringify({ email, password: data.get("password"), rememberMe: data.get("rememberMe") === "on" }) });
       const next = params.get("next"); router.replace(next?.startsWith("/") ? next : "/dashboard"); router.refresh();
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to sign in."); setBusy(false); }
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.code === "email_not_verified") {
+        try {
+          await authRequest("resend-verification", { method: "POST", body: JSON.stringify({ email }) });
+          router.push(`/verify-email-sent?email=${encodeURIComponent(email)}&sent=1`);
+        } catch {
+          router.push(`/verify-email-sent?email=${encodeURIComponent(email)}&sendFailed=1`);
+        }
+        return;
+      }
+      setError(reason instanceof Error ? reason.message : "Unable to sign in."); setBusy(false);
+    }
   }
   return <>
     <header className="form-heading"><p className="eyebrow">Secure access</p><h1>Welcome back</h1><p>Sign in to continue growing your business.</p></header>
