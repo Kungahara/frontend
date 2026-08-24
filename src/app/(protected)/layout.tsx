@@ -219,6 +219,20 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     setNotificationsUnread(true);
   }, []);
 
+  useEffect(() => {
+    if (!user || !alertsHydrated) return;
+    const dateKey = businessTime().dateKey;
+    const simulationKey = `kungahara:notification-simulation:${user.id}:${dateKey}`;
+    if (window.sessionStorage.getItem(simulationKey) === "shown") return;
+    window.sessionStorage.setItem(simulationKey, "shown");
+    const timer = window.setTimeout(() => receiveCurrencyAlert({
+      id: `simulated-loan-${dateKey}`,
+      title: "Loan payment reminder",
+      message: "The loan from Munyaneza Clare is due in 6 days, on 30/08/2026.",
+    }), 600);
+    return () => window.clearTimeout(timer);
+  }, [alertsHydrated, receiveCurrencyAlert, user]);
+
   const refreshBusinessAlerts = useCallback(async () => {
     try {
       const [productsResponse, salesResponse, loansResponse] = await Promise.all([
@@ -248,7 +262,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         const daysLeft = Math.round((deadline.getTime() - today.getTime()) / day);
         const reminderDays = new Set<number>([0, 1]);
         for (let remaining = Math.floor(totalDays / 2); remaining > 1; remaining = Math.floor(remaining / 2)) reminderDays.add(remaining);
-        if (daysLeft >= 0 && reminderDays.has(daysLeft)) alerts.push({ id: `loan-${loan.id}-${daysLeft}-${dateKey}`, title: "Loan payment reminder", message: daysLeft === 0 ? `${loan.source} is due today.` : `${loan.source} is due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}, on ${deadline.toLocaleDateString("en-GB")}.` });
+        if (daysLeft >= 0 && reminderDays.has(daysLeft)) alerts.push({ id: `loan-${loan.id}-${daysLeft}-${dateKey}`, title: "Loan payment reminder", message: daysLeft === 0 ? `The loan from ${loan.source} is due today.` : `The loan from ${loan.source} is due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}, on ${deadline.toLocaleDateString("en-GB")}.` });
       });
       alerts.forEach(receiveCurrencyAlert);
     } catch { /* Notifications should never block the workspace. */ }
@@ -297,6 +311,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     } catch { /* Server preferences still protect delivery if local settings are invalid. */ }
     if (!deliveryEnabled) return;
     currencyAlerts.forEach((alert) => {
+      if (alert.id.startsWith("simulated-")) return;
       if (deliveryAttemptIds.current.has(alert.id)) return;
       deliveryAttemptIds.current.add(alert.id);
       void inventoryFetch("/api/notifications/deliver", {

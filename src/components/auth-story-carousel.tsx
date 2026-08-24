@@ -35,8 +35,8 @@ export function AuthStoryCarousel() {
         const verticalOffsets = ["2rem", "0.75rem", "0.75rem", "0.25rem", "0.25rem"];
         const rotations = ["0deg", "3deg", "-3deg", "5deg", "-5deg"];
         const scales = ["1", "0.98", "0.98", "0.955", "0.955"];
-        const style = { "--deck-position": position, "--deck-x": horizontalOffsets[position], "--deck-y": verticalOffsets[position], "--deck-rotation": rotations[position], "--deck-scale": scales[position] } as CSSProperties;
-        return <div className={`auth-showcase-frame${position === 0 ? " current" : ""}${position === 1 ? " next" : ""}`} style={style} aria-hidden={position !== 0} onAnimationEnd={position === 0 ? () => setActive((current) => (current + 1) % slides.length) : undefined} key={slide.image}><Image src={slide.image} alt={position === 0 ? slide.alt : ""} fill sizes="(max-width: 820px) 0px, 55vw" loading="eager" /></div>;
+        const style = { "--deck-position": position, "--deck-x": horizontalOffsets[position], "--deck-y": verticalOffsets[position], "--deck-rotation": rotations[position], "--deck-scale": scales[position], backgroundImage: `url("${slide.image}")`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover" } as CSSProperties;
+        return <div className={`auth-showcase-frame${position === 0 ? " current" : ""}${position === 1 ? " next" : ""}`} style={style} aria-hidden={position !== 0} onAnimationEnd={position === 0 ? () => setActive((current) => (current + 1) % slides.length) : undefined} key={slide.image}><Image src={slide.image} alt={position === 0 ? slide.alt : ""} fill sizes="(max-width: 820px) 0px, 55vw" loading="eager" unoptimized /></div>;
       })}</div>
     </div>
     <span className="auth-feature-callout" aria-hidden="true"><SpeechBubbleImage /><span className="auth-feature-callout-glyph"><ActiveIcon /></span></span>

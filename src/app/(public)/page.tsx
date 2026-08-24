@@ -16,6 +16,9 @@ import { cookies } from "next/headers";
 
 import { Brand } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
+import { MarketingNavigation } from "@/components/marketing-navigation";
+import { TrackedAuthLink } from "@/components/tracked-auth-link";
+import { AuthModalHost } from "@/components/auth-modal-host";
 
 const features = [
   { icon: BarChart3, title: "A dashboard that makes sense", copy: "See income, expenses, profit, stock value, and business activity without digging through separate tools." },
@@ -44,23 +47,17 @@ export default async function HomePage() {
   const hasSession = (await cookies()).has("kungahara_session");
 
   return <main className="marketing-page">
+    <AuthModalHost />
     <header className="marketing-header">
       <Brand />
-      <nav className="marketing-nav" aria-label="Main navigation">
-        <a href="#home">Home</a>
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#about">About us</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contact">Contact us</a>
-      </nav>
+      <MarketingNavigation />
       <div className="marketing-auth-actions">
         {hasSession ? <>
           <Link className="marketing-login" href="/dashboard">Dashboard</Link>
           <LogoutButton className="marketing-signup" label="Log out" redirectTo="/" />
         </> : <>
-          <Link className="marketing-login" href="/login">Log in</Link>
-          <Link className="marketing-signup" href="/signup">Sign up</Link>
+          <TrackedAuthLink className="marketing-login" href="/login">Log in</TrackedAuthLink>
+          <TrackedAuthLink className="marketing-signup" href="/signup">Sign up</TrackedAuthLink>
         </>}
       </div>
     </header>
@@ -68,12 +65,12 @@ export default async function HomePage() {
     <section className="marketing-hero" id="home">
 
       <div className="marketing-hero-copy">
-        <p className="marketing-trust"><span className="marketing-trust-dot" aria-hidden="true" /> Trusted by Modern Sellers</p>
+        <p className="marketing-trust marketing-hero-trust"><span className="marketing-trust-label">New</span><span>Trusted by Modern Sellers</span></p>
         <h1>One clear place to run<br /><em>your whole business.</em></h1>
         <p className="marketing-hero-description">Kungahara brings your stock, sales, finances, and documents into one calm workspace—so you spend less time chasing numbers and more time growing.</p>
         <div className="marketing-hero-actions">
-          <Link className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>{hasSession ? "Open dashboard" : "Get started free"}<ArrowRight aria-hidden="true" /></Link>
-          <Link className="marketing-secondary-cta" href={hasSession ? "/dashboard" : "/login"}>Continue to workplace<ArrowRight aria-hidden="true" /></Link>
+          <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>{hasSession ? "Open dashboard" : "Get started free"}<ArrowRight aria-hidden="true" /></TrackedAuthLink>
+          <TrackedAuthLink className="marketing-secondary-cta" href={hasSession ? "/dashboard" : "/login"}>Continue to workplace<ArrowRight aria-hidden="true" /></TrackedAuthLink>
         </div>
       </div>
 
@@ -88,7 +85,6 @@ export default async function HomePage() {
               alt="Kungahara dashboard showing finances, stock, sales, and business insights"
               fill
               sizes="(max-width: 1200px) 100vw, 1200px"
-              quality={100}
               unoptimized
               priority
             />
@@ -99,28 +95,35 @@ export default async function HomePage() {
 
     <section className="marketing-section marketing-features" id="features">
       <div className="marketing-section-heading">
-        <p className="marketing-kicker">Everything connected</p>
         <h2>Run the business.<br /><em>See the whole picture.</em></h2>
         <p>Each tool is useful on its own. Together, they give you one dependable view of how your business is doing.</p>
       </div>
       <div className="marketing-feature-grid">{features.map(({ icon: Icon, title, copy }, index) => <article className="marketing-feature-card" key={title}>
         <span className="marketing-feature-number">0{index + 1}</span>
         <span className="marketing-feature-icon"><Icon aria-hidden="true" /></span>
-        <h3>{title}</h3><p>{copy}</p>
-        <a href="#contact">Learn more <ChevronRight aria-hidden="true" /></a>
+        <div className="marketing-feature-copy">
+          <h3>{title}</h3><p>{copy}</p>
+          <a href="#contact">Learn more <ChevronRight aria-hidden="true" /></a>
+        </div>
       </article>)}</div>
     </section>
 
     <section className="marketing-section marketing-process" id="how-it-works">
       <div className="marketing-process-intro">
-        <p className="marketing-kicker">How it works</p>
+        <p className="marketing-kicker marketing-trust marketing-process-trust"><span className="marketing-trust-dot" />How it works</p>
         <h2>From scattered details<br /><em>to confident decisions.</em></h2>
         <p>Kungahara keeps the process simple. Add what happens in your business, and your workspace turns it into a clear, useful picture.</p>
-        <Link className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>Start your workspace<ArrowRight aria-hidden="true" /></Link>
+        <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>Start your workspace<ArrowRight aria-hidden="true" /></TrackedAuthLink>
       </div>
-      <div className="marketing-step-list">{steps.map((step) => <article key={step.number}>
-        <span>{step.number}</span><div><h3>{step.title}</h3><p>{step.copy}</p></div>
-      </article>)}</div>
+      <div className="marketing-step-list">
+        <svg className="marketing-step-path" viewBox="0 0 640 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path d="M 528 78 C 650 78 675 96 675 126 C 675 162 645 183 580 183 L 160 183 C 110 183 82 190 82 205 C 82 220 95 230 111 235" />
+          <path d="M 640 315 C 678 320 688 346 688 372 C 688 410 645 429 580 429 L 120 429 C 50 429 -60 460 -60 490 C -60 520 -35 535 0 535" />
+        </svg>
+        {steps.map((step) => <article key={step.number}>
+          <span>{step.number}</span><div><h3>{step.title}</h3><p>{step.copy}</p></div>
+        </article>)}
+      </div>
     </section>
 
     <section className="marketing-section marketing-about" id="about">
@@ -130,7 +133,7 @@ export default async function HomePage() {
         <div className="marketing-about-card note"><Sparkles aria-hidden="true" /><span>Designed with simplicity at the center.</span></div>
       </div>
       <div className="marketing-about-copy">
-        <p className="marketing-kicker">About Kungahara</p>
+        <p className="marketing-kicker marketing-trust marketing-about-trust"><span className="marketing-trust-dot" aria-hidden="true" />About Kungahara</p>
         <h2>Business software<br /><em>should feel human.</em></h2>
         <p>Kungahara exists to make everyday business management easier to understand. We bring essential tools together in a focused experience shaped around clarity, confidence, and steady growth.</p>
         <p>From a first sale to a growing product catalogue, the workspace helps business owners stay close to the details without becoming overwhelmed by them.</p>

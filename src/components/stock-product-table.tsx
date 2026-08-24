@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
+import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = {
@@ -160,6 +161,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
   const [categories, setCategories] = useState<Category[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [query, setQuery] = useState("");
+  const [tableSort, setTableSort] = useState<{ key: "price" | "quantity"; direction: Exclude<SortDirection, null> } | null>(null);
   const [editing, setEditing] = useState<EditProduct | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [confirmation, setConfirmation] = useState("");
@@ -212,10 +214,18 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
 
   const visibleProducts = useMemo(() => {
     const value = query.trim().toLowerCase();
-    if (!value) return products;
-    return products.filter((product) => [product.name, product.categoryName, product.size]
-      .some((field) => field.toLowerCase().includes(value)));
-  }, [products, query]);
+    const filtered = value ? products.filter((product) => [product.name, product.categoryName, product.size]
+      .some((field) => field.toLowerCase().includes(value))) : products;
+    if (!tableSort) return filtered;
+    return [...filtered].sort((a, b) => {
+      const difference = tableSort.key === "price" ? Number(a.costPrice) - Number(b.costPrice) : availableQuantity(a) - availableQuantity(b);
+      return difference * (tableSort.direction === "asc" ? 1 : -1);
+    });
+  }, [products, query, tableSort]);
+
+  function toggleTableSort(key: "price" | "quantity") {
+    setTableSort((current) => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
+  }
 
   function change(field: EditableField, value: string) {
     setEditing((current) => current ? { ...current, [field]: value } : current);
@@ -439,7 +449,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     {error && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-product-table-wrap">
       <table className="stock-product-table">
-        <thead><tr><th>Name</th><th><button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button></th><th>Size</th><th>Price bought for</th><th>Quantity</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th><button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button></th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Price bought for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
         <tbody className={!loading && !visibleProducts.length ? "empty" : ""}>
           {visibleProducts.map((product) => {
             const quantity = availableQuantity(product);

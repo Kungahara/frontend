@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CloudUpload, Download, ShieldAlert, Upload, X } from "lucide-react";
+import { CloudUpload, Download, Monitor, Moon, ShieldAlert, Sun, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
@@ -205,7 +205,10 @@ export function SettingsContent() {
 
     <section className="settings-section settings-appearance-section" aria-label="Dashboard and appearance settings">
       <div className="settings-row"><div><strong>Dashboard time scope</strong><small>Default period used by dashboard summaries.</small></div><div className="settings-choice-group">{(["today", "month", "year"] as Scope[]).map((scope) => <button className={preferences.scope === scope ? "active" : ""} type="button" key={scope} onClick={() => savePreferences({ ...preferences, scope })}>{scope === "today" ? "Today" : scope === "month" ? "This month" : "This year"}</button>)}</div></div>
-      <div className="settings-row"><div><strong>Theme</strong><small>Use a light, dark, or system-matched workspace.</small></div><div className="settings-choice-group">{(["light", "dark", "system"] as ThemeMode[]).map((theme) => <button className={preferences.theme === theme ? "active" : ""} type="button" key={theme} onClick={() => savePreferences({ ...preferences, theme })}>{theme[0].toUpperCase() + theme.slice(1)}</button>)}</div></div>
+      <div className="settings-row"><div><strong>Theme</strong><small>Use a light, dark, or system-matched workspace.</small></div><div className="settings-choice-group settings-theme-choice">{(["light", "dark", "system"] as ThemeMode[]).map((theme) => {
+        const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+        return <button className={preferences.theme === theme ? "active" : ""} type="button" aria-pressed={preferences.theme === theme} key={theme} onClick={() => savePreferences({ ...preferences, theme })}><ThemeIcon aria-hidden="true" />{theme[0].toUpperCase() + theme.slice(1)}</button>;
+      })}</div></div>
       <div className="settings-row settings-language-row"><div><strong>Language</strong><small>English is the current application language.</small></div><CustomSelect className="settings-language-select" label="Language" value="en" options={[{ label: "English", value: "en" }]} onChange={() => undefined} /></div>
     </section>
 

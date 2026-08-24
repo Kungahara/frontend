@@ -4,6 +4,7 @@ import { BadgeDollarSign, ClipboardList, Coins, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
+import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { StockStatusIcon } from "@/components/stock-summary-card";
 import { inventoryFetch } from "@/lib/inventory-client";
 
@@ -43,6 +44,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
   const [weekIndex, setWeekIndex] = useState(Math.floor((now.getDate() - 1) / 7));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [tableSort, setTableSort] = useState<{ key: "money" | "quantity"; direction: Exclude<SortDirection, null> } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -83,8 +85,19 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
 
   const visibleSales = useMemo(() => {
     const value = query.trim().toLowerCase();
-    return analysis.selected.filter((sale) => !value || [sale.productName, sale.categoryName, sale.size].some((field) => field.toLowerCase().includes(value)));
-  }, [query, analysis.selected]);
+    const filtered = analysis.selected.filter((sale) => !value || [sale.productName, sale.categoryName, sale.size].some((field) => field.toLowerCase().includes(value)));
+    if (!tableSort) return filtered;
+    return [...filtered].sort((a, b) => {
+      const difference = tableSort.key === "money"
+        ? Number(a.total ?? Number(a.unitPrice) * a.quantity) - Number(b.total ?? Number(b.unitPrice) * b.quantity)
+        : a.quantity - b.quantity;
+      return difference * (tableSort.direction === "asc" ? 1 : -1);
+    });
+  }, [query, analysis.selected, tableSort]);
+
+  function toggleTableSort(key: "money" | "quantity") {
+    setTableSort((current) => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
+  }
   const itemsSold = analysis.selected.reduce((total, sale) => total + sale.quantity, 0);
   const { year: selectedMonthYear, monthIndex: selectedMonthIndex } = monthParts(month);
   const selectedWeek = weeks[Math.min(weekIndex, weeks.length - 1)] ?? weeks[0];
@@ -115,7 +128,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
         </div><label className="stock-product-search"><span className="sr-only">Search sales</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label></div>
       </header>
       {error && <p className="stock-product-error" role="alert">{error}</p>}
-      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th>Sold for</th><th>Quantity</th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
+      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
         {loading && <tr><td className="historical-sales-loading" colSpan={6}><span aria-hidden="true" />Loading historical sales…</td></tr>}
         {visibleSales.map((sale) => <tr key={sale.id}><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td>{money(Number(sale.total ?? Number(sale.unitPrice) * sale.quantity))}</td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
         {!loading && !visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}

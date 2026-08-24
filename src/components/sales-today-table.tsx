@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
+import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = { id: string; categoryName: string; name: string; size: string; quantity: number; sellingPrice: string };
@@ -29,6 +30,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [tableSort, setTableSort] = useState<{ key: "price" | "quantity"; direction: Exclude<SortDirection, null> } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,8 +53,17 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
 
   const todaySales = useMemo(() => {
     const value = query.trim().toLowerCase();
-    return sales.filter((sale) => !value || [sale.productName, sale.categoryName, sale.size].some((field) => field.toLowerCase().includes(value)));
-  }, [query, sales]);
+    const filtered = sales.filter((sale) => !value || [sale.productName, sale.categoryName, sale.size].some((field) => field.toLowerCase().includes(value)));
+    if (!tableSort) return filtered;
+    return [...filtered].sort((a, b) => {
+      const difference = tableSort.key === "price" ? Number(a.unitPrice) - Number(b.unitPrice) : a.quantity - b.quantity;
+      return difference * (tableSort.direction === "asc" ? 1 : -1);
+    });
+  }, [query, sales, tableSort]);
+
+  function toggleTableSort(key: "price" | "quantity") {
+    setTableSort((current) => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
+  }
 
   function openSellDialog() {
     const first = products.find((product) => product.quantity > 0);
@@ -173,7 +184,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     {error && !selling && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-product-table-wrap">
       <table className="stock-product-table sales-product-table">
-        <thead><tr><th>Name</th><th>Category</th><th>Size</th><th>Sold for</th><th>Quantity</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
         <tbody className={!loading && !todaySales.length ? "empty" : ""}>
           {todaySales.map((sale) => <tr key={sale.id}><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td>{new Intl.NumberFormat("en-RW").format(Number(sale.unitPrice))} RWF</td><td><span className="stock-quantity-value">{sale.quantity}</span></td><td><div className="stock-row-actions"><button type="button" aria-label={`Edit sale of ${sale.productName}`} onClick={() => openEditDialog(sale)}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete sale of ${sale.productName}`} onClick={() => { setError(""); setDeleting(sale); }}><Trash2 aria-hidden="true" /></button></div></td></tr>)}
           {!loading && !todaySales.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No sales match your search.</p> : <div className="stock-empty-state sales-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to record sales" width={180} height={180} /><strong>Ready for today&apos;s first sale</strong><p>Use Sell new item to record a sale. It will appear here automatically.</p><button type="button" disabled={!products.some((product) => product.quantity > 0)} onClick={openSellDialog}><Plus aria-hidden="true" />Sell new item</button></div>}</td></tr>}
