@@ -5,9 +5,9 @@ import {
   ChevronRight,
   FileText,
   Focus,
+  Code2,
   Mail,
   PackageCheck,
-  Send,
   ShoppingCart,
   WalletCards,
 } from "lucide-react";
@@ -21,6 +21,7 @@ import { MarketingNavigation } from "@/components/marketing-navigation";
 import { MarketingFaqList } from "@/components/marketing-faq-list";
 import { TrackedAuthLink } from "@/components/tracked-auth-link";
 import { AuthModalHost } from "@/components/auth-modal-host";
+import { MarketingContactForm } from "@/components/marketing-contact-form";
 
 const features = [
   { icon: BarChart3, title: "A dashboard that makes sense", copy: "See income, expenses, profit, stock value, and business activity without digging through separate tools." },
@@ -157,21 +158,46 @@ export default async function HomePage() {
         <p>Have a question, need help getting started, or want to learn whether Kungahara fits your business? Send us a message.</p>
         <a href="mailto:hervendizeye0@gmail.com"><Mail aria-hidden="true" /> hervendizeye0@gmail.com</a>
       </div>
-      <form className="marketing-contact-form">
-        <div><label htmlFor="contact-first-name">First name</label><input id="contact-first-name" name="firstName" autoComplete="given-name" placeholder="Enter your first name" /></div>
-        <div><label htmlFor="contact-last-name">Last name</label><input id="contact-last-name" name="lastName" autoComplete="family-name" placeholder="Enter your last name" /></div>
-        <div><label htmlFor="contact-email">Email address</label><input id="contact-email" name="email" type="email" placeholder="you@example.com" /></div>
-        <div><label htmlFor="contact-business">Business name</label><input id="contact-business" name="business" autoComplete="organization" placeholder="Enter your business name" /></div>
-        <div><label htmlFor="contact-message">How can we help?</label><textarea id="contact-message" name="message" rows={4} placeholder="Tell us what you need" /></div>
-        <button type="submit">Send message<Send aria-hidden="true" /></button>
-      </form>
+      <MarketingContactForm />
     </section>
 
     <footer className="marketing-footer">
-      <Brand />
-      <p>One clear place to understand and grow your business.</p>
-      <nav aria-label="Footer navigation"><a href="#features">Features</a><a href="#about">About us</a><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav>
-      <small>© 2026 Kungahara. All rights reserved.</small>
+      <div className="marketing-footer-signoff">
+        <div className="marketing-footer-top">
+          <div className="marketing-footer-intro">
+            <Brand />
+            <p>One clear place to manage stock, sales, finances, and records, built for growing businesses.</p>
+          </div>
+          <nav className="marketing-footer-column" aria-label="Product links">
+            <strong>Product</strong>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <TrackedAuthLink href={hasSession ? "/dashboard" : "/signup"}>{hasSession ? "Dashboard" : "Get started"}</TrackedAuthLink>
+          </nav>
+          <nav className="marketing-footer-column" aria-label="Company links">
+            <strong>Company</strong>
+            <a href="#about">About us</a>
+            <a href="#faq">FAQ</a>
+            <a href="#contact">Contact</a>
+          </nav>
+          <nav className="marketing-footer-column" aria-label="Legal links">
+            <strong>Legal</strong>
+            <Link href="/terms">Terms of service</Link>
+            <Link href="/privacy">Privacy policy</Link>
+          </nav>
+          <div className="marketing-footer-socials">
+            <strong>Follow Kungahara</strong>
+            <div>
+              <a href="https://github.com/Kungahara" target="_blank" rel="noreferrer" aria-label="Kungahara on GitHub"><Code2 aria-hidden="true" /></a>
+              <a href="mailto:hervendizeye0@gmail.com" aria-label="Email Kungahara"><Mail aria-hidden="true" /></a>
+            </div>
+          </div>
+        </div>
+        <span className="marketing-footer-orb one" aria-hidden="true" />
+        <span className="marketing-footer-orb two" aria-hidden="true" />
+        <p aria-label="Kungahara">Kungahara</p>
+        <small>© 2026 Kungahara. All rights reserved.</small>
+      </div>
     </footer>
   </main>;
 }

@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const BACKEND = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api").replace(/\/$/, "");
-const secure = process.env.NODE_ENV === "production";
+// Local-network testing uses plain HTTP even when Next.js runs in production
+// mode. Enable secure cookies explicitly only when the site is served via HTTPS.
+const secure = process.env.AUTH_COOKIE_SECURE === "true";
 
 type TokenResponse = { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number; rememberMe: boolean; user: unknown };
 

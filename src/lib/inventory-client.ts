@@ -13,7 +13,7 @@ export async function refreshInventorySession() {
 }
 
 async function requestWithRefresh(path: string, init?: RequestInit) {
-  let response = await fetch(path, init);
+  const response = await fetch(path, init);
   if (response.status !== 401) return response;
   await refreshInventorySession();
   return fetch(path, init);

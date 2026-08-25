@@ -219,20 +219,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     setNotificationsUnread(true);
   }, []);
 
-  useEffect(() => {
-    if (!user || !alertsHydrated) return;
-    const dateKey = businessTime().dateKey;
-    const simulationKey = `kungahara:notification-simulation:${user.id}:${dateKey}`;
-    if (window.sessionStorage.getItem(simulationKey) === "shown") return;
-    window.sessionStorage.setItem(simulationKey, "shown");
-    const timer = window.setTimeout(() => receiveCurrencyAlert({
-      id: `simulated-loan-${dateKey}`,
-      title: "Loan payment reminder",
-      message: "The loan from Munyaneza Clare is due in 6 days, on 30/08/2026.",
-    }), 600);
-    return () => window.clearTimeout(timer);
-  }, [alertsHydrated, receiveCurrencyAlert, user]);
-
   const refreshBusinessAlerts = useCallback(async () => {
     try {
       const [productsResponse, salesResponse, loansResponse] = await Promise.all([
@@ -283,7 +269,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     const timer = window.setTimeout(() => {
       try {
         const saved = JSON.parse(window.localStorage.getItem(key) ?? "[]") as CurrencyAlert[];
-        const alerts = Array.isArray(saved) ? saved.filter((alert) => !alert.id.startsWith("no-sales-") || alert.id.startsWith("no-sales-1200-") || alert.id.startsWith("no-sales-2000-")) : [];
+        const alerts = Array.isArray(saved) ? saved.filter((alert) => {
+          if (alert.id.startsWith("simulated-")) return false;
+          return !alert.id.startsWith("no-sales-") || alert.id.startsWith("no-sales-1200-") || alert.id.startsWith("no-sales-2000-");
+        }) : [];
         currencyAlertIds.current = new Set(alerts.map((alert) => alert.id));
         setCurrencyAlerts(alerts);
         setNotificationsUnread(window.localStorage.getItem(`${key}:unread`) === "true");
