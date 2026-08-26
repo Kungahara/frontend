@@ -6,7 +6,7 @@ import { CloudUpload, Download, Monitor, Moon, ShieldAlert, Sun, Upload, X } fro
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
-import { authRequest, type AuthUser } from "@/lib/api/client";
+import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { browserPushSupported, disableBrowserPush, enableBrowserPush } from "@/lib/browser-push";
 import { inventoryFetch } from "@/lib/inventory-client";
 
@@ -107,7 +107,7 @@ export function SettingsContent() {
       if (channel === "email") {
         const response = await inventoryFetch("/api/notifications/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ emailEnabled: enabled }) });
         const body = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(body?.error?.message ?? "Unable to update email delivery.");
+        if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to update email delivery."));
         savePreferences({ ...preferences, emailDelivery: enabled });
         setMessage(`Email notifications ${enabled ? "enabled" : "disabled"}.`);
         return;
@@ -126,7 +126,7 @@ export function SettingsContent() {
       }
       const response = await inventoryFetch("/api/notifications/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ browserPushEnabled: enabled }) });
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to update browser push delivery.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to update browser push delivery."));
       savePreferences({ ...preferences, browserPushDelivery: enabled });
       setMessage(`Browser push notifications ${enabled ? "enabled" : "disabled"}.`);
     } catch (reason) {
@@ -150,7 +150,7 @@ export function SettingsContent() {
     setBusy("picture"); setError(""); const formData = new FormData(); formData.set("image", image);
     const response = await fetch("/api/profile-picture", { method: "POST", body: formData });
     const body = await response.json().catch(() => null);
-    if (!response.ok) setError(body?.error?.message ?? "Unable to upload the picture.");
+    if (!response.ok) setError(apiErrorMessage(body, "Unable to upload the picture."));
     else { setUser(body.user); setMessage("Profile picture updated."); window.dispatchEvent(new CustomEvent("kungahara:user-changed", { detail: body.user })); }
     setBusy("");
   }
@@ -168,7 +168,7 @@ export function SettingsContent() {
       const session = await fetch("/api/auth/me", { cache: "no-store" });
       if (!session.ok) {
         const body = await session.json().catch(() => null);
-        throw new Error(body?.error?.message ?? "Your session has expired. Please sign in again.");
+        throw new Error(apiErrorMessage(body, "Your session has expired. Please sign in again."));
       }
       const date = new Date().toISOString().slice(0, 10);
       const counterKey = `kungahara:export-copy:${kind}:${date}`;
@@ -187,7 +187,7 @@ export function SettingsContent() {
   async function deleteAccount() {
     setBusy("delete"); setError("");
     const response = await fetch("/api/auth/me", { method: "DELETE" });
-    if (!response.ok) { const body = await response.json().catch(() => null); setError(body?.error?.message ?? "Unable to delete the account."); setBusy(""); return; }
+    if (!response.ok) { const body = await response.json().catch(() => null); setError(apiErrorMessage(body, "Unable to delete the account.")); setBusy(""); return; }
     router.replace("/login");
     router.refresh();
   }

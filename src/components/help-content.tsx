@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { Plus, Send } from "lucide-react";
 
+import { apiErrorMessage } from "@/lib/api/client";
+
 const questions = [
   {
     question: "How do I record a sale?",
@@ -44,7 +46,7 @@ export function HelpContent() {
         body: JSON.stringify({ message: feedback.trim() }),
       });
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to send your message.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to send your message."));
       setFeedback(""); setSent(true);
     } catch (reason) {
       setSendError(reason instanceof Error ? reason.message : "Unable to send your message.");

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Building2, Camera, Check, CloudUpload, Pencil, Trash2, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
-import { authRequest, type AuthUser } from "@/lib/api/client";
+import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 
 export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChange: (user: AuthUser) => void }) {
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     formData.set("image", image);
     const response = await fetch("/api/profile-picture", { method: "POST", body: formData });
     const body = await response.json().catch(() => null);
-    if (!response.ok) setError(body?.error?.message ?? "Unable to upload the profile picture.");
+    if (!response.ok) setError(apiErrorMessage(body, "Unable to upload the profile picture."));
     else { onUserChange(body.user as AuthUser); setOpen(false); }
     setBusy(false);
   }
@@ -45,7 +45,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     setError("");
     const response = await fetch("/api/profile-picture", { method: "DELETE" });
     const body = await response.json().catch(() => null);
-    if (!response.ok) setError(body?.error?.message ?? "Unable to remove the profile picture.");
+    if (!response.ok) setError(apiErrorMessage(body, "Unable to remove the profile picture."));
     else { onUserChange(body.user as AuthUser); setOpen(false); }
     setBusy(false);
   }

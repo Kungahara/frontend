@@ -2459,6 +2459,11 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-theme-dark .stock-delete-confirm { color: white; background: #dc4f48; }
 .dashboard-theme-dark .stock-delete-confirm:disabled { color: #d5a4a2; background: #71363a; opacity: 1; }
 .dashboard-theme-dark .stock-add-grid .stock-form-field { color: #c8d0dd; }
+.dashboard-theme-dark .stock-add-grid input,
+.dashboard-theme-dark .stock-add-grid select { color: #edf1f8; background-color: #111827; border-color: #344057; caret-color: white; color-scheme: dark; }
+.dashboard-theme-dark .stock-add-grid input::placeholder { color: #7f8a9d; opacity: 1; }
+.dashboard-theme-dark .stock-add-grid input:focus,
+.dashboard-theme-dark .stock-add-grid select:focus { color: #f4f6fb; background-color: #111827; border-color: #6889f2; box-shadow: 0 0 0 3px rgb(104 137 242 / 16%); }
 .dashboard-theme-dark .stock-category-picker-trigger { color: #edf1f8; background: #111827; border-color: #263044; }
 .dashboard-theme-dark .stock-new-category-input button { color: #9db2ff; }
 .dashboard-theme-dark .stock-new-category-input button:hover { background: #233152; }
@@ -2558,6 +2563,21 @@ button.marketing-signup { cursor: pointer; }
 .currency-dialog input:focus,
 .currency-dialog select:focus { background: white; border-color: #3864e8; box-shadow: 0 0 0 3px rgb(56 100 232 / 9%); }
 .currency-dialog-submit { min-height: 2.4rem; margin-top: 0.15rem; color: white; font-size: 0.68rem; font-weight: 600; background: #3864e8; border: 0; border-radius: 0.55rem; cursor: pointer; }
+.dashboard-theme-dark .currency-dialog-backdrop { background: rgb(4 8 17 / 62%); }
+.dashboard-theme-dark .currency-dialog { color: #edf1f8; background: #151b2a; border: 1px solid #263044; box-shadow: 0 24px 70px rgb(0 0 0 / 46%); }
+.dashboard-theme-dark .currency-dialog h2 { color: #f4f6fb; }
+.dashboard-theme-dark .currency-dialog > p { color: #9ba7ba; }
+.dashboard-theme-dark .currency-dialog-close { color: #b7c1d1; background: #242e42; }
+.dashboard-theme-dark .currency-dialog-close:hover { color: white; background: #303d55; }
+.dashboard-theme-dark .currency-dialog .custom-select-field { color: #c8d0dd; }
+.dashboard-theme-dark .currency-dialog .custom-select-trigger { color: #edf1f8; background: #111827; border-color: #344057; }
+.dashboard-theme-dark .currency-dialog .custom-select-trigger:hover { border-color: #52617b; }
+.dashboard-theme-dark .currency-dialog .custom-select-trigger:focus-visible { border-color: #6889f2; box-shadow: 0 0 0 3px rgb(104 137 242 / 16%); }
+.dashboard-theme-dark .currency-dialog .custom-select-menu { background: #171f2f; border-color: #344057; box-shadow: 0 16px 34px rgb(0 0 0 / 42%); }
+.dashboard-theme-dark .currency-dialog .custom-select-menu button { color: #c9d2e1; }
+.dashboard-theme-dark .currency-dialog .custom-select-menu button:hover { color: #f3f6ff; background: #202c43; }
+.dashboard-theme-dark .currency-dialog .custom-select-menu button.selected { color: #c8d5ff; background: #233152; }
+.dashboard-theme-dark .currency-dialog-submit:hover { background: #315bdb; }
 
 /* The complete desktop top bar is scaled up uniformly by 10%. */
 @media (min-width: 851px) {

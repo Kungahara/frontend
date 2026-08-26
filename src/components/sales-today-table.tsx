@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
+import { apiErrorMessage } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = { id: string; categoryName: string; name: string; size: string; quantity: number; sellingPrice: string };
@@ -99,7 +100,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(body?.error?.message ?? "Unable to record this sale.");
+      setError(apiErrorMessage(body, "Unable to record this sale."));
       setBusy(false);
       return;
     }
@@ -144,7 +145,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(body?.error?.message ?? "Unable to update this sale.");
+      setError(apiErrorMessage(body, "Unable to update this sale."));
       setBusy(false);
       return;
     }
@@ -162,7 +163,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     const response = await inventoryFetch(`/api/sales/${deleting.id}`, { method: "DELETE" });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(body?.error?.message ?? "Unable to delete this sale.");
+      setError(apiErrorMessage(body, "Unable to delete this sale."));
       setBusy(false);
       return;
     }

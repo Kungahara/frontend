@@ -3,6 +3,7 @@
 import { BadgeDollarSign, Banknote, Coins, Pencil, Plus, Trash2, WalletCards, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { apiErrorMessage } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 
@@ -40,7 +41,7 @@ export function FinanceOverview() {
   useEffect(() => {
     Promise.all(["/api/products", "/api/sales", "/api/stock-movements", "/api/loans"].map((path) => inventoryFetch(path).then(async (response) => {
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to load finance data.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to load finance data."));
       return body;
     }))).then(([productBody, saleBody, movementBody, loanBody]) => {
       setProducts(productBody.products ?? []); setSales(saleBody.sales ?? []);
@@ -71,7 +72,7 @@ export function FinanceOverview() {
     try {
       const response = await inventoryFetch(editingLoanId ? `/api/loans/${editingLoanId}` : "/api/loans", { method: editingLoanId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to save the loan.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to save the loan."));
       setLoans((current) => editingLoanId ? current.map((loan) => loan.id === editingLoanId ? body.loan : loan) : [...current, body.loan]); closeLoanDialog();
       window.dispatchEvent(new CustomEvent("kungahara:data-changed"));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save the loan."); } finally { setSaving(false); }

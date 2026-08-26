@@ -4,6 +4,7 @@ import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { Clock3, FileText, Folder, HardDrive, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
 
+import { apiErrorMessage } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type DocumentPeriod = "today" | "month" | "all";
@@ -92,7 +93,7 @@ export function DocumentsOverview() {
     try {
       const response = await inventoryFetch("/api/document-folders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body?.error?.message ?? "Could not create the folder.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Could not create the folder."));
       setFolders((current) => [...current, body.folder]);
       setActiveFolder(body.folder.id);
       setNewFolderName(""); setAddingFolder(false);
@@ -111,7 +112,7 @@ export function DocumentsOverview() {
       if (activeFolder !== "all-docs") formData.set("folderId", activeFolder);
       const response = await inventoryFetch("/api/document-photos", { method: "POST", body: formData });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body?.error?.message ?? "Could not upload the photo.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Could not upload the photo."));
       const photo = body.photo as DocumentPhoto;
       await preloadDocumentImages([photo.imageUrl]);
       setPhotos((current) => [photo, ...current]);
@@ -128,7 +129,7 @@ export function DocumentsOverview() {
       const response = await inventoryFetch(`/api/document-folders/${deletingFolder.id}`, { method: "DELETE" });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? "Could not delete the folder.");
+        throw new Error(apiErrorMessage(body, "Could not delete the folder."));
       }
       setFolders((current) => current.filter((folder) => folder.id !== deletingFolder.id));
       setPhotos((current) => current.filter((photo) => photo.folderId !== deletingFolder.id));
@@ -145,7 +146,7 @@ export function DocumentsOverview() {
       const response = await inventoryFetch(`/api/document-photos/${deletingPhoto.id}`, { method: "DELETE" });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? "Could not delete the document.");
+        throw new Error(apiErrorMessage(body, "Could not delete the document."));
       }
       setPhotos((current) => current.filter((photo) => photo.id !== deletingPhoto.id));
       if (deletingPhoto.folderId) setFolders((current) => current.map((folder) => folder.id === deletingPhoto.folderId ? { ...folder, documentCount: Math.max(0, folder.documentCount - 1), sizeBytes: Math.max(0, folder.sizeBytes - deletingPhoto.fileSize) } : folder));
@@ -165,7 +166,7 @@ export function DocumentsOverview() {
     try {
       const response = await inventoryFetch(`/api/document-photos/${photo.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folderId: nextFolderId }) });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body?.error?.message ?? "Could not move the document.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Could not move the document."));
       setPhotos((current) => current.map((item) => item.id === photo.id ? body.photo : item));
       setFolders((current) => current.map((folder) => {
         if (folder.id === photo.folderId) return { ...folder, documentCount: Math.max(0, folder.documentCount - 1), sizeBytes: Math.max(0, folder.sizeBytes - photo.fileSize) };

@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { Send } from "lucide-react";
 
+import { apiErrorMessage } from "@/lib/api/client";
+
 export function MarketingContactForm() {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState("");
@@ -22,7 +24,7 @@ export function MarketingContactForm() {
         body: JSON.stringify(Object.fromEntries(data.entries())),
       });
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.error?.message ?? "Unable to send your message.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "Unable to send your message."));
       setSuccess(body?.message ?? "Your message was sent to Kungahara support.");
       form.reset();
     } catch (reason) {

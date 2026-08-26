@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
+import { apiErrorMessage } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = {
@@ -258,7 +259,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(body?.error?.message ?? "Unable to save this product.");
+      setError(apiErrorMessage(body, "Unable to save this product."));
       setBusy(false);
       return;
     }
@@ -282,7 +283,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     const response = await inventoryFetch(`/api/products/${deleting.id}`, { method: "DELETE" });
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      setError(body?.error?.message ?? "Unable to delete this product.");
+      setError(apiErrorMessage(body, "Unable to delete this product."));
       setBusy(false);
       return;
     }
@@ -319,7 +320,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
-        setError(body?.error?.message ?? "Unable to add to this product.");
+        setError(apiErrorMessage(body, "Unable to add to this product."));
         setBusy(false);
         return;
       }
@@ -340,7 +341,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       });
       const categoryBody = await categoryResponse.json().catch(() => null);
       if (!categoryResponse.ok) {
-        setError(categoryBody?.error?.message ?? "Unable to create this category.");
+        setError(apiErrorMessage(categoryBody, "Unable to create this category."));
         setBusy(false);
         return;
       }
@@ -361,7 +362,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(body?.error?.message ?? "Unable to add this product.");
+      setError(apiErrorMessage(body, "Unable to add this product."));
       setBusy(false);
       return;
     }
@@ -390,7 +391,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       body: JSON.stringify({ quantity, note: "Quantity re-added through Add product" }),
     });
     const body = await response.json().catch(() => null);
-    if (!response.ok) { setError(body?.error?.message ?? "Unable to add this quantity."); setBusy(false); return; }
+    if (!response.ok) { setError(apiErrorMessage(body, "Unable to add this quantity.")); setBusy(false); return; }
     setProducts((current) => current.map((product) => product.id === existingProductId ? body.product : product));
     setAdding(false); setExistingQuantity(""); setQuery(""); setBusy(false);
     window.dispatchEvent(new Event("kungahara:inventory-changed"));
