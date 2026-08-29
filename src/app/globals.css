@@ -2057,6 +2057,37 @@ button.marketing-signup { cursor: pointer; }
 @media (max-width: 900px) { .dashboard-summary-body { height: auto; overflow-y: auto; } .dashboard-lower-content { flex-direction: column; } .dashboard-graph-panel { min-height: 19rem; flex-basis: auto; } .dashboard-stock-summary-grid { grid-template-rows: repeat(2, minmax(8.5rem, auto)); } }
 @media (max-width: 560px) { .dashboard-stock-summary-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, minmax(8.5rem, auto)); } .dashboard-graph-panel > header { align-items: flex-start; flex-direction: column; } }
 
+/* A 1280 x 800 PC has a shorter page viewport after browser chrome is included. */
+@media (min-width: 1201px) and (max-width: 1280px) and (max-height: 800px) {
+  .dashboard-sidebar-promo { margin: auto 0.25rem; }
+  .dashboard-general { margin-top: 0; }
+  .stock-summary-icon {
+    top: 0.72rem;
+    right: 0.72rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+  .stock-summary-icon svg {
+    width: 0.88rem;
+    height: 0.88rem;
+  }
+  .dashboard-lower-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(8.5rem, auto) minmax(0, 1fr);
+  }
+  .dashboard-stock-summary-grid {
+    grid-row: 1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: minmax(8.5rem, auto);
+  }
+  .dashboard-graph-panel {
+    width: 100%;
+    min-height: 0;
+    grid-row: 2;
+  }
+}
+
 /* Settings */
 .settings-initial-state { display: flex; width: 100%; min-height: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 0.35rem; color: #303846; }
 .settings-initial-state strong { font-size: 0.78rem; }
