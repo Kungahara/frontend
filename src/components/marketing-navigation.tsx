@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const links = [
   { id: "home", label: "Home" },
@@ -13,6 +14,8 @@ const links = [
 
 export function MarketingNavigation() {
   const [activeSection, setActiveSection] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sections = links
@@ -79,13 +82,48 @@ export function MarketingNavigation() {
     };
   }, []);
 
-  return <nav className="marketing-nav" aria-label="Main navigation">
-    {links.map(({ id, label }) => <a
-      className={activeSection === id ? "active" : undefined}
-      href={`#${id}`}
-      aria-current={activeSection === id ? "location" : undefined}
-      onClick={() => setActiveSection(id)}
-      key={id}
-    >{label}</a>)}
-  </nav>;
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!navigationRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+    };
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  return <div className={`marketing-navigation${menuOpen ? " menu-open" : ""}`} ref={navigationRef}>
+    <button
+      className="marketing-menu-toggle"
+      type="button"
+      aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-controls="marketing-navigation-links"
+      aria-expanded={menuOpen}
+      onClick={() => setMenuOpen((open) => !open)}
+    >
+      {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+    </button>
+    <nav className="marketing-nav" id="marketing-navigation-links" aria-label="Main navigation">
+      {links.map(({ id, label }) => <a
+        className={activeSection === id ? "active" : undefined}
+        href={`#${id}`}
+        aria-current={activeSection === id ? "location" : undefined}
+        onClick={() => {
+          setActiveSection(id);
+          closeMenu();
+        }}
+        key={id}
+      >{label}</a>)}
+    </nav>
+  </div>;
 }

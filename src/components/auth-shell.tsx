@@ -19,7 +19,7 @@ export function AuthShellWithBackdrop({ mode, children, backdropSection = "home"
     <AuthLandingBackdrop section={section} />
     <section className="auth-card">
       <div className="auth-story" data-mode={mode}><Brand /><AuthStoryCarousel /></div>
-      <div className="auth-form-panel"><Link className="auth-close" href={returnHref} replace scroll={false} aria-label="Close authentication"><X aria-hidden="true" /></Link>{children}</div>
+      <div className="auth-form-panel"><Link className="auth-close" href={returnHref} replace scroll={false} aria-label="Close authentication"><X aria-hidden="true" /></Link><div className="auth-form-brand"><Brand /></div>{children}</div>
     </section>
   </main>;
 }

@@ -30,9 +30,9 @@ export function OAuthButtons({ mode }: { mode: "login" | "signup" }) {
   }
 
   return <div className={`oauth-grid ${mode}`}>
-    {(["google", "microsoft"] as Provider[]).map((provider) => <button className="oauth-button" type="button" key={provider} disabled={!config[provider].clientId} onClick={() => start(provider)}>
+    {(["google", "microsoft"] as Provider[]).map((provider) => <button className="oauth-button" type="button" aria-label={`${mode === "login" ? "Continue" : "Sign up"} with ${config[provider].label}`} key={provider} disabled={!config[provider].clientId} onClick={() => start(provider)}>
       <Image className="provider-mark" src={provider === "google" ? "/google-g.png" : "/microsoft-logo.png"} width={18} height={18} alt="" />
-      {mode === "login" ? "Continue" : "Sign up"} with {config[provider].label}
+      <span className="oauth-button-label">{mode === "login" ? "Continue" : "Sign up"} with {config[provider].label}</span>
     </button>)}
   </div>;
 }
