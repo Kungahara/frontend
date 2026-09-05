@@ -4,6 +4,7 @@ import { Coins, PackageMinus, ShoppingBag, TrendingDown, TrendingUp } from "luci
 import { useEffect, useRef, useState } from "react";
 
 import { inventoryFetch } from "@/lib/inventory-client";
+import { formatCompactRwf, formatRwf } from "@/lib/format-money";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type StockMovement = { productId: string; type: "stock_in" | "adjustment"; quantity: number; createdAt: string };
@@ -42,12 +43,13 @@ function StockValueCard({ products, movements }: { products: Product[]; movement
   const lastMonthValue = Math.max(0, currentValue - movementValueThisMonth);
   const change = lastMonthValue ? ((currentValue - lastMonthValue) / lastMonthValue) * 100 : currentValue > 0 ? 100 : 0;
   const ChangeIcon = change >= 0 ? TrendingUp : TrendingDown;
-  const formattedValue = `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(currentValue)}`;
+  const formattedValue = formatRwf(currentValue);
+  const compactValue = formatCompactRwf(currentValue);
 
   return <article className="stock-summary-card stock-value-card" aria-label="Stock value">
     <span className="stock-summary-title">Stock value</span>
     <span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span>
-    <div className="stock-value-amount">{formattedValue}</div>
+    <div className="stock-value-amount"><span className="dashboard-money-full">{formattedValue}</span><span className="dashboard-money-compact">{compactValue}</span></div>
     <div className="stock-value-comparison">
       <span className={`stock-summary-change${change >= 0 ? " increase" : " decrease"}`}><ChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(change))}%</span><span>than last month</span>
     </div>
@@ -93,19 +95,19 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
     const product = products.find((item) => item.id === sale.productId);
     return total + Math.max(0, Number(product?.costPrice ?? 0) - Number(sale.unitPrice)) * sale.quantity;
   }, 0);
-  const formatMoney = (value: number) => `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)}`;
+  const responsiveMoney = (value: number) => <><span className="dashboard-money-full">{formatRwf(value)}</span><span className="dashboard-money-compact">{formatCompactRwf(value)}</span></>;
 
   return <div className="stock-summary-grid sales-summary-grid">
     <article className="stock-summary-card stock-value-card" aria-label="Sold stock value">
       <span className="stock-summary-title">Sold stock value</span>
       <span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span>
-      <div className="stock-value-amount">{formatMoney(todayValue)}</div>
+      <div className="stock-value-amount">{responsiveMoney(todayValue)}</div>
       <div className="stock-value-comparison"><span className={`stock-summary-change${valueChange >= 0 ? " increase" : " decrease"}`}><ValueChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(valueChange))}%</span><span>than yesterday</span></div>
     </article>
     <article className="stock-summary-card selling-summary-card best sales-most-selling-card" aria-label="Most selling item">
       <span className="stock-summary-title">Most selling item</span>
       <span className="stock-summary-icon selling-summary-icon"><ShoppingBag aria-hidden="true" /></span>
-      <div className="stock-summary-value-row sales-item-value-row"><strong className="sales-item-value">{formatMoney(mostSelling?.moneyToday ?? 0)}</strong><span className="selling-item-name">{mostSelling?.soldToday ? mostSelling.name : "No sales today"}</span></div>
+      <div className="stock-summary-value-row sales-item-value-row"><strong className="sales-item-value">{responsiveMoney(mostSelling?.moneyToday ?? 0)}</strong><span className="selling-item-name">{mostSelling?.soldToday ? mostSelling.name : "No sales today"}</span></div>
       <span className="stock-summary-previous">Money made today{mostSelling?.soldToday ? <> · <strong>{mostSelling.soldToday}</strong> sold</> : ""}</span>
     </article>
     <article className="stock-summary-card" aria-label="Sold items quantity">
@@ -117,7 +119,7 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
     <article className="stock-summary-card least-stock-card sales-loss-card" aria-label="Losses suffered this month">
       <span className="stock-summary-title">Losses suffered</span>
       <span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span>
-      <div className="stock-value-amount">{formatMoney(lossThisMonth)}</div>
+      <div className="stock-value-amount">{responsiveMoney(lossThisMonth)}</div>
       <span className="least-stock-remaining">Money lost this month</span>
     </article>
   </div>;

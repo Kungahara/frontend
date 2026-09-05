@@ -2899,19 +2899,26 @@ button.marketing-signup { cursor: pointer; }
   .stock-page-content > .stock-summary-grid > .stock-summary-card:nth-last-child(-n + 2) { grid-column: span 3; }
 }
 
-@media (min-width: 401px) and (max-width: 560px) {
+@media (min-width: 360px) and (max-width: 440px) {
   .dashboard-shell.dashboard-theme-dark { background: #0b101b; }
   .dashboard-sidebar { right: 0.55rem; bottom: 0.5rem; left: 0.55rem; width: auto; height: 4rem; align-items: center; padding: 0.32rem 0.38rem; overflow: hidden; background: #f8f9fb; border: 1px solid #e3e7ef; border-radius: 999px; box-shadow: 0 8px 24px rgb(27 38 58 / 18%); }
   .dashboard-sidebar > .dashboard-nav { width: 100%; min-width: 0; height: 100%; flex: 1; align-items: center; justify-content: space-around; gap: 0.2rem; }
   .dashboard-sidebar > .dashboard-general { display: none; }
-  .dashboard-nav a { width: 4.15rem; min-width: 4.15rem; height: 2.25rem; min-height: 2.25rem; flex: 0 0 4.15rem; padding: 0; gap: 0; color: #727b89; border-radius: 999px; }
+  .dashboard-nav a { width: auto; min-width: 0; max-width: 4.15rem; height: 2.25rem; min-height: 2.25rem; flex: 1 1 0; padding: 0; gap: 0; color: #727b89; border-radius: 999px; }
   .dashboard-nav a span, .dashboard-secondary-nav a span, .dashboard-sidebar-signout span { display: none; }
   .dashboard-nav a svg, .dashboard-secondary-nav a svg, .dashboard-sidebar-signout svg { width: 1rem; height: 1rem; }
   .dashboard-nav a.active { color: white; background: #3864e8; border-radius: 999px; box-shadow: 0 4px 10px rgb(56 100 232 / 25%); }
-  .dashboard-stage { height: calc(100dvh - 4.75rem); }
+  .dashboard-stage { height: 100dvh; }
+  .dashboard-workspace { padding-bottom: 5.25rem; }
   .dashboard-page-identity small { display: block; font-size: 0.54rem; }
   .stock-summary-grid, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stock-summary-grid .stock-summary-icon,
+  .sales-summary-grid .stock-summary-icon,
+  .historical-summary-grid .stock-summary-icon,
+  .finance-summary-grid .stock-summary-icon,
+  .documents-summary-grid .stock-summary-icon { top: 0.52rem; right: 0.575rem; }
   .dashboard-summary-body .dashboard-stock-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(8.5rem, auto)); }
+  .dashboard-summary-body .dashboard-stock-summary-grid .stock-summary-icon { top: 0.25rem; right: 0.3rem; }
   .dashboard-summary-body .stock-summary-title { display: none; }
   .dashboard-summary-body .stock-summary-card { display: grid; align-content: stretch; grid-template-rows: 1fr auto 1fr; }
   .dashboard-summary-body .stock-value-amount,
@@ -2923,6 +2930,83 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-summary-body .stock-value-comparison { align-self: end; grid-row: 3; }
   .dashboard-summary-body .dashboard-money-full { display: none; }
   .dashboard-summary-body .dashboard-money-compact { display: inline; }
+  .sales-summary-grid .dashboard-money-full { display: none; }
+  .sales-summary-grid .dashboard-money-compact { display: inline; }
+  .sales-summary-grid .stock-summary-title { display: none; }
+  .sales-summary-grid .stock-summary-card { display: grid; min-height: 8.5rem; align-content: stretch; grid-template-rows: 1fr auto 1fr; }
+  .sales-summary-grid .stock-value-amount,
+  .sales-summary-grid .stock-summary-value-row { align-self: center; grid-row: 2; padding-top: 0; }
+  .sales-summary-grid .stock-value-comparison,
+  .sales-summary-grid .stock-summary-previous,
+  .sales-summary-grid .least-stock-remaining { align-self: end; grid-row: 3; }
+  .stock-page-content > .stock-summary-grid > .stock-summary-card:last-child { grid-column: 1 / -1; }
+  .stock-page-content > .stock-summary-grid .stock-summary-title { display: none; }
+  .stock-page-content > .stock-summary-grid .stock-summary-card { display: grid; min-height: 8.5rem; align-content: stretch; grid-template-rows: 1fr auto 1fr; }
+  .stock-page-content > .stock-summary-grid .dashboard-money-full { display: none; }
+  .stock-page-content > .stock-summary-grid .dashboard-money-compact { display: inline; }
+  .stock-page-content > .stock-summary-grid .stock-value-amount,
+  .stock-page-content > .stock-summary-grid .stock-summary-value-row,
+  .stock-page-content > .stock-summary-grid .least-stock-name { align-self: center; grid-row: 2; padding-top: 0; }
+  .stock-page-content > .stock-summary-grid .stock-value-comparison,
+  .stock-page-content > .stock-summary-grid .stock-summary-previous,
+  .stock-page-content > .stock-summary-grid .least-stock-remaining { align-self: end; grid-row: 3; }
+  .dashboard-summary-body .selling-item-name,
+  .stock-page-content > .stock-summary-grid .selling-item-name,
+  .sales-summary-grid .selling-item-name { position: absolute; top: 0.65rem; left: 0.7rem; max-width: calc(100% - 4rem); }
+  .finance-summary-grid .stock-summary-title,
+  .documents-summary-grid .stock-summary-title { display: none; }
+  .finance-summary-grid .stock-summary-card,
+  .documents-summary-grid .stock-summary-card { display: grid; min-height: 8.5rem; align-content: stretch; grid-template-rows: 1fr auto 1fr; }
+  .finance-summary-grid .dashboard-money-full { display: none; }
+  .finance-summary-grid .dashboard-money-compact { display: inline; }
+  .finance-summary-grid .stock-value-amount,
+  .finance-summary-grid .stock-summary-value-row,
+  .documents-summary-grid .stock-value-amount,
+  .documents-summary-grid .stock-summary-value-row { align-self: center; grid-row: 2; padding-top: 0; }
+  .finance-summary-grid .historical-card-note,
+  .finance-summary-grid .stock-summary-previous,
+  .documents-summary-grid .historical-card-note,
+  .documents-summary-grid .stock-summary-previous { align-self: end; grid-row: 3; }
+  .stock-analysis-meta .stock-period-controls { width: 100%; flex-wrap: nowrap; align-items: end; justify-content: space-between; gap: 0.3rem; }
+  .stock-analysis-meta .stock-period-field { min-width: 0; flex: 0 1 6.6rem; }
+  .stock-analysis-meta .stock-period-field input,
+  .stock-analysis-meta .stock-period-field select,
+  .stock-analysis-meta .stock-period-field .custom-select-trigger { width: 100%; }
+  .stock-analysis-meta .stock-period-buttons { min-width: 0; flex: 1; justify-content: flex-end; gap: 0.16rem; }
+  .stock-analysis-meta .stock-period-buttons button { min-width: 2.6rem; padding-right: 0.35rem; padding-left: 0.35rem; }
+  .sales-history-toolbar { align-items: stretch; }
+  .sales-history-toolbar > h2 { width: 100%; flex: 0 0 100%; }
+  .sales-history-toolbar-actions { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr); gap: 0.45rem; }
+  .sales-history-toolbar-actions .stock-period-controls { width: 100%; min-width: 0; flex-wrap: nowrap; align-items: end; justify-content: space-between; gap: 0.3rem; }
+  .sales-history-toolbar-actions .stock-period-field { min-width: 0; flex: 0 1 6.6rem; }
+  .sales-history-toolbar-actions .stock-period-field input,
+  .sales-history-toolbar-actions .stock-period-field select,
+  .sales-history-toolbar-actions .stock-period-field .custom-select-trigger { width: 100%; }
+  .sales-history-toolbar-actions .stock-period-buttons { min-width: 0; flex: 1; justify-content: flex-end; gap: 0.16rem; }
+  .sales-history-toolbar-actions .stock-period-buttons button { min-width: 2.6rem; padding-right: 0.35rem; padding-left: 0.35rem; }
+  .sales-history-toolbar-actions .stock-product-search { width: 100%; min-width: 0; }
+  .stock-data-body.stock-page,
+  .stock-data-body.sales-page,
+  .stock-page-content,
+  .sales-page-content,
+  .sales-view-content,
+  .sales-history-view,
+  .finance-page-content { height: auto; min-height: 100%; overflow: visible; }
+  .documents-page-content { height: auto; min-height: 100%; overflow: visible; }
+  .documents-main-row,
+  .documents-library { height: auto; min-height: 0; flex: none; overflow: visible; }
+  .documents-photo-grid { min-height: 0; flex: none; overflow: visible; }
+  .documents-folders,
+  .documents-folders.scrollable { height: auto; max-height: none; min-height: 0; overflow: visible; overscroll-behavior: auto; }
+  .documents-summary-card.storage .stock-summary-value-row strong { max-width: calc(100% - 2.7rem); line-height: 1.05; white-space: normal; }
+  .sales-product-panel,
+  .finance-loans-panel { min-height: 0; flex: none; overflow: visible; }
+  .sales-product-panel .stock-product-table-wrap,
+  .finance-loans-panel .stock-product-table-wrap { min-height: 0; flex: none; overflow-x: auto; overflow-y: visible; }
+  .sales-product-panel .stock-product-table,
+  .finance-loans-table { height: auto; }
+  .sales-product-panel .stock-product-table tbody,
+  .finance-loans-table tbody { min-height: 0; flex: none; overflow-y: visible; }
   .dashboard-summary-body .dashboard-graph-panel > header { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.4rem; }
   .dashboard-summary-body .dashboard-graph-panel .sales-view-tabs { min-width: 0; flex: 0 1 auto; }
   .dashboard-summary-body .dashboard-graph-panel .sales-view-tabs button { padding-right: 0.62rem; padding-left: 0.62rem; }

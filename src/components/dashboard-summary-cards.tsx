@@ -5,18 +5,15 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { inventoryFetch } from "@/lib/inventory-client";
+import { formatCompactRwf, formatRwf } from "@/lib/format-money";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 type Movement = { productId: string; type: string; quantity: number; createdAt: string };
 type DashboardScope = "today" | "month" | "year";
 
-const salesMoney = (value: number) => `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)}`;
-
-function DashboardMoney({ value, currencyFirst = true }: { value: number; currencyFirst?: boolean }) {
-  const full = new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value);
-  const compact = new Intl.NumberFormat("en", { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }).format(value);
-  return <><span className="dashboard-money-full">{currencyFirst ? `RWF ${full}` : `${full} RWF`}</span><span className="dashboard-money-compact">{currencyFirst ? `RWF ${compact}` : `${compact} RWF`}</span></>;
+function DashboardMoney({ value }: { value: number }) {
+  return <><span className="dashboard-money-full">{formatRwf(value)}</span><span className="dashboard-money-compact">{formatCompactRwf(value)}</span></>;
 }
 
 function inDashboardScope(value: string, scope: DashboardScope) {
@@ -97,7 +94,7 @@ function DashboardGraph({ products, sales }: { products: Product[]; sales: Sale[
   const tooltipX = hovered ? Math.min(414, Math.max(50, x(hovered.index) - tooltipWidth / 2)) : 0;
   const tooltipY = hovered ? Math.max(4, y(hoveredValue) - 62) : 0;
   const seriesLabel = hovered?.series === "sales" ? "Items sold" : hovered?.series === "income" ? "Income" : "Expenses";
-  const tooltipValue = hovered?.series === "sales" ? `${hoveredValue} items sold` : salesMoney(hoveredValue);
+  const tooltipValue = hovered?.series === "sales" ? `${hoveredValue} items sold` : formatRwf(hoveredValue);
 
   return <section className="dashboard-graph-panel" aria-label={view === "sales" ? "General sales graph" : "Income and expenses graph"}>
     <header><nav className="sales-view-tabs" aria-label="Dashboard graphs"><button className={view === "finance" ? "active" : ""} type="button" aria-pressed={view === "finance"} onClick={() => { setView("finance"); setHovered(null); }}>Income &amp; expenses</button><button className={view === "sales" ? "active" : ""} type="button" aria-pressed={view === "sales"} onClick={() => { setView("sales"); setHovered(null); }}>Sales</button></nav><Link className="dashboard-continue-button" href={view === "sales" ? "/sales?view=analytics" : "/stock?view=analysis"}>Continue to page <ArrowRight /></Link></header>
@@ -184,9 +181,9 @@ export function DashboardSummaryCards() {
 
   return <section className="stock-data-body dashboard-summary-body" aria-label="Dashboard financial summary">
     <div className="finance-summary-grid">
-      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={invested} currencyFirst={false} /></div><span className="historical-card-note">Stock purchased</span></article>
-      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={income} currencyFirst={false} /></strong></div><span className="stock-summary-previous">Money from sales</span></article>
-      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={profit} currencyFirst={false} /></strong></div><span className="stock-summary-previous">Profit made {scopeWords}</span></article>
+      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={invested} /></div><span className="historical-card-note">Stock purchased</span></article>
+      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={income} /></strong></div><span className="stock-summary-previous">Money from sales</span></article>
+      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={profit} /></strong></div><span className="stock-summary-previous">Profit made {scopeWords}</span></article>
       <article className="stock-summary-card finance-summary-card least-stock-card sales-loss-card"><span className="stock-summary-title">Losses suffered</span><span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={losses} /></div><span className="least-stock-remaining">Money lost {scopeWords}</span></article>
     </div>
     <div className="dashboard-lower-content">

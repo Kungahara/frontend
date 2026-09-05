@@ -204,7 +204,7 @@ export function DocumentsOverview() {
   function summaryValue(title: string) {
     if (title === "Total documents") return `${folderPhotos.length} file${folderPhotos.length === 1 ? "" : "s"}`;
     if (title === "Folders") return `${folders.length} folder${folders.length === 1 ? "" : "s"}`;
-    if (title === "Storage used") return `${formatBytes(totalBytes)} / 5 GB`;
+    if (title === "Storage used") return <>{formatBytes(totalBytes)}<br />/ 5 GB</>;
     return `${recentCount} this week`;
   }
 
