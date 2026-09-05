@@ -11,8 +11,13 @@ type Sale = { productId: string; quantity: number; unitPrice: string; createdAt:
 type Movement = { productId: string; type: string; quantity: number; createdAt: string };
 type DashboardScope = "today" | "month" | "year";
 
-const financeMoney = (value: number) => `${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)} RWF`;
 const salesMoney = (value: number) => `RWF ${new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value)}`;
+
+function DashboardMoney({ value, currencyFirst = true }: { value: number; currencyFirst?: boolean }) {
+  const full = new Intl.NumberFormat("en-RW", { maximumFractionDigits: 0 }).format(value);
+  const compact = new Intl.NumberFormat("en", { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }).format(value);
+  return <><span className="dashboard-money-full">{currencyFirst ? `RWF ${full}` : `${full} RWF`}</span><span className="dashboard-money-compact">{currencyFirst ? `RWF ${compact}` : `${compact} RWF`}</span></>;
+}
 
 function inDashboardScope(value: string, scope: DashboardScope) {
   const date = new Date(value), now = new Date();
@@ -179,16 +184,16 @@ export function DashboardSummaryCards() {
 
   return <section className="stock-data-body dashboard-summary-body" aria-label="Dashboard financial summary">
     <div className="finance-summary-grid">
-      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount">{financeMoney(invested)}</div><span className="historical-card-note">Stock purchased</span></article>
-      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(income)}</strong></div><span className="stock-summary-previous">Money from sales</span></article>
-      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{financeMoney(profit)}</strong></div><span className="stock-summary-previous">Profit made {scopeWords}</span></article>
-      <article className="stock-summary-card finance-summary-card least-stock-card sales-loss-card"><span className="stock-summary-title">Losses suffered</span><span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span><div className="stock-value-amount">{salesMoney(losses)}</div><span className="least-stock-remaining">Money lost {scopeWords}</span></article>
+      <article className="stock-summary-card finance-summary-card blue stock-value-card"><span className="stock-summary-title">Money invested {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={invested} currencyFirst={false} /></div><span className="historical-card-note">Stock purchased</span></article>
+      <article className="stock-summary-card finance-summary-card green"><span className="stock-summary-title">Income {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={income} currencyFirst={false} /></strong></div><span className="stock-summary-previous">Money from sales</span></article>
+      <article className="stock-summary-card finance-summary-card profit"><span className="stock-summary-title">Profit {scopeWords}</span><span className="stock-summary-icon finance-card-icon"><WalletCards aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={profit} currencyFirst={false} /></strong></div><span className="stock-summary-previous">Profit made {scopeWords}</span></article>
+      <article className="stock-summary-card finance-summary-card least-stock-card sales-loss-card"><span className="stock-summary-title">Losses suffered</span><span className="stock-summary-icon least-stock-icon"><TrendingDown aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={losses} /></div><span className="least-stock-remaining">Money lost {scopeWords}</span></article>
     </div>
     <div className="dashboard-lower-content">
     <DashboardGraph products={products} sales={sales} />
     <div className="dashboard-stock-summary-grid">
-      <article className="stock-summary-card stock-value-card" aria-label="Stock value"><span className="stock-summary-title">Stock value</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount">{salesMoney(stockValue)}</div><div className="stock-value-comparison"><span className={`stock-summary-change${stockValueChange >= 0 ? " increase" : " decrease"}`}><StockValueChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(stockValueChange))}%</span><span>than last month</span></div></article>
-      <article className="stock-summary-card" aria-label="Expected income from stock"><span className="stock-summary-title">Expected income</span><span className="stock-summary-icon stock-status-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{salesMoney(expectedIncome)}</strong></div><span className="stock-summary-previous">If all current stock is sold</span></article>
+      <article className="stock-summary-card stock-value-card" aria-label="Stock value"><span className="stock-summary-title">Stock value</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={stockValue} /></div><div className="stock-value-comparison"><span className={`stock-summary-change${stockValueChange >= 0 ? " increase" : " decrease"}`}><StockValueChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(stockValueChange))}%</span><span>than last month</span></div></article>
+      <article className="stock-summary-card" aria-label="Expected income from stock"><span className="stock-summary-title">Expected income</span><span className="stock-summary-icon stock-status-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={expectedIncome} /></strong></div><span className="stock-summary-previous">If all current stock is sold</span></article>
       <SellingItemCard title="Most selling item in stock" product={mostSelling?.product} percentage={mostSelling?.percentage ?? 0} tone="best" />
       <SellingItemCard title="Least selling item in stock" product={leastSelling?.product} percentage={leastSelling?.percentage ?? 0} tone="least" />
     </div>

@@ -422,18 +422,15 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       <aside className="stock-product-section" aria-labelledby="product-analysis-title">
         <header><h2 id="product-analysis-title">Products</h2><p>Choose what to show on the graph.</p></header>
         <div className="stock-product-choice">
-          <button className={selectedAnalysisProductId === "all" ? "active" : ""} type="button" onClick={() => setSelectedAnalysisProductId("all")}><span>All in {selectedCategoryName}</span><small>{categoryProducts.length}</small></button>
-          {categoryProducts.map((product) => <button className={selectedAnalysisProductId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setSelectedAnalysisProductId(product.id)}><span>{product.name}</span><small>{availableQuantity(product)} left</small></button>)}
+          <button className={selectedAnalysisProductId === "all" ? "active" : ""} type="button" onClick={() => setSelectedAnalysisProductId("all")}><span>All in {selectedCategoryName}</span></button>
+          {categoryProducts.map((product) => <button className={selectedAnalysisProductId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setSelectedAnalysisProductId(product.id)}><span>{product.name}</span></button>)}
         </div>
       </aside>
       <aside className="stock-category-section" aria-labelledby="category-analysis-title">
         <header><h2 id="category-analysis-title">Categories</h2><p>Choose a category to analyze.</p></header>
         <div className="stock-category-list">
-          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>All categories</span><small>{products.length} {products.length === 1 ? "product" : "products"}</small></button>
-          {categories.map((category) => {
-            const count = products.filter((product) => product.categoryId === category.id).length;
-            return <button className={selectedCategoryId === category.id ? "active" : ""} type="button" key={category.id} onClick={() => { setSelectedCategoryId(category.id); setSelectedAnalysisProductId("all"); }}><span>{category.name}</span><small>{count} {count === 1 ? "product" : "products"}</small></button>;
-          })}
+          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>All categories</span></button>
+          {categories.map((category) => <button className={selectedCategoryId === category.id ? "active" : ""} type="button" key={category.id} onClick={() => { setSelectedCategoryId(category.id); setSelectedAnalysisProductId("all"); }}><span>{category.name}</span></button>)}
         </div>
       </aside>
     </div>;

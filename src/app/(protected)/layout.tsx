@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Moon,
   PackageX,
+  PanelLeftClose,
   ShoppingCart,
   Sun,
   X,
@@ -139,6 +140,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsUnread, setNotificationsUnread] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [alertsHydrated, setAlertsHydrated] = useState(false);
   const authenticationStarted = useRef(false);
@@ -358,9 +360,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     year: "numeric",
   }).format(new Date());
 
-  return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}`}>
+  return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
     <aside className="dashboard-sidebar">
-      <Brand subtitle={user.businessName} />
+      <div className="dashboard-sidebar-header">
+        <Brand subtitle={user.businessName} ariaLabel={sidebarCollapsed ? "Expand sidebar" : "Kungahara home"} onClick={sidebarCollapsed ? (event) => { event.preventDefault(); setSidebarCollapsed(false); } : undefined} />
+        {!sidebarCollapsed && <button className="sidebar-collapse-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar" onClick={() => setSidebarCollapsed(true)}><PanelLeftClose aria-hidden="true" /></button>}
+      </div>
       <p className="dashboard-nav-label">Menu</p>
       <nav className="dashboard-nav" aria-label="Menu">
         {menuItems.map(({ href, label, icon: Icon }) => (

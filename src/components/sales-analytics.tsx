@@ -140,12 +140,12 @@ export function SalesAnalytics() {
     </svg></div>
     </section>
     <aside className="stock-product-section" aria-labelledby="sales-items-title"><header><h2 id="sales-items-title">Items</h2><p>Choose what to show on the graph.</p></header><div className="stock-product-choice">
-      <button className={productId === "all" ? "active" : ""} type="button" onClick={() => setProductId("all")}><span>{categoryName === "all" ? "All items" : `All in ${categoryName}`}</span><small>{products.length}</small></button>
-      {products.map((product) => <button className={productId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setProductId(product.id)}><span>{product.name}</span><small>{sales.filter((sale) => sale.productId === product.id).reduce((total, sale) => total + sale.quantity, 0)} sold</small></button>)}
+      <button className={productId === "all" ? "active" : ""} type="button" onClick={() => setProductId("all")}><span>{categoryName === "all" ? "All items" : `All in ${categoryName}`}</span></button>
+      {products.map((product) => <button className={productId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setProductId(product.id)}><span>{product.name}</span></button>)}
     </div></aside>
     <aside className="stock-category-section" aria-labelledby="sales-categories-title"><header><h2 id="sales-categories-title">Categories</h2><p>Choose a category to analyze.</p></header><div className="stock-category-list">
-      <button className={categoryName === "all" ? "active" : ""} type="button" onClick={() => { setCategoryName("all"); setProductId("all"); }}><span>All categories</span><small>{categories.length}</small></button>
-      {categories.map((category) => <button className={categoryName === category ? "active" : ""} type="button" key={category} onClick={() => { setCategoryName(category); setProductId("all"); }}><span>{category}</span><small>{new Set(sales.filter((sale) => sale.categoryName === category).map((sale) => sale.productId)).size} items</small></button>)}
+      <button className={categoryName === "all" ? "active" : ""} type="button" onClick={() => { setCategoryName("all"); setProductId("all"); }}><span>All categories</span></button>
+      {categories.map((category) => <button className={categoryName === category ? "active" : ""} type="button" key={category} onClick={() => { setCategoryName(category); setProductId("all"); }}><span>{category}</span></button>)}
     </div></aside>
   </div>;
 }
