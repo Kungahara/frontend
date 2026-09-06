@@ -2831,6 +2831,9 @@ button.marketing-signup { cursor: pointer; }
   .auth-page { height: 100dvh; min-height: 0; place-items: start center; padding: 0.35rem; overflow-y: auto; }
   .auth-card { width: 100%; height: auto; max-height: none; min-height: 0; border-width: 3px; border-radius: 1rem; }
   .auth-form-panel { justify-content: flex-start; padding: 1rem 0.85rem; overflow: visible; }
+  .auth-modal-page { padding: 0.35rem; overflow: hidden; }
+  .auth-modal-page .auth-card { max-height: calc(100dvh - 0.7rem); overflow: hidden; }
+  .auth-modal-page .auth-form-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
   .auth-close { top: 0.55rem; right: 0.55rem; }
   .auth-form-brand { margin-bottom: 0.5rem; }
   .form-heading h1 { font-size: 1.4rem; }
