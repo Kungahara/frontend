@@ -7,9 +7,28 @@ import { AuthStoryCarousel } from "@/components/auth-story-carousel";
 
 export function AuthModalShell({ mode, children, onClose, onModeChange }: { mode: "login" | "signup"; children: React.ReactNode; onClose: () => void; onModeChange: (mode: "login" | "signup") => void }) {
   useEffect(() => {
+    const root = document.documentElement;
+    const scrollY = window.scrollY;
     const previousOverflow = document.body.style.overflow;
+    const previousPosition = document.body.style.position;
+    const previousTop = document.body.style.top;
+    const previousWidth = document.body.style.width;
+    const previousRootOverflow = root.style.overflow;
+
+    root.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.position = previousPosition;
+      document.body.style.top = previousTop;
+      document.body.style.width = previousWidth;
+      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
+    };
   }, []);
 
   function followAuthSwitch(event: React.MouseEvent<HTMLElement>) {
