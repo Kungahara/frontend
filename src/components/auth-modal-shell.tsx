@@ -22,7 +22,7 @@ export function AuthModalShell({ mode, children, onClose, onModeChange }: { mode
   return <main className="auth-modal-page" onClickCapture={followAuthSwitch}>
     <section className="auth-card" role="dialog" aria-modal="true" aria-label={mode === "login" ? "Sign in" : "Create account"}>
       <div className="auth-story" data-mode={mode}><Brand /><AuthStoryCarousel /></div>
-      <div className="auth-form-panel"><button className="auth-close" type="button" aria-label="Close authentication" onClick={onClose}><X aria-hidden="true" /></button><div className="auth-form-brand"><Brand /></div>{children}</div>
+      <div className="auth-form-panel"><button className="auth-close" type="button" aria-label="Close authentication" onClick={onClose}><X aria-hidden="true" /></button><div className="auth-modal-scroll"><div className="auth-form-brand"><Brand /></div>{children}</div></div>
     </section>
   </main>;
 }

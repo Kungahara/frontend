@@ -1247,6 +1247,7 @@ button.marketing-signup { cursor: pointer; }
 .auth-page, .auth-modal-page { overscroll-behavior: contain; }
 .auth-modal-page::before { position: fixed; z-index: -1; inset: 0; background: rgb(20 31 52 / 16%); backdrop-filter: blur(10px) saturate(0.9); content: ""; }
 .auth-modal-page .auth-card { flex: 0 0 auto; }
+.auth-modal-scroll { display: contents; }
 
 .auth-backdrop {
   opacity: 0.34;
@@ -2831,9 +2832,10 @@ button.marketing-signup { cursor: pointer; }
   .auth-page { height: 100dvh; min-height: 0; place-items: start center; padding: 0.35rem; overflow-y: auto; }
   .auth-card { width: 100%; height: auto; max-height: none; min-height: 0; border-width: 3px; border-radius: 1rem; }
   .auth-form-panel { justify-content: flex-start; padding: 1rem 0.85rem; overflow: visible; }
-  .auth-modal-page { padding: 0.35rem; overflow: hidden; }
-  .auth-modal-page .auth-card { max-height: calc(100dvh - 0.7rem); overflow: hidden; }
-  .auth-modal-page .auth-form-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .auth-modal-page { height: 100dvh; min-height: 0; padding: 0.35rem; overflow: hidden; }
+  .auth-modal-page .auth-card { height: calc(100dvh - 0.7rem); max-height: calc(100dvh - 0.7rem); overflow: hidden; }
+  .auth-modal-page .auth-form-panel { min-height: 0; padding: 0; overflow: hidden; }
+  .auth-modal-page .auth-modal-scroll { display: flex; min-height: 0; flex: 1; flex-direction: column; justify-content: flex-start; padding: 1rem 0.85rem; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
   .auth-close { top: 0.55rem; right: 0.55rem; }
   .auth-form-brand { margin-bottom: 0.5rem; }
   .form-heading h1 { font-size: 1.4rem; }
