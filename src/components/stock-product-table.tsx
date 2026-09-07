@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
@@ -176,6 +176,9 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
   const [existingQuantity, setExistingQuantity] = useState("");
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>(emptyProduct);
+  const [addMessage, setAddMessage] = useState("");
+  const addFormRef = useRef<HTMLFormElement>(null);
+  const addPendingRef = useRef(false);
   const [analysisOpen, setAnalysisOpen] = useState(initialAnalysisOpen);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedAnalysisProductId, setSelectedAnalysisProductId] = useState("all");
@@ -295,7 +298,35 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     setBusy(false);
   }
 
-  async function addProduct() {
+  function finishAdding(keepOpen: boolean, categoryId = newProduct.categoryId) {
+    setAdding(keepOpen);
+    setCategoryPickerOpen(false);
+    setNewProduct({ ...emptyProduct, categoryId });
+    setExistingQuantity("");
+    setQuery("");
+    if (keepOpen) {
+      setAddMessage(addMode === "existing" ? "Quantity added. Choose the next product." : "Product added. You can add another.");
+      requestAnimationFrame(() => {
+        addFormRef.current?.querySelector<HTMLElement>(".stock-add-product-selector button, .stock-add-grid input:not([readonly])")?.focus();
+      });
+    }
+  }
+
+  async function submitAddition(keepOpen: boolean) {
+    if (addPendingRef.current || busy) return;
+    addPendingRef.current = true;
+    setAddMessage("");
+    try {
+      await (addMode === "existing" ? addExistingStock(keepOpen) : addProduct(keepOpen));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to add this product. Please try again.");
+    } finally {
+      addPendingRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function addProduct(keepOpen = false) {
     setError("");
     const name = newProduct.name.trim();
     const size = newProduct.size.trim();
@@ -326,9 +357,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
         return;
       }
       setProducts((current) => current.map((product) => product.id === matchingProduct.id ? body.product : product));
-      setQuery("");
-      setAdding(false);
-      setNewProduct(emptyProduct);
+      finishAdding(keepOpen, matchingProduct.categoryId);
       window.dispatchEvent(new Event("kungahara:inventory-changed"));
       setBusy(false);
       return;
@@ -348,6 +377,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       }
       categoryId = categoryBody.category.id;
       setCategories((current) => [...current, categoryBody.category]);
+      setNewProduct((current) => ({ ...current, categoryId, categoryName: "" }));
     }
     const response = await inventoryFetch("/api/products", {
       method: "POST",
@@ -368,22 +398,21 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       return;
     }
     setProducts((current) => body.merged ? current.map((product) => product.id === body.product.id ? body.product : product) : [...current, body.product]);
-    setQuery("");
     setAnalysisOpen(false);
-    setAdding(false);
-    setNewProduct(emptyProduct);
+    finishAdding(keepOpen, categoryId);
     setError("");
     window.dispatchEvent(new Event("kungahara:inventory-changed"));
     setBusy(false);
   }
 
   function openAddDialog() {
+    setAddMessage("");
     setError(""); setCategoryPickerOpen(false); setExistingQuantity("");
     setExistingProductId(products[0]?.id ?? ""); setAddMode(products.length ? "existing" : "new");
     setNewProduct({ ...emptyProduct, categoryId: categories[0]?.id ?? newCategoryValue }); setAdding(true);
   }
 
-  async function addExistingStock() {
+  async function addExistingStock(keepOpen = false) {
     const quantity = Number(existingQuantity);
     if (!existingProductId || !Number.isInteger(quantity) || quantity < 1) { setError("Choose an item and enter a quantity of at least 1."); return; }
     setBusy(true); setError("");
@@ -394,7 +423,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     const body = await response.json().catch(() => null);
     if (!response.ok) { setError(apiErrorMessage(body, "Unable to add this quantity.")); setBusy(false); return; }
     setProducts((current) => current.map((product) => product.id === existingProductId ? body.product : product));
-    setAdding(false); setExistingQuantity(""); setQuery(""); setBusy(false);
+    finishAdding(keepOpen); setBusy(false);
     window.dispatchEvent(new Event("kungahara:inventory-changed"));
     window.dispatchEvent(new Event("kungahara:data-changed"));
   }
@@ -477,8 +506,8 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       </div>
     </div>}
     {adding && <div className="stock-delete-backdrop" role="presentation">
-      <form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="add-product-title" onSubmit={(event) => { event.preventDefault(); void (addMode === "existing" ? addExistingStock() : addProduct()); }}>
-        <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => { setCategoryPickerOpen(false); setAdding(false); }}><X aria-hidden="true" /></button>
+      <form ref={addFormRef} className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="add-product-title" aria-busy={busy} onSubmit={(event) => { event.preventDefault(); const submitter = (event.nativeEvent as SubmitEvent).submitter; void submitAddition(submitter instanceof HTMLButtonElement && submitter.value === "continue"); }}>
+        <button className="stock-delete-close" type="button" aria-label="Close" disabled={busy} onClick={() => { setCategoryPickerOpen(false); setAdding(false); }}><X aria-hidden="true" /></button>
         <h3 id="add-product-title">Add product</h3>
         <div className="stock-add-grid">
           {products.length > 0 && (addMode === "new" ? <label>Product name<input autoFocus required value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} /></label> : <CustomSelect className="stock-add-product-selector" label="Product name" value={existingProductId} options={[...products.map((product) => ({ value: product.id, label: `${product.name} · ${product.size || "No size"} · ${product.quantity} in stock` })), { value: newItemValue, label: "+ New item" }]} onChange={(value) => { setError(""); if (value === newItemValue) { setAddMode("new"); setExistingProductId(""); setNewProduct((current) => ({ ...current, name: "" })); } else { setAddMode("existing"); setExistingProductId(value); } }} />)}
@@ -510,7 +539,11 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
           </>}
         </div>
         {error && <p className="stock-add-note" role="alert">{error}</p>}
-        <button className="stock-add-submit" disabled={busy}>{busy ? "Adding…" : addMode === "existing" && products.length ? "Add quantity" : "Add product"}</button>
+        {addMessage && <p className="stock-add-note" role="status">{addMessage}</p>}
+        <div className="stock-add-actions">
+          <button className="stock-add-submit" type="submit" value="close" disabled={busy}>{busy ? "Adding…" : addMode === "existing" && products.length ? "Add quantity" : "Add product"}</button>
+          <button className="stock-add-submit stock-add-continue" type="submit" value="continue" disabled={busy}>Add &amp; continue</button>
+        </div>
       </form>
     </div>}
     {editing && <div className="stock-delete-backdrop" role="presentation">

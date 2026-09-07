@@ -1737,8 +1737,8 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-theme-dark .sales-view-tabs button:hover { color: #dbe4ff; }
 .dashboard-theme-dark .sales-view-tabs button.active { color: white; background: #3864e8; }
 .stock-summary-card { position: relative; display: grid; width: min(100%, 13rem); min-height: 8.5rem; align-content: space-between; padding: 1.04rem 1.15rem 0.92rem; background: white; border: 1px solid #eef0f4; border-radius: 1.04rem; box-shadow: 0 5px 16px rgb(32 48 80 / 5%); }
-.stock-summary-title { color: #7f8691; font-size: 0.71rem; font-weight: 500; }
-.stock-summary-icon { position: absolute; top: 1.04rem; right: 1.15rem; display: grid; width: 2.47rem; height: 2.47rem; place-items: center; color: white; background: #4aa9f5; border-radius: 50%; }
+.stock-summary-title { min-height: 2.2rem; padding-right: 2.2rem; color: #7f8691; font-size: 0.71rem; font-weight: 500; }
+.stock-summary-icon { position: absolute; top: 0.4rem; right: 0.4rem; display: grid; width: 2.47rem; height: 2.47rem; place-items: center; color: white; background: #4aa9f5; border-radius: 50%; }
 .stock-summary-icon svg { display: block; width: 1.15rem; height: 1.15rem; flex: 0 0 auto; stroke-width: 1.7; }
 .stock-status-icon { width: 2.47rem; height: 2.47rem; }
 .stock-status-icon svg { width: 1.15rem; height: 1.15rem; }
@@ -1756,7 +1756,8 @@ button.marketing-signup { cursor: pointer; }
 .stock-value-card { background: linear-gradient(135deg, #315fe4 0%, #5279ef 100%); border-color: transparent; box-shadow: 0 7px 18px rgb(49 95 228 / 24%); }
 .stock-value-card .stock-summary-title { color: rgb(255 255 255 / 82%); }
 .stock-value-icon { color: #3864e8; background: white; }
-.stock-value-amount { align-self: end; padding-top: 0.3rem; color: #20242c; font-size: 1.44rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.stock-value-amount { align-self: end; margin-bottom: 0.5rem; color: #20242c; font-size: 1.44rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.stock-summary-value-row:has(.dashboard-money-full) { margin-bottom: 0.5rem; padding-top: 0; }
 .stock-value-card .stock-value-amount { color: white; }
 .stock-value-comparison { display: flex; align-items: center; gap: 0.35rem; color: rgb(255 255 255 / 86%); font-size: 0.62rem; white-space: nowrap; }
 .stock-value-comparison .stock-summary-change { font-size: 0.55rem; }
@@ -2005,6 +2006,11 @@ button.marketing-signup { cursor: pointer; }
 .stock-period-field .custom-select-trigger { height: 2rem; font-size: 0.62rem; }
 .stock-add-submit { width: 100%; min-height: 2.3rem; margin-top: 0.8rem; color: white; font-size: 0.65rem; font-weight: 650; background: #3864e8; border: 0; border-radius: 0.52rem; cursor: pointer; }
 .stock-add-submit:disabled { cursor: not-allowed; opacity: 0.48; }
+.stock-add-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+.stock-add-actions .stock-add-submit { flex: 1 1 8rem; width: auto; margin-top: 0; padding: 0.5rem 0.75rem; }
+.stock-add-continue { color: #3864e8; background: transparent; border: 1px solid currentColor; }
+.stock-add-continue:hover:not(:disabled) { background: rgb(56 100 232 / 8%); }
+.dashboard-theme-dark .stock-add-continue { color: #9bb5ff; }
 .sales-product-panel { min-height: 0; flex: 1; margin-top: 0.85rem; }
 .sales-history-view { display: flex; min-height: 0; flex: 1; flex-direction: column; overflow: hidden; }
 .sales-history-analysis { flex: 0 0 auto; padding: 0.85rem; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); }
@@ -2108,8 +2114,8 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-sidebar-promo { margin: auto 0.25rem; }
   .dashboard-general { margin-top: 0; }
   .stock-summary-icon {
-    top: 0.72rem;
-    right: 0.72rem;
+    top: 0.4rem;
+    right: 0.4rem;
     width: 1.9rem;
     height: 1.9rem;
   }
