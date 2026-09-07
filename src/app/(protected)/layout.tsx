@@ -88,21 +88,18 @@ const sidebarSlides = [
   {
     title: "Stock",
     heading: "Never run out unexpectedly.",
-    description: "Track quantities and identify products that need restocking.",
     points: ["Monitor stock levels", "Restock at the right time"],
     icon: StockIcon,
   },
   {
     title: "Sales",
     heading: "Understand what drives your income.",
-    description: "See your best-selling products and follow daily sales.",
     points: ["Discover top products", "Track revenue clearly"],
     icon: ShoppingCart,
   },
   {
     title: "Finance",
     heading: "Keep your business financially healthy.",
-    description: "Monitor profit, expenses, and upcoming loan deadlines.",
     points: ["Understand your profit", "Never miss a payment"],
     icon: Banknote,
   },
@@ -383,7 +380,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         <div className="sidebar-promo-copy" key={activeSlide.title}>
           <p>{activeSlide.title}</p>
           <strong>{activeSlide.heading}</strong>
-          <span>{activeSlide.description}</span>
           <ul>{activeSlide.points.map((point) => <li key={point}>{point}</li>)}</ul>
         </div>
         <div className="sidebar-promo-dots" aria-label="Choose highlight">

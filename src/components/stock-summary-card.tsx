@@ -3,8 +3,8 @@
 import { Coins, PackageMinus, ShoppingBag, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
-import { formatCompactRwf, formatRwf } from "@/lib/format-money";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type StockMovement = { productId: string; type: "stock_in" | "adjustment"; quantity: number; createdAt: string };
@@ -43,13 +43,11 @@ function StockValueCard({ products, movements }: { products: Product[]; movement
   const lastMonthValue = Math.max(0, currentValue - movementValueThisMonth);
   const change = lastMonthValue ? ((currentValue - lastMonthValue) / lastMonthValue) * 100 : currentValue > 0 ? 100 : 0;
   const ChangeIcon = change >= 0 ? TrendingUp : TrendingDown;
-  const formattedValue = formatRwf(currentValue);
-  const compactValue = formatCompactRwf(currentValue);
 
   return <article className="stock-summary-card stock-value-card" aria-label="Stock value">
     <span className="stock-summary-title">Stock value</span>
     <span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span>
-    <div className="stock-value-amount"><span className="dashboard-money-full">{formattedValue}</span><span className="dashboard-money-compact">{compactValue}</span></div>
+    <div className="stock-value-amount"><MoneyAmount value={currentValue} /></div>
     <div className="stock-value-comparison">
       <span className={`stock-summary-change${change >= 0 ? " increase" : " decrease"}`}><ChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(change))}%</span><span>than last month</span>
     </div>
@@ -95,7 +93,7 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
     const product = products.find((item) => item.id === sale.productId);
     return total + Math.max(0, Number(product?.costPrice ?? 0) - Number(sale.unitPrice)) * sale.quantity;
   }, 0);
-  const responsiveMoney = (value: number) => <><span className="dashboard-money-full">{formatRwf(value)}</span><span className="dashboard-money-compact">{formatCompactRwf(value)}</span></>;
+  const responsiveMoney = (value: number) => <MoneyAmount value={value} />;
 
   return <div className="stock-summary-grid sales-summary-grid">
     <article className="stock-summary-card stock-value-card" aria-label="Sold stock value">

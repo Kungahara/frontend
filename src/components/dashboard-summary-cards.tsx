@@ -4,8 +4,9 @@ import { ArrowRight, BadgeDollarSign, Coins, ShoppingBag, TrendingDown, Trending
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
-import { formatCompactRwf, formatRwf } from "@/lib/format-money";
+import { formatRwf } from "@/lib/format-money";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
@@ -13,7 +14,7 @@ type Movement = { productId: string; type: string; quantity: number; createdAt: 
 type DashboardScope = "today" | "month" | "year";
 
 function DashboardMoney({ value }: { value: number }) {
-  return <><span className="dashboard-money-full">{formatRwf(value)}</span><span className="dashboard-money-compact">{formatCompactRwf(value)}</span></>;
+  return <MoneyAmount value={value} />;
 }
 
 function inDashboardScope(value: string, scope: DashboardScope) {

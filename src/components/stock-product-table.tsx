@@ -7,8 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { apiErrorMessage } from "@/lib/api/client";
+import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
-import { formatRwf } from "@/lib/format-money";
 
 type Product = {
   id: string;
@@ -486,7 +486,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
               <td><strong>{product.name}</strong></td>
               <td><button className="stock-category-pill" type="button" onClick={() => setQuery(product.categoryName)}>{product.categoryName}</button></td>
               <td>{product.size || "—"}</td>
-              <td>{formatRwf(Number(product.costPrice))}</td>
+              <td><MoneyAmount value={Number(product.costPrice)} /></td>
               <td><span className={`stock-quantity-value${isLowStock ? " low" : ""}`} tabIndex={isLowStock ? 0 : undefined} aria-label={isLowStock ? `${quantity} units. Stock value is low.` : `${quantity} units`} data-tooltip={isLowStock ? "Stock value is low" : undefined}>{quantity}</span></td>
               <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
             </tr>;
