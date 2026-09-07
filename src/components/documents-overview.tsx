@@ -1,5 +1,7 @@
 "use client";
 
+import { FitText } from "@/components/fit-text";
+
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { Clock3, FileText, Folder, HardDrive, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
@@ -204,7 +206,7 @@ export function DocumentsOverview() {
   function summaryValue(title: string) {
     if (title === "Total documents") return `${folderPhotos.length} file${folderPhotos.length === 1 ? "" : "s"}`;
     if (title === "Folders") return `${folders.length} folder${folders.length === 1 ? "" : "s"}`;
-    if (title === "Storage used") return <>{formatBytes(totalBytes)}<br />/ 5 GB</>;
+    if (title === "Storage used") return <FitText text={`${formatBytes(totalBytes)} / 5 GB`} />;
     return `${recentCount} this week`;
   }
 

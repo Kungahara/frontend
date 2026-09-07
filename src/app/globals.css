@@ -1760,10 +1760,10 @@ button.marketing-signup { cursor: pointer; }
 .stock-value-amount { align-self: end; margin-bottom: 0.5rem; color: #20242c; font-size: 1.44rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
 .stock-summary-value-row:has(.money-amount) { margin-bottom: 0.5rem; padding-top: 0; }
 .stock-value-card .stock-value-amount { color: white; }
-.money-amount { display: block; width: 100%; min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; }
-.money-amount-text { display: inline-block; white-space: nowrap; vertical-align: top; }
+.fit-text { display: block; width: 100%; min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; }
+.fit-text-content { display: inline-block; white-space: nowrap; vertical-align: top; }
 .stock-value-amount { min-width: 0; }
-.stock-summary-value-row > strong:has(.money-amount) { min-width: 0; flex: 1; }
+.stock-summary-value-row > strong:has(.fit-text) { min-width: 0; flex: 1; }
 .sales-item-value-row > .sales-item-value:has(.money-amount) { flex-basis: 100%; }
 .stock-value-comparison { display: flex; align-items: center; gap: 0.35rem; color: rgb(255 255 255 / 86%); font-size: calc(0.62rem * var(--ui-text-scale)); white-space: nowrap; }
 .stock-value-comparison .stock-summary-change { font-size: calc(0.55rem * var(--ui-text-scale)); }
@@ -2019,6 +2019,7 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-theme-dark .stock-add-continue { color: #9bb5ff; }
 .sales-product-panel { min-height: 0; flex: 1; margin-top: 0.85rem; }
 .sales-history-view { display: flex; min-height: 0; flex: 1; flex-direction: column; overflow: hidden; }
+.sales-history-loading { position: static; flex: 1; padding: 1rem; text-align: center; }
 .sales-history-analysis { flex: 0 0 auto; padding: 0.85rem; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); }
 .sales-history-analysis > header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.65rem; }
 .sales-history-analysis h2 { color: #252b35; font-size: calc(0.85rem * var(--ui-text-scale)); }
@@ -3006,7 +3007,6 @@ button.marketing-signup { cursor: pointer; }
   .documents-photo-grid { min-height: 0; flex: none; overflow: visible; }
   .documents-folders,
   .documents-folders.scrollable { height: auto; max-height: none; min-height: 0; overflow: visible; overscroll-behavior: auto; }
-  .documents-summary-card.storage .stock-summary-value-row strong { max-width: calc(100% - 2.7rem); line-height: 1.05; white-space: normal; }
   .sales-product-panel,
   .finance-loans-panel { min-height: 0; flex: none; overflow: visible; }
   .sales-product-panel .stock-product-table-wrap,
@@ -3024,4 +3024,49 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-theme-dark .dashboard-secondary-nav a { color: #aeb7c7; }
   .dashboard-theme-dark .dashboard-nav a.active,
   .dashboard-theme-dark .dashboard-secondary-nav a.active { color: white; background: #3864e8; }
+}
+
+/* Give small-phone cards three distinct rows: icon, value, supporting text. */
+@media (max-width: 480px) {
+  .dashboard-summary-body .dashboard-stock-summary-grid { grid-template-rows: none; grid-auto-rows: minmax(8rem, auto); }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-card {
+    min-height: 8rem;
+    grid-template-rows: auto auto auto;
+    align-content: space-between;
+    row-gap: 0.4rem;
+    padding: 0.6rem 0.65rem;
+    text-align: center;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-card > .stock-summary-title { display: none; }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-card > .stock-summary-icon {
+    position: static;
+    grid-row: 1;
+    justify-self: center;
+    width: 2rem;
+    height: 2rem;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-card > :is(.stock-value-amount, .stock-summary-value-row, .least-stock-name) {
+    grid-row: 2;
+    align-self: center;
+    justify-content: center;
+    margin: 0;
+    padding-top: 0;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-card > :is(.stock-value-comparison, .stock-summary-previous, .least-stock-remaining, .historical-card-note) {
+    grid-row: 3;
+    align-self: start;
+    justify-content: center;
+    margin: 0;
+    white-space: normal;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .selling-item-name {
+    position: static;
+    max-width: 100%;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .selling-summary-card .stock-summary-value-row {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-summary-value-row > strong:has(.fit-text) { width: 100%; flex: auto; }
+  :is(.stock-page-content > .stock-summary-grid, .dashboard-summary-body, .sales-summary-grid, .historical-summary-grid, .finance-summary-grid, .documents-summary-grid) .stock-value-comparison { flex-wrap: wrap; }
 }

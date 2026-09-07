@@ -21,7 +21,7 @@ export function SalesOverview({ initialView = "today" }: { initialView?: SalesVi
   const [tableReady, setTableReady] = useState(false);
   const finishSummary = useCallback(() => setSummaryReady(true), []);
   const finishTable = useCallback(() => setTableReady(true), []);
-  const ready = summaryReady && tableReady;
+  const ready = view === "history" || (summaryReady && (view !== "today" || tableReady));
   const navigation = <nav className="sales-view-tabs" aria-label="Sales views">
     {salesViews.map((item) => <button className={view === item.id ? "active" : ""} type="button" aria-pressed={view === item.id} key={item.id} onClick={() => setView(item.id)}>{item.label}</button>)}
   </nav>;

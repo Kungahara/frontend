@@ -47,14 +47,17 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     inventoryFetch("/api/sales", { signal: controller.signal }).then(async (response) => {
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error();
-      setSales(Array.isArray(body?.sales) ? body.sales : []);
+      if (!response.ok || !Array.isArray(body?.sales)) throw new Error();
+      if (active) setSales(body.sales);
     }).catch((reason) => {
-      if (!(reason instanceof DOMException && reason.name === "AbortError")) setError("Unable to load historical sales.");
-    }).finally(() => setLoading(false));
-    return () => controller.abort();
+      if (active && !(reason instanceof DOMException && reason.name === "AbortError")) setError("Unable to load historical sales. Please reopen Historical sales to try again.");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; controller.abort(); };
   }, []);
 
   const weeks = monthWeekRanges(month);
@@ -108,12 +111,19 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
       ? `Sales in ${new Intl.DateTimeFormat("en", { month: "long" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))}`
       : `Sales in ${new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
 
+  if (loading || error) return <div className="sales-history-view">
+    {navigation}
+    <div className="sales-page-loading sales-history-loading" role={error ? "alert" : "status"} aria-live="polite" aria-busy={loading}>
+      {loading ? <><span aria-hidden="true" /><strong>Loading historical sales…</strong><small>Please wait while we fetch your sales records.</small></> : <strong>{error}</strong>}
+    </div>
+  </div>;
+
   return <div className="sales-history-view">
     <div className="stock-summary-grid historical-summary-grid">
-      <article className="stock-summary-card stock-value-card" aria-label="Money made in selected period"><span className="stock-summary-title">Money made</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className={`stock-value-amount${loading ? " sales-value-loading" : ""}`}>{loading ? "Loading…" : <MoneyAmount value={analysis.total} />}</div><span className="historical-card-note">In the selected {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
-      <article className="stock-summary-card selling-summary-card best" aria-label="Highest sales period"><span className="stock-summary-title">Highest sales {period === "1D" ? "hour" : period === "1W" ? "day" : period === "1M" ? "week" : "month"}</span><span className="stock-summary-icon selling-summary-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row historical-card-value"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "Loading…" : <MoneyAmount value={analysis.top.value} />}</strong></div><span className="stock-summary-previous">{loading ? "Fetching sales" : analysis.top.label}</span></article>
-      <article className="stock-summary-card" aria-label="Items sold"><span className="stock-summary-title">Items sold</span><span className="stock-summary-icon stock-status-icon"><StockStatusIcon /></span><div className="stock-summary-value-row"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "…" : itemsSold}</strong></div><span className="stock-summary-previous">Units sold in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
-      <article className="stock-summary-card" aria-label="Sales recorded"><span className="stock-summary-title">Sales recorded</span><span className="stock-summary-icon historical-count-icon"><ClipboardList aria-hidden="true" /></span><div className="stock-summary-value-row"><strong className={loading ? "sales-value-loading" : ""}>{loading ? "…" : analysis.selected.length}</strong></div><span className="stock-summary-previous">Transactions in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
+      <article className="stock-summary-card stock-value-card" aria-label="Money made in selected period"><span className="stock-summary-title">Money made</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><MoneyAmount value={analysis.total} /></div><span className="historical-card-note">In the selected {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
+      <article className="stock-summary-card selling-summary-card best" aria-label="Highest sales period"><span className="stock-summary-title">Highest sales {period === "1D" ? "hour" : period === "1W" ? "day" : period === "1M" ? "week" : "month"}</span><span className="stock-summary-icon selling-summary-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row historical-card-value"><strong><MoneyAmount value={analysis.top.value} /></strong></div><span className="stock-summary-previous">{analysis.top.label}</span></article>
+      <article className="stock-summary-card" aria-label="Items sold"><span className="stock-summary-title">Items sold</span><span className="stock-summary-icon stock-status-icon"><StockStatusIcon /></span><div className="stock-summary-value-row"><strong>{itemsSold}</strong></div><span className="stock-summary-previous">Units sold in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
+      <article className="stock-summary-card" aria-label="Sales recorded"><span className="stock-summary-title">Sales recorded</span><span className="stock-summary-icon historical-count-icon"><ClipboardList aria-hidden="true" /></span><div className="stock-summary-value-row"><strong>{analysis.selected.length}</strong></div><span className="stock-summary-previous">Transactions in this {period === "1D" ? "day" : period === "1W" ? "week" : period === "1M" ? "month" : "year"}</span></article>
     </div>
     {navigation}
     <section className="stock-product-panel sales-product-panel historical-sales-table" aria-labelledby="historical-sales-title">
@@ -126,11 +136,11 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
           <div className="stock-period-buttons" aria-label="Sales period">{(["1D", "1W", "1M", "1Y"] as Period[]).map((value) => <button className={period === value ? "active" : ""} type="button" key={value} onClick={() => setPeriod(value)}>{{ "1D": "Day", "1W": "Week", "1M": "Month", "1Y": "Year" }[value]}</button>)}</div>
         </div><label className="stock-product-search"><span className="sr-only">Search sales</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label></div>
       </header>
-      {error && <p className="stock-product-error" role="alert">{error}</p>}
-      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
-        {loading && <tr><td className="historical-sales-loading" colSpan={6}><span aria-hidden="true" />Loading historical sales…</td></tr>}
+
+      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!visibleSales.length ? "empty" : ""}>
+
         {visibleSales.map((sale) => <tr key={sale.id}><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.total ?? Number(sale.unitPrice) * sale.quantity)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
-        {!loading && !visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
+        {!visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
       </tbody></table></div>
     </section>
   </div>;
