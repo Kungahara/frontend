@@ -118,6 +118,121 @@ const french: Record<string, string> = {
   "Unable to send your message.": "Impossible d’envoyer votre message."
 };
 
+const kinyarwanda: Record<string, string> = {
+  "Stock products": "Ibicuruzwa byo mu bubiko", "Search stock products": "Shakisha ibicuruzwa mu bubiko",
+  "Search…": "Shakisha…", "Add product": "Ongeramo igicuruzwa", "Add your first product": "Ongeramo igicuruzwa cyawe cya mbere",
+  "Start adding products now": "Tangira kongeramo ibicuruzwa", "Build your stock list and keep every item organized in one place.": "Kora urutonde rw’ububiko kandi utegure buri gicuruzwa ahantu hamwe.",
+  "No products match your search.": "Nta bicuruzwa bihuye n’ibyo washakishije.",
+  "Name": "Izina", "Category": "Icyiciro", "Size": "Ingano", "Price bought for": "Igiciro cyaguzweho",
+  "Quantity": "Umubare", "Actions": "Ibikorwa", "Action": "Igikorwa", "Product name": "Izina ry’igicuruzwa",
+  "Quantity to add": "Umubare wongerwamo", "Current stock": "Ibihari mu bubiko", "Low-stock alert (20%)": "Imenyesha ry’ububiko buke (20%)",
+  "Calculated automatically as 20% of the entered quantity": "Bibarwa ku buryo bwikora nka 20% by’umubare wanditswe",
+  "Choose category": "Hitamo icyiciro", "Product category": "Icyiciro cy’igicuruzwa",
+  "Create new category": "Kora icyiciro gishya", "Enter category name": "Andika izina ry’icyiciro",
+  "Add & continue": "Ongeramo kandi ukomeze", "Edit product": "Hindura igicuruzwa", "Save changes": "Bika impinduka",
+  "Delete product": "Siba igicuruzwa", "Cancel": "Hagarika", "Close": "Funga",
+  "Income and expenses": "Ayinjira n’asohoka", "Recorded sales in RWF": "Ibyagurishijwe byanditswe muri RWF",
+  "Back to Stock products": "Subira ku bicuruzwa byo mu bubiko", "Income": "Ayinjira", "Expenses": "Ayasohoka",
+  "Year": "Umwaka", "Month": "Ukwezi", "Graph period": "Igihe cy’igishushanyo",
+  "Products": "Ibicuruzwa", "Choose what to show on the graph.": "Hitamo amakuru agaragara ku gishushanyo.",
+  "Items sold over time": "Ibicuruzwa byagurishijwe uko igihe kigenda", "All items": "Ibicuruzwa byose",
+  "Categories": "Ibyiciro", "Choose a category to analyze.": "Hitamo icyiciro cyo gusesengura.",
+  "All categories": "Ibyiciro byose", "No recorded sales for this selection and period.": "Nta byagurishijwe byanditswe kuri iri hitamo n’iki gihe.",
+  "No products in this category yet.": "Nta bicuruzwa biri muri iki cyiciro.",
+  "Stock value": "Agaciro k’ububiko", "than last month": "ugereranyije n’ukwezi gushize",
+  "Least item in stock": "Igicuruzwa gisigaye gake", "Remaining stock:": "Ibicuruzwa bisigaye:",
+  "Sold stock value": "Agaciro k’ibicuruzwa byagurishijwe", "than yesterday": "ugereranyije n’ejo",
+  "Most selling item": "Igicuruzwa kigurishwa cyane", "Least selling item": "Igicuruzwa kigurishwa gake",
+  "Money made today": "Amafaranga yinjiye uyu munsi", "sold": "byagurishijwe", "Sold items quantity": "Umubare w’ibicuruzwa byagurishijwe",
+  "Items sold today": "Ibicuruzwa byagurishijwe uyu munsi", "Losses suffered": "Igihombo",
+  "Money lost this month": "Amafaranga yahombye uku kwezi", "Stock status": "Imiterere y’ububiko", "Stock size:": "Ingano y’ububiko:",
+  "Sales views": "Uko ibyagurishijwe bigaragara", "Today": "Uyu munsi", "Historical sales": "Ibyagurishijwe kera",
+  "Sales analytics": "Isesengura ry’ibyagurishijwe", "Today sales": "Ibyagurishijwe uyu munsi", "Search today sales": "Shakisha ibyagurishijwe uyu munsi",
+  "Money made in selected period": "Amafaranga yinjiye mu gihe cyatoranyijwe", "Money made": "Amafaranga yinjiye",
+  "Highest sales period": "Igihe cyagurishijwemo byinshi", "Highest sales": "Ibyagurishijwe byinshi",
+  "Items sold": "Ibicuruzwa byagurishijwe", "Sales recorded": "Ibyagurishijwe byanditswe",
+  "In the selected": "Mu gihe cyatoranyijwe", "Units sold in this": "Ibicuruzwa byagurishijwe muri iki gihe",
+  "Transactions in this": "Ibikorwa by’ubucuruzi muri iki gihe", "Day": "Umunsi", "Week": "Icyumweru",
+  "day": "umunsi", "week": "icyumweru", "month": "ukwezi", "year": "umwaka", "hour": "isaha",
+  "Search sales": "Shakisha ibyagurishijwe", "Sales period": "Igihe cy’ibyagurishijwe", "Date": "Itariki",
+  "Sell new item": "Gurisha igicuruzwa gishya", "Sold for": "Igiciro cyagurishijweho",
+  "No sales match your search.": "Nta byagurishijwe bihuye n’ibyo washakishije.",
+  "Ready for today's first sale": "Witeguye kwandika icyagurishijwe cya mbere cy’uyu munsi",
+  "Use Sell new item to record a sale. It will appear here automatically.": "Koresha ‘Gurisha igicuruzwa gishya’ wandike icyagurishijwe. Kirahita kigaragara hano.",
+  "Edit sale": "Hindura icyagurishijwe", "Delete sale": "Siba icyagurishijwe", "Select product": "Hitamo igicuruzwa",
+  "Unit price": "Igiciro cya kimwe", "Available stock": "Ibihari mu bubiko", "Record sale": "Andika icyagurishijwe",
+  "This month": "Uku kwezi", "This year": "Uyu mwaka", "All": "Byose",
+  "Loans": "Imyenda", "Money borrowed for the business and upcoming payment reminders.": "Amafaranga yagujijwe ubucuruzi n’ibyibutsa by’igihe cyo kwishyura.",
+  "Stock purchased": "Ibicuruzwa byaguzwe", "Money from sales": "Amafaranga yavuye mu byagurishijwe", "Money in loans": "Amafaranga y’imyenda",
+  "Add loan": "Ongeramo umwenda", "Source / name": "Inkomoko / izina", "Amount": "Amafaranga",
+  "Loan date": "Itariki y’umwenda", "Deadline": "Igihe ntarengwa", "Interest rate": "Inyungu ku mwenda",
+  "No loans due this month": "Nta mwenda ugomba kwishyurwa uku kwezi", "No loans due this year": "Nta mwenda ugomba kwishyurwa uyu mwaka",
+  "Loans appear here when their repayment deadline falls within the selected period.": "Imyenda igaragara hano iyo igihe cyo kuyishyura kiri mu gihe cyatoranyijwe.",
+  "Edit loan": "Hindura umwenda", "Add a loan": "Ongeramo umwenda", "Name or money source": "Izina cyangwa inkomoko y’amafaranga",
+  "Interest rate (%)": "Inyungu ku mwenda (%)", "Update loan": "Vugurura umwenda", "Save loan": "Bika umwenda",
+  "Update the loan details and its automatic reminder schedule.": "Vugurura amakuru y’umwenda na gahunda y’ibyibutsa byikora.",
+  "Record where the money came from and when you need to repay it. Reminders are scheduled automatically.": "Andika aho amafaranga yavuye n’igihe agomba kwishyurirwa. Ibyibutsa bitegurwa ku buryo bwikora.",
+  "Total documents": "Inyandiko zose", "Folders": "Ububiko bw’inyandiko", "Storage used": "Umwanya wakoreshejwe",
+  "Recently added": "Ibyongeweho vuba", "Files saved in your workspace": "Dosiye zabitswe aho ukorera",
+  "Folders organizing your files": "Ububiko butegura dosiye zawe", "Space currently in use": "Umwanya ukoreshwa ubu",
+  "Files uploaded this week": "Inyandiko zongewemo muri iki cyumweru", "All Docs": "Inyandiko zose", "Add a folder": "Ongeramo ububiko",
+  "Search descriptions": "Shakisha mu bisobanuro", "Search photos by description": "Shakisha amafoto ukoresheje ibisobanuro",
+  "Filter documents by date": "Shungura inyandiko hakurikijwe itariki", "Add document": "Ongeramo inyandiko",
+  "No documents yet": "Nta nyandiko ziraboneka", "Add documents inside a folder to see them here.": "Ongeramo inyandiko mu bubiko kugira ngo zigaragare hano.",
+  "Document folders": "Ububiko bw’inyandiko", "Create a folder": "Kora ububiko", "Give your new folder a name.": "Ha ububiko bushya izina.",
+  "Folder name": "Izina ry’ububiko", "Enter folder name": "Andika izina ry’ububiko", "Creating…": "Birimo gukorwa…",
+  "Create folder": "Kora ububiko", "Photo": "Ifoto", "Choose photo": "Hitamo ifoto",
+  "No photo selected": "Nta foto yatoranyijwe", "Description": "Ibisobanuro", "Describe this photo": "Sobanura iyi foto",
+  "Choose an image and add a description before uploading.": "Hitamo ifoto kandi wongeremo ibisobanuro mbere yo kuyohereza.",
+  "The folder and every photo inside it will be permanently deleted.": "Ububiko n’amafoto yose arimo birasibwa burundu.",
+  "Loading documents": "Inyandiko zirimo gutegurwa", "View": "Reba", "Delete": "Siba",
+  "Upload document": "Ohereza inyandiko", "Delete folder": "Siba ububiko", "Delete document": "Siba inyandiko",
+  "Close document": "Funga inyandiko", "The image could not be loaded.": "Ifoto ntiyashoboye gutegurwa.",
+  "Delete this document?": "Siba iyi nyandiko?", "The image and its description will be permanently deleted.": "Ifoto n’ibisobanuro byayo birasibwa burundu.",
+  "Settings could not be loaded": "Igenamiterere ntiryashoboye gutegurwa", "Unable to load your profile and business details.": "Ntibyashobotse gutegura umwirondoro n’amakuru y’ubucuruzi.",
+  "Try again": "Gerageza nanone", "Dismiss notification": "Kuraho itangazo", "Profile and business settings": "Igenamiterere ry’umwirondoro n’ubucuruzi",
+  "Profile": "Umwirondoro", "Profile picture": "Ifoto y’umwirondoro", "Change picture": "Hindura ifoto",
+  "First name": "Izina rya mbere", "Last name": "Izina rya nyuma", "Business name": "Izina ry’ubucuruzi", "Save details": "Bika amakuru",
+  "Dashboard and appearance settings": "Igenamiterere ry’ahabanza n’imigaragarire",
+  "Dashboard time scope": "Igihe cy’amakuru yo ku rubuga rw’ibanze", "Default period used by dashboard summaries.": "Igihe gisanzwe gikoreshwa mu ncamake yo ku rubuga rw’ibanze.",
+  "Theme": "Imigaragarire", "Use a light, dark, or system-matched workspace.": "Koresha imigaragarire ibona, yijimye cyangwa ijyanye na sisitemu.",
+  "Light": "Ibona", "Dark": "Iyijimye", "System": "Sisitemu", "Language": "Ururimi",
+  "English": "Icyongereza", "French": "Igifaransa", "Kinyarwanda": "Ikinyarwanda",
+  "Mon": "Mbe", "Tue": "Kab", "Wed": "Gat", "Thu": "Kan", "Fri": "Gat", "Sat": "Gnd", "Sun": "Cyu",
+  "Email": "E-mail", "Email ·": "E-mail ·", "Browser push": "Amatangazo kuri mudasobwa", "Browser push ·": "Amatangazo kuri mudasobwa ·", "on": "birakora", "off": "ntibikora", "saving…": "birimo kubikwa…",
+  "Application language": "Ururimi rwa porogaramu", "Notification and reminder settings": "Igenamiterere ry’amatangazo n’ibyibutsa",
+  "Sales reminders": "Ibyibutsa by’ibyagurishijwe", "Notify you when no sale has been recorded on a working day.": "Kumenyesha iyo nta cyagurishijwe cyanditswe ku munsi w’akazi.",
+  "Noon reminder": "Icyibutsa cya saa sita", "Shown after 12:00 PM.": "Kigaragara nyuma ya saa sita.",
+  "Evening reminder": "Icyibutsa cya nimugoroba", "Shown after 8:00 PM.": "Kigaragara nyuma ya saa mbiri z’ijoro.",
+  "Working days": "Iminsi y’akazi", "Sales reminders only appear on selected days.": "Ibyibutsa by’ibyagurishijwe bigaragara gusa ku minsi yatoranyijwe.",
+  "Loan deadline reminders": "Ibyibutsa by’igihe cyo kwishyura imyenda", "Keep the existing reminders for upcoming loan repayment dates.": "Gumana ibyibutsa by’amatariki yegereje yo kwishyura imyenda.",
+  "Delivery": "Aho amatangazo anyura", "Choose where stock, sales, and loan alerts should reach you.": "Hitamo aho amatangazo y’ububiko, ibyagurishijwe n’imyenda akugeraho.",
+  "In-app · on": "Muri porogaramu · birakora", "Security settings": "Igenamiterere ry’umutekano",
+  "Change password": "Hindura ijambo banga", "Send change link": "Hindura ijambo banga",
+  "A secure password-change link will be sent to": "Mesagi yizewe izoherezwa kuri",
+  "your email": "e-mail yawe", "Loan reminders": "Ibyibutsa by’imyenda", "8 PM reminder": "Icyibutsa cya saa mbiri z’ijoro",
+  "Data and account settings": "Igenamiterere ry’amakuru na konti", "Download PDF": "Bika PDF",
+  "Delete account": "Siba konti", "This permanently removes your account and cannot be undone.": "Ibi bisiba konti yawe burundu kandi ntibishobora gusubizwa inyuma.",
+  "Delete your account?": "Siba konti yawe?", "Delete permanently": "Siba burundu",
+  "How can we help?": "Twagufasha iki?", "Still need help?": "Uracyakeneye ubufasha?",
+  "How do I record a sale?": "Nandika nte icyagurishijwe?",
+  "Open Sales from the sidebar, choose the products and quantities sold, then confirm the sale. Your stock and dashboard totals update automatically.": "Fungura Ibyagurishijwe ku murongo wo ku ruhande, hitamo ibicuruzwa n’umubare wabyo, maze wemeze. Ububiko n’ibiteranyo byo ku rubuga rw’ibanze bihita bivugururwa.",
+  "How do I add or update stock?": "Nongeramo cyangwa mvugurure nte ububiko?",
+  "Go to Stock to add a product, change its quantity, update its price, or organize it into a category.": "Jya mu Bubiko wongeremo igicuruzwa, uhindure umubare cyangwa igiciro cyacyo, cyangwa ugishyire mu cyiciro.",
+  "How do loan reminders work?": "Ibyibutsa by’imyenda bikora bite?",
+  "Kungahara shows in-app reminders as repayment deadlines approach. You can turn these reminders on or off from Settings.": "Kungahara yerekana ibyibutsa igihe cyo kwishyura cyegereje. Ushobora kubifungura cyangwa kubifunga mu Igenamiterere.",
+  "Can I download my business records?": "Nshobora gukuramo inyandiko z’ubucuruzi bwanjye?",
+  "Yes. Open Settings, find Data & account, and choose the sales, stock, loans, or documents export you need.": "Yego. Fungura Igenamiterere, ujye ku Makuru na konti, maze uhitemo gukuramo ibyagurishijwe, ububiko, imyenda cyangwa inyandiko.",
+  "How do I change my account details?": "Nahindura nte amakuru ya konti yanjye?",
+  "Use Settings to update your name, business name, profile picture, password, appearance, and notification preferences.": "Koresha Igenamiterere uhindure izina, izina ry’ubucuruzi, ifoto y’umwirondoro, ijambo ry’ibanga, imigaragarire n’amatangazo.",
+  "Send us a suggestion or describe a problem.": "Twoherereze igitekerezo cyangwa usobanure ikibazo.",
+  "Suggestion or problem": "Igitekerezo cyangwa ikibazo", "Type your message here…": "Andika ubutumwa hano…",
+  "Your message was emailed to Kungahara support.": "Ubutumwa bwawe bwoherejwe ku bufasha bwa Kungahara.",
+  "Send message": "Ohereza ubutumwa", "Send": "Ohereza", "Export": "Kuramo",
+  "stock": "ububiko", "sales": "ibyagurishijwe", "loans": "imyenda",
+  "Unable to send your message.": "Ntibyashobotse kohereza ubutumwa bwawe."
+};
+
 const frenchMonths: Record<string, string> = {
   January: "janvier", February: "février", March: "mars", April: "avril", May: "mai", June: "juin",
   July: "juillet", August: "août", September: "septembre", October: "octobre", November: "novembre", December: "décembre",
@@ -155,14 +270,43 @@ const patterns: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
   [/^Export (stock|sales|loans)$/i, (m) => `Exporter ${m[1].toLowerCase() === "stock" ? "le stock" : m[1].toLowerCase() === "sales" ? "les ventes" : "les prêts"}`],
 ];
 
-function translate(value: string) {
+const kinyarwandaPatterns: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+  [/^Add document to (.+)$/, (m) => `Ongeramo inyandiko muri ${m[1]}`],
+  [/^Delete (.+)\?$/, (m) => `Siba ${m[1]}?`],
+  [/^View (.+)$/, (m) => `Reba ${m[1]}`],
+  [/^Delete (.+)$/, (m) => `Siba ${m[1]}`],
+  [/^Edit sale of (.+)$/, (m) => `Hindura icyagurishijwe cya ${m[1]}`],
+  [/^Delete sale of (.+)$/, (m) => `Siba icyagurishijwe cya ${m[1]}`],
+  [/^All in (.+)$/, (m) => `Byose muri ${m[1]}`],
+  [/^Money invested this (month|year)$/, (m) => `Amafaranga yashowe ${m[1] === "month" ? "uku kwezi" : "uyu mwaka"}`],
+  [/^Income this (month|year)$/, (m) => `Ayinjijwe ${m[1] === "month" ? "uku kwezi" : "uyu mwaka"}`],
+  [/^Profit this (month|year)$/, (m) => `Inyungu ${m[1] === "month" ? "y’uku kwezi" : "y’uyu mwaka"}`],
+  [/^Profit made this (month|year)$/, (m) => `Inyungu yabonetse ${m[1] === "month" ? "uku kwezi" : "uyu mwaka"}`],
+  [/^(\d+) loans? due this (month|year)$/, (m) => `Imyenda ${m[1]} igomba kwishyurwa ${m[2] === "month" ? "uku kwezi" : "uyu mwaka"}`],
+  [/^Sales in (.+)$/, (m) => `Ibyagurishijwe muri ${m[1]}`],
+  [/^Sales on (.+)$/, (m) => `Ibyagurishijwe ku wa ${m[1]}`],
+  [/^Week (\d+)$/, (m) => `Icyumweru cya ${m[1]}`],
+  [/^(\d+) documents?$/, (m) => `Inyandiko ${m[1]}`],
+  [/^(\d+) folders?$/, (m) => `Ububiko ${m[1]}`],
+  [/^(\d+) files?$/, (m) => `Inyandiko ${m[1]}`],
+  [/^(\d+) this week$/, (m) => `${m[1]} muri iki cyumweru`],
+  [/^Edit (.+) loan$/, (m) => `Hindura umwenda ${m[1]}`],
+  [/^Delete (.+) loan$/, (m) => `Siba umwenda ${m[1]}`],
+  [/^Use (.+)$/, (m) => `Koresha ${m[1]}`],
+  [/^(English|French|Kinyarwanda) is the current application language\.$/, (m) => `${kinyarwanda[m[1]] ?? m[1]} ni rwo rurimi rwa porogaramu rukoreshwa.`],
+  [/^Export (stock|sales|loans)$/i, (m) => `Bika ${kinyarwanda[m[1].toLowerCase()] ?? m[1]}`],
+];
+
+function translate(value: string, locale: string) {
   const leading = value.match(/^\s*/)?.[0] ?? "";
   const trailing = value.match(/\s*$/)?.[0] ?? "";
   const clean = value.trim();
   if (!clean) return value;
-  const direct = french[clean];
+  const dictionary = locale === "rw" ? kinyarwanda : french;
+  const activePatterns = locale === "rw" ? kinyarwandaPatterns : patterns;
+  const direct = dictionary[clean];
   if (direct) return leading + direct + trailing;
-  for (const [pattern, replacement] of patterns) {
+  for (const [pattern, replacement] of activePatterns) {
     const match = clean.match(pattern);
     if (match) return leading + replacement(match) + trailing;
   }
@@ -171,19 +315,19 @@ function translate(value: string) {
 
 export function useWorkspaceCopy() {
   const locale = useLocale();
-  return useCallback((value: string) => locale === "fr" ? translate(value).trim() : value, [locale]);
+  return useCallback((value: string) => locale === "fr" || locale === "rw" ? translate(value, locale).trim() : value, [locale]);
 }
 
 export function WorkspaceCopyTranslator() {
   const locale = useLocale();
 
   useEffect(() => {
-    if (locale !== "fr") return;
+    if (locale !== "fr" && locale !== "rw") return;
     function translateAttributes(element: Element) {
       ["placeholder", "aria-label", "title"].forEach((attribute) => {
         const value = element.getAttribute(attribute);
         if (!value) return;
-        const translated = translate(value);
+        const translated = translate(value, locale);
         if (translated !== value) element.setAttribute(attribute, translated);
       });
     }
@@ -192,7 +336,7 @@ export function WorkspaceCopyTranslator() {
       let node: Node | null;
       while ((node = walker.nextNode())) {
         if (node.parentElement?.closest("script, style")) continue;
-        const translated = translate(node.nodeValue ?? "");
+        const translated = translate(node.nodeValue ?? "", locale);
         if (translated !== node.nodeValue) node.nodeValue = translated;
       }
       if (root instanceof Element) translateAttributes(root);
@@ -201,7 +345,7 @@ export function WorkspaceCopyTranslator() {
     apply(document.querySelector(".dashboard-shell") ?? document.body);
     const observer = new MutationObserver((mutations) => mutations.forEach((mutation) => {
       if (mutation.type === "characterData") {
-        const translated = translate(mutation.target.nodeValue ?? "");
+        const translated = translate(mutation.target.nodeValue ?? "", locale);
         if (translated !== mutation.target.nodeValue) mutation.target.nodeValue = translated;
         return;
       }
@@ -211,7 +355,7 @@ export function WorkspaceCopyTranslator() {
       }
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.TEXT_NODE) {
-          const translated = translate(node.nodeValue ?? "");
+          const translated = translate(node.nodeValue ?? "", locale);
           if (translated !== node.nodeValue) node.nodeValue = translated;
         } else if (node instanceof Element) apply(node);
       });

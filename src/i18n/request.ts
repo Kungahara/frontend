@@ -6,7 +6,7 @@ const localeCookie = "kungahara-language";
 export default getRequestConfig(async () => {
   const store = await cookies();
   const requested = store.get(localeCookie)?.value;
-  const locale = requested === "fr" ? "fr" : "en";
+  const locale = requested === "fr" || requested === "rw" ? requested : "en";
 
   return {
     locale,

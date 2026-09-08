@@ -10,6 +10,7 @@ import { StockStatusIcon } from "@/components/stock-summary-card";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
+import { localizedFullDate, localizedMonth, localizedWeekday } from "@/lib/localized-date";
 
 type Sale = { id: string; productName: string; categoryName: string; size: string; quantity: number; unitPrice: string; total: string; createdAt: string };
 type Period = "1D" | "1W" | "1M" | "1Y";
@@ -30,7 +31,7 @@ function monthWeekRanges(value: string, locale = "en") {
   return Array.from({ length: Math.ceil(days / 7) }, (_, index) => {
     const startDay = index * 7 + 1;
     const endDay = Math.min(days, startDay + 6);
-    return { startDay, endDay, label: `${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
+    return { startDay, endDay, label: `${localizedMonth(new Date(year, monthIndex, 1), locale, "short")} ${startDay}–${endDay}` };
   });
 }
 
@@ -83,7 +84,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     const buckets = bucketDates.map((date, index) => {
       const next = period === "1D" ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() + 1) : period === "1Y" ? new Date(year, index + 1, 1) : period === "1M" ? new Date(monthYear, monthIndex, (weeks[index]?.endDay ?? date.getDate()) + 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
       const value = selected.filter((sale) => { const sold = new Date(sale.createdAt); return sold >= date && sold < next; }).reduce((sum, sale) => sum + Number(sale.total ?? Number(sale.unitPrice) * sale.quantity), 0);
-      const label = period === "1D" ? new Intl.DateTimeFormat(locale, { hour: "numeric" }).format(date) : period === "1Y" ? new Intl.DateTimeFormat(locale, { month: "short" }).format(date) : period === "1M" ? `${tr("Week")} ${index + 1}` : new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric" }).format(date);
+      const label = period === "1D" ? new Intl.DateTimeFormat(locale, { hour: "numeric" }).format(date) : period === "1Y" ? localizedMonth(date, locale, "short") : period === "1M" ? `${tr("Week")} ${index + 1}` : `${localizedWeekday(date, locale, "short")} ${date.getDate()}`;
       return { label, value };
     });
     const top = buckets.reduce((best, bucket) => bucket.value > best.value ? bucket : best, buckets[0] ?? { label: "No sales", value: 0 });
@@ -109,12 +110,12 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
   const { year: selectedMonthYear, monthIndex: selectedMonthIndex } = monthParts(month);
   const selectedWeek = weeks[Math.min(weekIndex, weeks.length - 1)] ?? weeks[0];
   const periodTitle = period === "1D"
-    ? `Sales on ${new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", year: "numeric" }).format(new Date(`${day}T00:00:00`))}`
+    ? `Sales on ${locale === "rw" ? localizedFullDate(new Date(`${day}T00:00:00`), locale) : new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", year: "numeric" }).format(new Date(`${day}T00:00:00`))}`
     : period === "1Y"
     ? `Sales in ${year}`
     : period === "1M"
-      ? `Sales in ${new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))}`
-      : `Sales in ${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
+      ? `Sales in ${localizedMonth(new Date(selectedMonthYear, selectedMonthIndex, 1), locale)}`
+      : `Sales in ${localizedMonth(new Date(selectedMonthYear, selectedMonthIndex, 1), locale, "short")} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
 
   if (loading) return <div className="sales-history-view">
     <div className="sales-page-loading sales-history-loading" role="status" aria-live="polite" aria-busy="true">

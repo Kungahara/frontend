@@ -139,7 +139,7 @@ export default async function HomePage() {
     <section className="marketing-section marketing-about" id="about">
       <div className="marketing-about-visual">
         <div className="marketing-about-card main"><p>{tr("Built for the way growing businesses really work.")}</p><strong>{tr("Clarity for every business day.")}</strong></div>
-        <div className="marketing-about-card stat"><strong>5</strong><span>{tr("connected workspaces")}</span></div>
+        <div className="marketing-about-card stat"><strong>150+</strong><span>{tr("connected workspaces")}</span></div>
         <div className="marketing-about-card note"><Focus aria-hidden="true" /><span>{tr("Designed with simplicity at the center.")}</span></div>
       </div>
       <div className="marketing-about-copy">

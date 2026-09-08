@@ -25,6 +25,7 @@ import { InactivityLogout } from "@/components/inactivity-logout";
 import { LogoutButton } from "@/components/logout-button";
 import { ProfileMenu } from "@/components/profile-menu";
 import { WorkspaceCopyTranslator } from "@/components/workspace-copy-translator";
+import { localizedFullDate } from "@/lib/localized-date";
 import { authRequest, type AuthUser } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
@@ -288,7 +289,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         const daysLeft = Math.round((deadline.getTime() - today.getTime()) / day);
         const reminderDays = new Set<number>([0, 1]);
         for (let remaining = Math.floor(totalDays / 2); remaining > 1; remaining = Math.floor(remaining / 2)) reminderDays.add(remaining);
-        if (daysLeft >= 0 && reminderDays.has(daysLeft)) alerts.push({ id: `loan-${loan.id}-${daysLeft}-${dateKey}`, title: t("alerts.loanTitle"), message: daysLeft === 0 ? t("alerts.loanDueToday", { source: loan.source }) : t("alerts.loanDueLater", { source: loan.source, days: daysLeft, date: deadline.toLocaleDateString(language === "fr" ? "fr-FR" : "en-GB") }) });
+        if (daysLeft >= 0 && reminderDays.has(daysLeft)) alerts.push({ id: `loan-${loan.id}-${daysLeft}-${dateKey}`, title: t("alerts.loanTitle"), message: daysLeft === 0 ? t("alerts.loanDueToday", { source: loan.source }) : t("alerts.loanDueLater", { source: loan.source, days: daysLeft, date: deadline.toLocaleDateString(language === "fr" ? "fr-FR" : language === "rw" ? "rw-RW" : "en-GB") }) });
       });
       alerts.forEach(receiveCurrencyAlert);
     } catch { /* Notifications should never block the workspace. */ }
@@ -393,12 +394,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const activeSlide = sidebarSlides[sidebarSlide];
   const activeSlideTitle = t(`slides.${activeSlide.key}.title`);
   const SlideIcon = activeSlide.icon;
-  const currentDate = new Intl.DateTimeFormat(language === "fr" ? "fr-FR" : "en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date());
+  const currentDate = localizedFullDate(new Date(), language);
 
   return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
     <InactivityLogout />

@@ -11,6 +11,7 @@ import { apiErrorMessage } from "@/lib/api/client";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
+import { localizedMonth, localizedWeekday } from "@/lib/localized-date";
 
 type Product = {
   id: string;
@@ -61,7 +62,7 @@ function monthWeekRanges(value: string, locale = "en") {
   return Array.from({ length: Math.ceil(days / 7) }, (_, index) => {
     const startDay = index * 7 + 1;
     const endDay = Math.min(days, startDay + 6);
-    return { startDay, endDay, label: `${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
+    return { startDay, endDay, label: `${localizedMonth(new Date(year, monthIndex, 1), locale, "short")} ${startDay}–${endDay}` };
   });
 }
 
@@ -135,8 +136,8 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
   const expensePath = smoothLinePath(expensePoints);
   const formatRwf = (value: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
   const formatDate = (date: Date) => period === "1W"
-    ? `${new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date)} ${date.getDate()}`
-    : new Intl.DateTimeFormat(locale, period === "1Y" ? { month: "short" } : { month: "short", day: "numeric" }).format(date);
+    ? `${localizedWeekday(date, locale, "short")} ${date.getDate()}`
+    : `${localizedMonth(date, locale, "short")}${period === "1Y" ? "" : ` ${date.getDate()}`}`;
   const hoveredValues = hoveredPoint?.series === "Income" ? income : expenses;
   const tooltipX = hoveredPoint ? Math.min(438, Math.max(64, x(hoveredPoint.index) - 46)) : 0;
   const tooltipY = hoveredPoint ? Math.max(8, y(hoveredValues[hoveredPoint.index]) - 50) : 0;

@@ -3,7 +3,7 @@ import { getLocale } from "next-intl/server";
 
 import { SalesOverview } from "@/components/sales-overview";
 
-export async function generateMetadata(): Promise<Metadata> { return { title: await getLocale() === "fr" ? "Ventes" : "Sales" }; }
+export async function generateMetadata(): Promise<Metadata> { const locale = await getLocale(); return { title: locale === "fr" ? "Ventes" : locale === "rw" ? "Ibyagurishijwe" : "Sales" }; }
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view } = await searchParams;
