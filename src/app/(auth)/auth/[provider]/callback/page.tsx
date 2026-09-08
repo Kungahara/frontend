@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Brand } from "@/components/brand";
 import { authRequest } from "@/lib/api/client";
+import { markSessionActivity } from "@/lib/session-activity";
 
 function CallbackStatus({ message, failed = false }: { message: string; failed?: boolean }) {
   return <main className="callback-page">
@@ -50,7 +51,7 @@ function OAuthCallback() {
     }
     if (!code) { showFailure("The sign-in provider did not return an authorization code. Please try again."); return; }
     authRequest(`oauth/${provider}`, { method: "POST", body: JSON.stringify({ code, redirectUri: `${window.location.origin}/auth/${provider}/callback` }) })
-      .then(() => { router.replace("/dashboard"); router.refresh(); })
+      .then(() => { markSessionActivity(); router.replace("/dashboard"); router.refresh(); })
       .catch((error) => { setFailed(true); setMessage(error instanceof Error ? error.message : "OAuth sign-in failed."); });
   }, [provider, router, search]);
   return <CallbackStatus message={message} failed={failed} />;

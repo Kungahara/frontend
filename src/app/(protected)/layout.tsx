@@ -19,6 +19,7 @@ import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState
 
 import { Brand } from "@/components/brand";
 import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monitor";
+import { InactivityLogout } from "@/components/inactivity-logout";
 import { LogoutButton } from "@/components/logout-button";
 import { ProfileMenu } from "@/components/profile-menu";
 import { authRequest, type AuthUser } from "@/lib/api/client";
@@ -106,6 +107,13 @@ const sidebarSlides = [
 ];
 
 const themeStorageKey = "kungahara:dashboard-theme";
+const languageStorageKey = "kungahara:language";
+type AppLanguage = "rw" | "en" | "fr";
+const languages: Array<{ value: AppLanguage; shortLabel: string; label: string }> = [
+  { value: "rw", shortLabel: "RW", label: "Kinyarwanda" },
+  { value: "en", shortLabel: "EN", label: "English" },
+  { value: "fr", shortLabel: "FR", label: "French" },
+];
 const businessClock = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Kigali", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", hourCycle: "h23" });
 
 function businessTime(date = new Date()) {
@@ -127,11 +135,22 @@ function savedDarkTheme() {
   }
 }
 
+function savedLanguage(): AppLanguage {
+  if (typeof window === "undefined") return "en";
+  try {
+    const language = window.localStorage.getItem(languageStorageKey);
+    return language === "rw" || language === "fr" ? language : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dark, setDark] = useState(savedDarkTheme);
+  const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
   const [sidebarSlide, setSidebarSlide] = useState(0);
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -159,6 +178,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     });
   }
 
+  function selectLanguage(next: AppLanguage) {
+    setLanguage(next);
+    try { window.localStorage.setItem(languageStorageKey, next); } catch { /* The selection still applies for this visit. */ }
+    window.dispatchEvent(new CustomEvent("kungahara:language-changed", { detail: { language: next } }));
+  }
+
   function dismissNotification(id: string) {
     setCurrencyAlerts((current) => current.filter((alert) => alert.id !== id));
   }
@@ -177,6 +202,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     [...menuItems.map((item) => item.href), "/settings", "/help"].forEach((href) => router.prefetch(href));
   }, [router]);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   useEffect(() => {
     function updateUser(event: Event) {
@@ -358,6 +387,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }).format(new Date());
 
   return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+    <InactivityLogout />
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
         <Brand subtitle={user.businessName} ariaLabel={sidebarCollapsed ? "Expand sidebar" : "Kungahara home"} onClick={sidebarCollapsed ? (event) => { event.preventDefault(); setSidebarCollapsed(false); } : undefined} />
@@ -403,6 +433,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         <div className="dashboard-topbar-right">
           <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
           <div className="dashboard-topbar-actions" ref={notificationsRef}>
+            <div className="dashboard-language-toggle" role="group" aria-label="Language">
+              {languages.map((item) => <button className={language === item.value ? "active" : ""} type="button" aria-label={`Use ${item.label}`} aria-pressed={language === item.value} title={item.label} key={item.value} onClick={() => selectLanguage(item.value)}>{item.shortLabel}</button>)}
+              <select className="dashboard-language-select" aria-label="Language" value={language} onChange={(event) => selectLanguage(event.target.value as AppLanguage)}>
+                {languages.map((item) => <option value={item.value} key={item.value}>{item.shortLabel}</option>)}
+              </select>
+            </div>
             <div className="dashboard-theme-toggle" aria-label="Theme">
               <button className={!dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={!dark} title="Toggle theme" onClick={toggleTheme}><Sun aria-hidden="true" /></button>
               <button className={dark ? "active" : ""} type="button" aria-label="Toggle theme" aria-pressed={dark} title="Toggle theme" onClick={toggleTheme}><Moon aria-hidden="true" /></button>

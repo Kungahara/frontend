@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { authRequest } from "@/lib/api/client";
+import { clearSessionActivity } from "@/lib/session-activity";
 
 type LogoutButtonProps = {
   className?: string;
@@ -20,6 +21,7 @@ export function LogoutButton({ className = "logout-button", label = "Sign out", 
   return <button className={className} disabled={busy} onClick={async () => {
     setBusy(true);
     await authRequest("logout", { method: "POST", body: "{}" }).catch(() => null);
+    clearSessionActivity();
     router.replace(redirectTo);
     router.refresh();
   }}>{showIcon && <LogOut aria-hidden="true" />}<span>{busy ? "Signing out…" : label}</span></button>;

@@ -1118,7 +1118,7 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-search input::placeholder { color: #9ba3b1; }
 .dashboard-account { display: flex; align-items: center; gap: 0.6rem; }
 .dashboard-account-mark { display: grid; width: 2.45rem; height: 2.45rem; place-items: center; color: white; font-weight: 800; background: #315fe4; border-radius: 50%; }
-.dashboard-account > span:last-child { display: grid; gap: 0.1rem; min-width: 8.5rem; }
+.dashboard-account-copy { display: grid; gap: 0.1rem; min-width: 8.5rem; }
 .dashboard-account strong { font-size: calc(0.75rem * var(--ui-text-scale)); }
 .dashboard-account small { color: #8b94a3; font-size: calc(0.62rem * var(--ui-text-scale)); }
 
@@ -1163,7 +1163,7 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-nav a, .dashboard-secondary-nav a, .back-to-frontend { justify-content: center; padding-inline: 0; }
   .dashboard-sidebar-signout { padding-inline: 0.2rem; font-size: calc(0.68rem * var(--ui-text-scale)); text-align: center; }
   .dashboard-stage { min-height: calc(100vh - 1rem); }
-  .dashboard-account > span:last-child { display: none; }
+  .dashboard-account-copy { display: none; }
   .dashboard-account-mark { width: 2.2rem; height: 2.2rem; }
   .dashboard-data-grid { grid-template-columns: 1fr; grid-template-rows: repeat(5, minmax(7rem, auto)); }
   .dashboard-data-grid .wide { grid-column: auto; }
@@ -1445,9 +1445,9 @@ button.marketing-signup { cursor: pointer; }
 .sidebar-collapse-toggle:hover { color: #315fe4; background: #eaf0ff; border-color: #d6e0ff; }
 .sidebar-collapse-toggle:focus-visible { outline: 2px solid #88a4ff; outline-offset: 2px; }
 .sidebar-collapse-toggle svg { width: 0.9rem; height: 0.9rem; stroke-width: 1.7; }
-.dashboard-shell.sidebar-collapsed { grid-template-columns: 5rem minmax(0, 1fr); }
-.sidebar-collapsed .dashboard-sidebar { padding-inline: 0.55rem; }
-.sidebar-collapsed .dashboard-sidebar-header { justify-content: center; gap: 0.2rem; padding-inline: 0; }
+.dashboard-shell.sidebar-collapsed { grid-template-columns: 3.75rem minmax(0, 1fr); }
+.sidebar-collapsed .dashboard-sidebar { padding-inline: 0.4rem; }
+.sidebar-collapsed .dashboard-sidebar-header { justify-content: center; gap: 0.2rem; margin-bottom: 0.85rem; padding-inline: 0; }
 .sidebar-collapsed .dashboard-sidebar .brand-copy,
 .sidebar-collapsed .dashboard-sidebar .dashboard-nav-label,
 .sidebar-collapsed .dashboard-sidebar .dashboard-nav span,
@@ -1563,6 +1563,11 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-theme-toggle button svg { width: 0.78rem; height: 0.78rem; stroke-width: 1.55; }
 .dashboard-theme-toggle button.active { color: #f1bd35; background: white; box-shadow: 0 1px 5px rgb(40 48 64 / 12%); }
 .dashboard-theme-toggle button:last-child.active { color: #687080; }
+.dashboard-language-toggle { display: flex; align-items: center; gap: 0.05rem; padding: 0.15rem; background: #e2e6ec; border-radius: 999px; box-shadow: inset 0 0 0 1px rgb(117 128 145 / 5%); }
+.dashboard-language-toggle button { display: grid; min-width: 1.85rem; height: 1.65rem; place-items: center; padding: 0 0.34rem; color: #858d9a; font-size: calc(0.52rem * var(--ui-text-scale)); font-weight: 700; background: transparent; border: 0; border-radius: 999px; cursor: pointer; transition: color 150ms ease, background 150ms ease, box-shadow 150ms ease; }
+.dashboard-language-toggle button:hover { color: #315fe4; }
+.dashboard-language-toggle button.active { color: #315fe4; background: white; box-shadow: 0 1px 5px rgb(40 48 64 / 12%); }
+.dashboard-language-select { display: none; }
 .dashboard-notifications { position: relative; }
 .dashboard-notifications > button { position: relative; display: grid; width: 1.85rem; height: 1.85rem; place-items: center; padding: 0; color: #858b96; background: transparent; border: 0; border-radius: 50%; cursor: pointer; }
 .dashboard-notifications > button:hover { color: #315fe4; background: #edf1fb; }
@@ -1593,7 +1598,6 @@ button.marketing-signup { cursor: pointer; }
 .dashboard-account-mark { width: 1.9rem; height: 1.9rem; overflow: hidden; font-size: calc(0.65rem * var(--ui-text-scale)); font-weight: 600; }
 .dashboard-account-mark.has-image { background: transparent; }
 .dashboard-account-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.dashboard-account > span:last-child { min-width: 7.5rem; gap: 0; }
 .dashboard-account strong { color: #30353f; font-size: calc(0.66rem * var(--ui-text-scale)); font-weight: 550; }
 .dashboard-account small { color: #9aa0aa; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 400; }
 .dashboard-profile-control { position: relative; }
@@ -1643,6 +1647,10 @@ button.marketing-signup { cursor: pointer; }
   box-shadow: 0 2px 7px rgb(0 0 0 / 26%);
 }
 .dashboard-theme-dark .dashboard-theme-toggle button:last-child.active { color: #a9bcff; }
+.dashboard-theme-dark .dashboard-language-toggle { background: #0f1624; box-shadow: inset 0 0 0 1px #2a3549; }
+.dashboard-theme-dark .dashboard-language-toggle button { color: #748198; }
+.dashboard-theme-dark .dashboard-language-toggle button:hover { color: #cbd5e6; }
+.dashboard-theme-dark .dashboard-language-toggle button.active { color: #c8d5ff; background: #263249; box-shadow: 0 2px 7px rgb(0 0 0 / 26%); }
 .dashboard-theme-dark .dashboard-notifications > button { color: #aab5c9; }
 .dashboard-theme-dark .dashboard-notifications > button:hover {
   color: #dbe4ff;
@@ -2695,11 +2703,13 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-theme-toggle { gap: 0.06rem; padding: 0.17rem; }
   .dashboard-theme-toggle button { width: 1.82rem; height: 1.82rem; }
   .dashboard-theme-toggle button svg { width: 0.86rem; height: 0.86rem; }
+  .dashboard-language-toggle { gap: 0.06rem; padding: 0.17rem; }
+  .dashboard-language-toggle button { min-width: 2.04rem; height: 1.82rem; font-size: calc(0.57rem * var(--ui-text-scale)); }
   .dashboard-notifications > button { width: 2.04rem; height: 2.04rem; }
   .dashboard-notifications > button svg { width: 0.94rem; height: 0.94rem; }
   .dashboard-account { gap: 0.55rem; margin-left: 0.28rem; }
   .dashboard-account-mark { width: 2.09rem; height: 2.09rem; font-size: calc(0.72rem * var(--ui-text-scale)); }
-  .dashboard-account > span:last-child { min-width: 8.25rem; }
+  .dashboard-account-copy { min-width: 8.25rem; }
   .dashboard-account strong { font-size: calc(0.73rem * var(--ui-text-scale)); }
   .dashboard-account small { font-size: calc(0.61rem * var(--ui-text-scale)); }
   .currency-monitor { gap: 0.39rem; }
@@ -2738,7 +2748,7 @@ button.marketing-signup { cursor: pointer; }
 }
 
 @media (min-width: 851px) and (max-width: 900px) {
-  .dashboard-account > span:last-child { display: none; }
+  .dashboard-account-copy { display: none; }
   .sidebar-collapsed .dashboard-sidebar-header { margin-bottom: 0.8rem; }
 }
 
@@ -2768,7 +2778,7 @@ button.marketing-signup { cursor: pointer; }
 }
 
 @media (max-width: 850px) {
-  .dashboard-account > span:last-child { display: none; }
+  .dashboard-account-copy { display: none; }
   .dashboard-topbar-right { gap: 0.35rem; }
   .dashboard-workspace { overscroll-behavior: contain; }
   .data-page-workspace { overflow-x: hidden; overflow-y: auto; }
@@ -2796,6 +2806,7 @@ button.marketing-signup { cursor: pointer; }
   .dashboard-page-identity strong { max-width: 8.5rem; overflow: hidden; font-size: calc(0.9rem * var(--ui-text-scale)); text-overflow: ellipsis; white-space: nowrap; }
   .dashboard-page-identity small, .currency-monitor { display: none; }
   .dashboard-topbar-actions { gap: 0.12rem; padding: 0.2rem 0.3rem; }
+  .dashboard-language-toggle button { min-width: 1.35rem; height: 2rem; padding-inline: 0.16rem; font-size: calc(0.46rem * var(--ui-text-scale)); }
   .dashboard-theme-toggle button, .dashboard-notifications > button, .dashboard-account-mark { width: 2rem; height: 2rem; }
   .dashboard-workspace { min-width: 0; padding: 0.5rem; border-radius: 0; }
   .notification-popover { position: fixed; top: 4rem; right: 0.5rem; left: 0.5rem; width: auto; max-width: none; max-height: calc(100dvh - 9.5rem); overflow-y: auto; }
@@ -2825,6 +2836,12 @@ button.marketing-signup { cursor: pointer; }
   .documents-photo-viewer-image { height: min(70dvh, 35rem); }
   .stock-delete-backdrop, .currency-dialog-backdrop, .documents-folder-dialog-backdrop, .settings-dialog-backdrop { padding: 0.5rem; }
   .stock-delete-dialog, .stock-add-dialog, .currency-dialog, .documents-folder-dialog, .settings-delete-dialog { width: 100%; max-height: calc(100dvh - 1rem); border-radius: 0.75rem; }
+}
+
+@media (max-width: 460px) {
+  .dashboard-language-toggle button { display: none; }
+  .dashboard-language-select { display: block; width: 2rem; height: 2rem; padding: 0; color: #315fe4; font: 700 calc(0.52rem * var(--ui-text-scale)) Outfit, sans-serif; text-align: center; background: white; border: 0; border-radius: 999px; outline: 0; cursor: pointer; }
+  .dashboard-theme-dark .dashboard-language-select { color: #c8d5ff; background: #263249; }
 }
 
 @media (max-width: 560px) {

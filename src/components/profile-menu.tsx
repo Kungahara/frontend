@@ -70,7 +70,6 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
   return <div className="dashboard-profile-control" ref={rootRef}>
     <button className="dashboard-account" type="button" aria-label="Open profile options" aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
       <span className={`dashboard-account-mark${user.profileImageUrl ? " has-image" : ""}`} aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
-      <span><strong>{name}</strong><small>{user.email}</small></span>
     </button>
     {open && <div className="dashboard-profile-menu">
       <div className="profile-menu-heading">
