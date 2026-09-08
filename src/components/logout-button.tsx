@@ -2,6 +2,7 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { authRequest } from "@/lib/api/client";
@@ -14,8 +15,9 @@ type LogoutButtonProps = {
   showIcon?: boolean;
 };
 
-export function LogoutButton({ className = "logout-button", label = "Sign out", redirectTo = "/login", showIcon = false }: LogoutButtonProps) {
+export function LogoutButton({ className = "logout-button", label, redirectTo = "/login", showIcon = false }: LogoutButtonProps) {
   const router = useRouter();
+  const t = useTranslations("Common");
   const [busy, setBusy] = useState(false);
 
   return <button className={className} disabled={busy} onClick={async () => {
@@ -24,5 +26,5 @@ export function LogoutButton({ className = "logout-button", label = "Sign out", 
     clearSessionActivity();
     router.replace(redirectTo);
     router.refresh();
-  }}>{showIcon && <LogOut aria-hidden="true" />}<span>{busy ? "Signing out…" : label}</span></button>;
+  }}>{showIcon && <LogOut aria-hidden="true" />}<span>{busy ? t("signingOut") : label ?? t("signOut")}</span></button>;
 }

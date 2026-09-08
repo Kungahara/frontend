@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { ApiError, authRequest } from "@/lib/api/client";
@@ -9,6 +10,7 @@ import { markSessionActivity } from "@/lib/session-activity";
 import { OAuthButtons } from "./oauth-buttons";
 
 export function LoginForm() {
+  const commonText = useTranslations("Common");
   const router = useRouter(); const params = useSearchParams();
   const inactivityMessage = params.get("reason") === "inactive" ? "You were signed out after 2 days of inactivity. Sign in to continue." : "";
   const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [show, setShow] = useState(false);
@@ -41,7 +43,7 @@ export function LoginForm() {
       <label>Password<span className="password-wrap"><input name="password" type={show ? "text" : "password"} autoComplete="current-password" placeholder="Password" required /><button type="button" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow(!show)}>{show ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}</button></span></label>
       <div className="login-options"><label className="remember-choice"><input name="rememberMe" type="checkbox" /><span>Remember me</span></label><Link href="/forgot-password">Forgot password?</Link></div>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button className="submit-button" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+      <button className="submit-button" disabled={busy}>{busy ? commonText("signingIn") : "Sign in"}</button>
     </form>
     <div className="divider"><span>or continue with</span></div><OAuthButtons mode="login" />
     <p className="switch-auth after-oauth">New to Kungahara? <Link href="/signup">Create an account</Link></p>

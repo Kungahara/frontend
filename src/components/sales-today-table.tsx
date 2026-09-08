@@ -3,6 +3,7 @@
 import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
@@ -18,6 +19,7 @@ function localDateValue(date = new Date()) {
 }
 
 export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
+  const commonText = useTranslations("Common");
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [query, setQuery] = useState("");
@@ -213,14 +215,14 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
         <label>Sold for<input required type="number" min="0.01" step="0.01" value={editSoldFor} onChange={(event) => setEditSoldFor(event.target.value)} /></label>
       </div>
       {error && <p className="stock-add-note" role="alert">{error}</p>}
-      <button className="stock-add-submit" disabled={busy}>{busy ? "Saving sale…" : "Save changes"}</button>
+      <button className="stock-add-submit" disabled={busy}>{busy ? commonText("savingSale") : "Save changes"}</button>
     </form></div>}
     {deleting && <div className="stock-delete-backdrop" role="presentation"><div className="stock-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-sale-title">
       <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => setDeleting(null)}><X aria-hidden="true" /></button>
       <h3 id="delete-sale-title">Delete sale of {deleting.productName}?</h3>
       <p>This removes the sale and restores <strong>{deleting.quantity}</strong> item{deleting.quantity === 1 ? "" : "s"} to Stock.</p>
       {error && <p className="stock-add-note" role="alert">{error}</p>}
-      <button className="stock-delete-confirm" type="button" disabled={busy} onClick={() => void deleteSale()}>{busy ? "Deleting sale…" : "Delete sale"}</button>
+      <button className="stock-delete-confirm" type="button" disabled={busy} onClick={() => void deleteSale()}>{busy ? commonText("deletingSale") : "Delete sale"}</button>
     </div></div>}
   </section>;
 }

@@ -4,19 +4,21 @@ import Link from "next/link";
 import { CircleAlert, ShieldCheck } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Brand } from "@/components/brand";
 import { authRequest } from "@/lib/api/client";
 import { markSessionActivity } from "@/lib/session-activity";
 
 function CallbackStatus({ message, failed = false }: { message: string; failed?: boolean }) {
+  const loadingText = useTranslations("Loading");
   return <main className="callback-page">
     <div className={`callback-card${failed ? " callback-card-failed" : ""}`}>
       <Brand />
       <div className="callback-status-icon" aria-hidden="true">
         {failed ? <CircleAlert /> : <><ShieldCheck /><span className="callback-spinner" /></>}
       </div>
-      <p className="callback-eyebrow">Secure sign in</p>
-      <h1>{failed ? "Unable to sign in" : "Signing you in"}</h1>
+      <p className="callback-eyebrow">{loadingText("secureSignIn")}</p>
+      <h1>{failed ? "Unable to sign in" : loadingText("signingYouIn")}</h1>
       <p className="callback-message">{message}</p>
       {failed && <Link className="callback-action" href="/login">Back to sign in</Link>}
     </div>
@@ -24,8 +26,9 @@ function CallbackStatus({ message, failed = false }: { message: string; failed?:
 }
 
 function OAuthCallback() {
+  const loadingText = useTranslations("Loading");
   const { provider } = useParams<{ provider: string }>(); const search = useSearchParams(); const router = useRouter();
-  const [message, setMessage] = useState("Completing your secure sign in…");
+  const [message, setMessage] = useState(() => loadingText("completingSignIn"));
   const [failed, setFailed] = useState(false);
   const started = useRef(false);
   useEffect(() => {
@@ -58,5 +61,6 @@ function OAuthCallback() {
 }
 
 export default function OAuthCallbackPage() {
-  return <Suspense fallback={<CallbackStatus message="Preparing secure sign in…" />}><OAuthCallback /></Suspense>;
+  const loadingText = useTranslations("Loading");
+  return <Suspense fallback={<CallbackStatus message={loadingText("preparingSecureSignIn")} />}><OAuthCallback /></Suspense>;
 }

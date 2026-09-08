@@ -2,16 +2,18 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { CloudUpload, Download, Monitor, Moon, ShieldAlert, Sun, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
-import { CustomSelect } from "@/components/custom-select";
 import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { browserPushSupported, disableBrowserPush, enableBrowserPush } from "@/lib/browser-push";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type ThemeMode = "light" | "dark" | "system";
 type Scope = "today" | "month" | "year";
+type AppLanguage = "rw" | "en" | "fr";
 type Preferences = {
   theme: ThemeMode;
   scope: Scope;
@@ -32,8 +34,22 @@ type NotificationPreferences = {
 };
 
 const preferenceKey = "kungahara:settings";
+const languageKey = "kungahara:language";
 const defaultPreferences: Preferences = { theme: "light", scope: "month", salesReminders: true, noonReminder: true, eveningReminder: true, loanReminders: true, workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"], emailDelivery: false, browserPushDelivery: false };
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const languages: Array<{ value: AppLanguage; shortLabel: string; label: string }> = [
+  { value: "rw", shortLabel: "RW", label: "Kinyarwanda" },
+  { value: "en", shortLabel: "EN", label: "English" },
+  { value: "fr", shortLabel: "FR", label: "French" },
+];
+
+function savedLanguage(): AppLanguage {
+  if (typeof window === "undefined") return "en";
+  try {
+    const saved = window.localStorage.getItem(languageKey);
+    return saved === "rw" || saved === "fr" ? saved : "en";
+  } catch { return "en"; }
+}
 
 function Switch({ checked, disabled = false, label, onChange }: { checked: boolean; disabled?: boolean; label: string; onChange: (checked: boolean) => void }) {
   return <button className={`settings-switch${checked ? " active" : ""}`} type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} onClick={() => onChange(!checked)}><span /></button>;
@@ -41,6 +57,9 @@ function Switch({ checked, disabled = false, label, onChange }: { checked: boole
 
 export function SettingsContent() {
   const router = useRouter();
+  const loadingText = useTranslations("Loading");
+  const commonText = useTranslations("Common");
+  const tr = useWorkspaceCopy();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [preferences, setPreferences] = useState<Preferences>(() => {
@@ -57,6 +76,7 @@ export function SettingsContent() {
       };
     } catch { return defaultPreferences; }
   });
+  const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -93,12 +113,28 @@ export function SettingsContent() {
     }).finally(() => setProfileLoading(false));
   }, []);
 
+  useEffect(() => {
+    function syncLanguage(event: Event) {
+      const next = (event as CustomEvent<{ language?: string }>).detail?.language;
+      if (next === "rw" || next === "en" || next === "fr") setLanguage(next);
+    }
+    window.addEventListener("kungahara:language-changed", syncLanguage);
+    return () => window.removeEventListener("kungahara:language-changed", syncLanguage);
+  }, []);
+
   function savePreferences(next: Preferences) {
     setPreferences(next);
     window.localStorage.setItem(preferenceKey, JSON.stringify(next));
     window.localStorage.setItem("kungahara:dashboard-theme", next.theme);
     window.localStorage.setItem("kungahara:dashboard-scope", next.scope);
     window.dispatchEvent(new CustomEvent("kungahara:settings-changed", { detail: next }));
+  }
+
+  function selectLanguage(next: AppLanguage) {
+    setLanguage(next);
+    try { window.localStorage.setItem(languageKey, next); } catch { /* Keep the selection for this visit. */ }
+    window.dispatchEvent(new CustomEvent("kungahara:language-changed", { detail: { language: next } }));
+    void fetch("/api/language", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language: next }) }).finally(() => window.location.reload());
   }
 
   async function updateDelivery(channel: "email" | "browser", enabled: boolean) {
@@ -193,14 +229,14 @@ export function SettingsContent() {
   }
 
   const initials = `${user?.firstName[0] ?? ""}${user?.lastName[0] ?? ""}`.toUpperCase();
-  if (profileLoading) return <div className="settings-initial-state" role="status" aria-live="polite"><span className="settings-loading-spinner" aria-hidden="true" /><strong>Loading your settings…</strong><small>Getting your profile and business details.</small></div>;
+  if (profileLoading) return <div className="settings-initial-state" role="status" aria-live="polite"><span className="settings-loading-spinner" aria-hidden="true" /><strong>{loadingText("settings")}</strong><small>{loadingText("settingsBody")}</small></div>;
   if (!user) return <div className="settings-initial-state error" role="alert"><strong>Settings could not be loaded</strong><small>{error || "Unable to load your profile and business details."}</small><button type="button" onClick={() => void loadProfile()}>Try again</button></div>;
   return <div className="settings-page">
     {(message || error) && <div className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}><span>{error || message}</span><button type="button" aria-label="Dismiss notification" onClick={() => { setMessage(""); setError(""); }}><X aria-hidden="true" /></button></div>}
 
     <section className="settings-section" aria-label="Profile and business settings">
-      <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Upload aria-hidden="true" />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button"><CloudUpload aria-hidden="true" />{busy === "picture" ? "Uploading…" : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
-      <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={!!user && !["owner", "admin"].includes(user.role)} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? "Saving…" : "Save details"}</button></form>
+      <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Upload aria-hidden="true" />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button"><CloudUpload aria-hidden="true" />{busy === "picture" ? commonText("uploading") : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
+      <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={!!user && !["owner", "admin"].includes(user.role)} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? commonText("saving") : "Save details"}</button></form>
     </section>
 
     <section className="settings-section settings-appearance-section" aria-label="Dashboard and appearance settings">
@@ -209,25 +245,25 @@ export function SettingsContent() {
         const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
         return <button className={preferences.theme === theme ? "active" : ""} type="button" aria-pressed={preferences.theme === theme} key={theme} onClick={() => savePreferences({ ...preferences, theme })}><ThemeIcon aria-hidden="true" />{theme[0].toUpperCase() + theme.slice(1)}</button>;
       })}</div></div>
-      <div className="settings-row settings-language-row"><div><strong>Language</strong><small>English is the current application language.</small></div><CustomSelect className="settings-language-select" label="Language" value="en" options={[{ label: "English", value: "en" }]} onChange={() => undefined} /></div>
+      <div className="settings-row settings-language-row"><div><strong>Language</strong><small>{languages.find((item) => item.value === language)?.label} is the current application language.</small></div><div className="settings-choice-group settings-language-choice" role="group" aria-label="Application language">{languages.map((item) => <button className={language === item.value ? "active" : ""} type="button" aria-label={`Use ${item.label}`} title={item.label} aria-pressed={language === item.value} key={item.value} onClick={() => selectLanguage(item.value)}>{item.shortLabel}</button>)}</div></div>
     </section>
 
     <section className="settings-section" aria-label="Notification and reminder settings">
       <div className="settings-row"><div><strong>Sales reminders</strong><small>Notify you when no sale has been recorded on a working day.</small></div><Switch label="Sales reminders" checked={preferences.salesReminders} onChange={(salesReminders) => savePreferences({ ...preferences, salesReminders })} /></div>
       <div className="settings-row nested"><div><strong>Noon reminder</strong><small>Shown after 12:00 PM.</small></div><Switch label="Noon reminder" disabled={!preferences.salesReminders} checked={preferences.salesReminders && preferences.noonReminder} onChange={(noonReminder) => savePreferences({ ...preferences, noonReminder })} /></div>
       <div className="settings-row nested"><div><strong>Evening reminder</strong><small>Shown after 8:00 PM.</small></div><Switch label="8 PM reminder" disabled={!preferences.salesReminders} checked={preferences.salesReminders && preferences.eveningReminder} onChange={(eveningReminder) => savePreferences({ ...preferences, eveningReminder })} /></div>
-      <div className="settings-row working-days"><div><strong>Working days</strong><small>Sales reminders only appear on selected days.</small></div><div className="settings-day-picker">{days.map((day) => <button className={preferences.workingDays.includes(day) ? "active" : ""} type="button" aria-pressed={preferences.workingDays.includes(day)} key={day} onClick={() => savePreferences({ ...preferences, workingDays: preferences.workingDays.includes(day) ? preferences.workingDays.filter((item) => item !== day) : [...preferences.workingDays, day] })}>{day}</button>)}</div></div>
+      <div className="settings-row working-days"><div><strong>{tr("Working days")}</strong><small>{tr("Sales reminders only appear on selected days.")}</small></div><div className="settings-day-picker">{days.map((day) => <button className={preferences.workingDays.includes(day) ? "active" : ""} type="button" aria-pressed={preferences.workingDays.includes(day)} key={day} onClick={() => savePreferences({ ...preferences, workingDays: preferences.workingDays.includes(day) ? preferences.workingDays.filter((item) => item !== day) : [...preferences.workingDays, day] })}>{tr(day)}</button>)}</div></div>
       <div className="settings-row"><div><strong>Loan deadline reminders</strong><small>Keep the existing reminders for upcoming loan repayment dates.</small></div><Switch label="Loan reminders" checked={preferences.loanReminders} onChange={(loanReminders) => savePreferences({ ...preferences, loanReminders })} /></div>
       <div className="settings-row"><div><strong>Delivery</strong><small>Choose where stock, sales, and loan alerts should reach you.</small></div><div className="settings-delivery"><span className="available">In-app · on</span><button type="button" className={preferences.emailDelivery ? "active" : ""} aria-pressed={preferences.emailDelivery} disabled={!!busy} onClick={() => void updateDelivery("email", !preferences.emailDelivery)}>Email · {busy === "delivery-email" ? "saving…" : preferences.emailDelivery ? "on" : "off"}</button><button type="button" className={preferences.browserPushDelivery ? "active" : ""} aria-pressed={preferences.browserPushDelivery} disabled={!!busy || !browserPushSupported()} onClick={() => void updateDelivery("browser", !preferences.browserPushDelivery)}>Browser push · {busy === "delivery-browser" ? "saving…" : preferences.browserPushDelivery ? "on" : "off"}</button></div></div>
     </section>
 
-    <section className="settings-section" aria-label="Security settings"><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? "Sending…" : "Send change link"}</button></div></section>
+    <section className="settings-section" aria-label="Security settings"><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? commonText("sending") : "Send change link"}</button></div></section>
 
     <section className="settings-section" aria-label="Data and account settings">
       <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>
       <div className="settings-danger-row"><span><ShieldAlert /></span><div><strong>Delete account</strong><small>This permanently removes your account and cannot be undone.</small></div><button type="button" onClick={() => setDeleteOpen(true)}>Delete account</button></div>
     </section>
 
-    {deleteOpen && <div className="settings-dialog-backdrop"><div className="settings-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title"><ShieldAlert /><h3 id="delete-account-title">Delete your account?</h3><p>Your account and any business data owned only by this account will be permanently removed.</p><div><button type="button" onClick={() => setDeleteOpen(false)}>Cancel</button><button className="danger" type="button" disabled={busy === "delete"} onClick={() => void deleteAccount()}>{busy === "delete" ? "Deleting…" : "Delete permanently"}</button></div></div></div>}
+    {deleteOpen && <div className="settings-dialog-backdrop"><div className="settings-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title"><ShieldAlert /><h3 id="delete-account-title">Delete your account?</h3><p>Your account and any business data owned only by this account will be permanently removed.</p><div><button type="button" onClick={() => setDeleteOpen(false)}>Cancel</button><button className="danger" type="button" disabled={busy === "delete"} onClick={() => void deleteAccount()}>{busy === "delete" ? commonText("deleting") : "Delete permanently"}</button></div></div></div>}
   </div>;
 }

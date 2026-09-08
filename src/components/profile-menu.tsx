@@ -1,12 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Building2, Camera, Check, CloudUpload, Pencil, Trash2, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 
 export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChange: (user: AuthUser) => void }) {
+  const commonText = useTranslations("Common");
+  const t = useTranslations("Profile");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +38,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     formData.set("image", image);
     const response = await fetch("/api/profile-picture", { method: "POST", body: formData });
     const body = await response.json().catch(() => null);
-    if (!response.ok) setError(apiErrorMessage(body, "Unable to upload the profile picture."));
+    if (!response.ok) setError(apiErrorMessage(body, t("uploadError")));
     else { onUserChange(body.user as AuthUser); setOpen(false); }
     setBusy(false);
   }
@@ -45,7 +48,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     setError("");
     const response = await fetch("/api/profile-picture", { method: "DELETE" });
     const body = await response.json().catch(() => null);
-    if (!response.ok) setError(apiErrorMessage(body, "Unable to remove the profile picture."));
+    if (!response.ok) setError(apiErrorMessage(body, t("removeError")));
     else { onUserChange(body.user as AuthUser); setOpen(false); }
     setBusy(false);
   }
@@ -61,14 +64,14 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
       setBusinessName(result.user.businessName ?? "");
       setEditingBusiness(false);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to update the business name.");
+      setError(reason instanceof Error ? reason.message : t("businessError"));
     } finally {
       setBusy(false);
     }
   }
 
   return <div className="dashboard-profile-control" ref={rootRef}>
-    <button className="dashboard-account" type="button" aria-label="Open profile options" aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
+    <button className="dashboard-account" type="button" aria-label={t("openOptions")} aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
       <span className={`dashboard-account-mark${user.profileImageUrl ? " has-image" : ""}`} aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
     </button>
     {open && <div className="dashboard-profile-menu">
@@ -77,15 +80,15 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
         <span><strong>{name}</strong><small>{user.email}</small></span>
       </div>
       {editingBusiness ? <form className="profile-business-form" onSubmit={saveBusiness}>
-        <label>Business name<input autoFocus required maxLength={200} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label>
-        <div><button type="submit" aria-label="Save business name" disabled={busy || !businessName.trim()}><Check aria-hidden="true" /></button><button type="button" aria-label="Cancel editing business name" onClick={() => { setEditingBusiness(false); setBusinessName(user.businessName ?? ""); }}><X aria-hidden="true" /></button></div>
-      </form> : <button className="profile-menu-action" type="button" disabled={!['owner', 'admin'].includes(user.role)} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>Business name</small>{user.businessName ?? "Not set"}</span><Pencil aria-hidden="true" /></button>}
+        <label>{t("businessName")}<input autoFocus required maxLength={200} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label>
+        <div><button type="submit" aria-label={t("saveBusinessName")} disabled={busy || !businessName.trim()}><Check aria-hidden="true" /></button><button type="button" aria-label={t("cancelBusinessEdit")} onClick={() => { setEditingBusiness(false); setBusinessName(user.businessName ?? ""); }}><X aria-hidden="true" /></button></div>
+      </form> : <button className="profile-menu-action" type="button" disabled={!['owner', 'admin'].includes(user.role)} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>{t("businessName")}</small>{user.businessName ?? t("notSet")}</span><Pencil aria-hidden="true" /></button>}
       <label className={`profile-menu-action${busy ? " disabled" : ""}`}>
-        <CloudUpload aria-hidden="true" /><span>{busy ? "Uploading…" : user.profileImageUrl ? "Change profile picture" : "Upload profile picture"}</span>
+        <CloudUpload aria-hidden="true" /><span>{busy ? commonText("uploading") : user.profileImageUrl ? t("changePicture") : t("uploadPicture")}</span>
         <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} />
       </label>
-      {user.profileImageUrl && <button className="profile-menu-action danger" type="button" disabled={busy} onClick={remove}><Trash2 aria-hidden="true" /><span>Remove profile picture</span></button>}
-      {!user.profileImageUrl && <p className="profile-menu-hint"><Camera aria-hidden="true" /> JPEG, PNG or WebP, up to 5 MB.</p>}
+      {user.profileImageUrl && <button className="profile-menu-action danger" type="button" disabled={busy} onClick={remove}><Trash2 aria-hidden="true" /><span>{t("removePicture")}</span></button>}
+      {!user.profileImageUrl && <p className="profile-menu-hint"><Camera aria-hidden="true" /> {t("pictureHint")}</p>}
       {error && <p className="profile-menu-error" role="alert">{error}</p>}
     </div>}
   </div>;

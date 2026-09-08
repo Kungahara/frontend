@@ -2,12 +2,14 @@
 
 import { BadgeDollarSign, ClipboardList, Coins, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { StockStatusIcon } from "@/components/stock-summary-card";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
+import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 
 type Sale = { id: string; productName: string; categoryName: string; size: string; quantity: number; unitPrice: string; total: string; createdAt: string };
 type Period = "1D" | "1W" | "1M" | "1Y";
@@ -22,17 +24,20 @@ function monthParts(value: string) {
   return { year, monthIndex: month - 1 };
 }
 
-function monthWeekRanges(value: string) {
+function monthWeekRanges(value: string, locale = "en") {
   const { year, monthIndex } = monthParts(value);
   const days = new Date(year, monthIndex + 1, 0).getDate();
   return Array.from({ length: Math.ceil(days / 7) }, (_, index) => {
     const startDay = index * 7 + 1;
     const endDay = Math.min(days, startDay + 6);
-    return { startDay, endDay, label: `${new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
+    return { startDay, endDay, label: `${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
   });
 }
 
 export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
+  const loadingText = useTranslations("Loading");
+  const locale = useLocale();
+  const tr = useWorkspaceCopy();
   const now = new Date();
   const [sales, setSales] = useState<Sale[]>([]);
   const [query, setQuery] = useState("");
@@ -60,7 +65,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     return () => { active = false; controller.abort(); };
   }, []);
 
-  const weeks = monthWeekRanges(month);
+  const weeks = monthWeekRanges(month, locale);
   const analysis = useMemo(() => {
     const { year: monthYear, monthIndex } = monthParts(month);
     const selectedWeek = weeks[Math.min(weekIndex, weeks.length - 1)] ?? weeks[0];
@@ -78,7 +83,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     const buckets = bucketDates.map((date, index) => {
       const next = period === "1D" ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() + 1) : period === "1Y" ? new Date(year, index + 1, 1) : period === "1M" ? new Date(monthYear, monthIndex, (weeks[index]?.endDay ?? date.getDate()) + 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
       const value = selected.filter((sale) => { const sold = new Date(sale.createdAt); return sold >= date && sold < next; }).reduce((sum, sale) => sum + Number(sale.total ?? Number(sale.unitPrice) * sale.quantity), 0);
-      const label = period === "1D" ? new Intl.DateTimeFormat("en", { hour: "numeric" }).format(date) : period === "1Y" ? new Intl.DateTimeFormat("en", { month: "short" }).format(date) : period === "1M" ? `Week ${index + 1}` : new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric" }).format(date);
+      const label = period === "1D" ? new Intl.DateTimeFormat(locale, { hour: "numeric" }).format(date) : period === "1Y" ? new Intl.DateTimeFormat(locale, { month: "short" }).format(date) : period === "1M" ? `${tr("Week")} ${index + 1}` : new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric" }).format(date);
       return { label, value };
     });
     const top = buckets.reduce((best, bucket) => bucket.value > best.value ? bucket : best, buckets[0] ?? { label: "No sales", value: 0 });
@@ -104,17 +109,23 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
   const { year: selectedMonthYear, monthIndex: selectedMonthIndex } = monthParts(month);
   const selectedWeek = weeks[Math.min(weekIndex, weeks.length - 1)] ?? weeks[0];
   const periodTitle = period === "1D"
-    ? `Sales on ${new Intl.DateTimeFormat("en", { month: "long", day: "numeric", year: "numeric" }).format(new Date(`${day}T00:00:00`))}`
+    ? `Sales on ${new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", year: "numeric" }).format(new Date(`${day}T00:00:00`))}`
     : period === "1Y"
     ? `Sales in ${year}`
     : period === "1M"
-      ? `Sales in ${new Intl.DateTimeFormat("en", { month: "long" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))}`
-      : `Sales in ${new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
+      ? `Sales in ${new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))}`
+      : `Sales in ${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(selectedMonthYear, selectedMonthIndex, 1))} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
 
-  if (loading || error) return <div className="sales-history-view">
+  if (loading) return <div className="sales-history-view">
+    <div className="sales-page-loading sales-history-loading" role="status" aria-live="polite" aria-busy="true">
+      <span aria-hidden="true" /><strong>{loadingText("history")}</strong><small>{loadingText("historyBody")}</small>
+    </div>
+  </div>;
+
+  if (error) return <div className="sales-history-view">
     {navigation}
-    <div className="sales-page-loading sales-history-loading" role={error ? "alert" : "status"} aria-live="polite" aria-busy={loading}>
-      {loading ? <><span aria-hidden="true" /><strong>Loading historical sales…</strong><small>Please wait while we fetch your sales records.</small></> : <strong>{error}</strong>}
+    <div className="sales-page-loading sales-history-loading" role="alert" aria-live="polite">
+      <strong>{error}</strong>
     </div>
   </div>;
 
@@ -127,11 +138,11 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     </div>
     {navigation}
     <section className="stock-product-panel sales-product-panel historical-sales-table" aria-labelledby="historical-sales-title">
-      <header className="stock-product-toolbar sales-history-toolbar"><h2 id="historical-sales-title">{periodTitle}</h2>
+      <header className="stock-product-toolbar sales-history-toolbar"><h2 id="historical-sales-title">{tr(periodTitle)}</h2>
         <div className="sales-history-toolbar-actions"><div className="stock-period-controls">
           {period === "1D" && <label className="stock-period-field"><span>Day</span><input type="date" value={day} onChange={(event) => event.target.value && setDay(event.target.value)} /></label>}
           {period === "1Y" && <label className="stock-period-field"><span>Year</span><input type="number" min="2000" max="2100" value={year} onChange={(event) => setYear(Number(event.target.value) || now.getFullYear())} /></label>}
-          {period !== "1D" && period !== "1Y" && <label className="stock-period-field"><span>Month</span><input type="month" value={month} onChange={(event) => { if (event.target.value) { setMonth(event.target.value); setWeekIndex(0); } }} /></label>}
+          {period !== "1D" && period !== "1Y" && <label className="stock-period-field"><span>{tr("Month")}</span><input lang={locale} type="month" value={month} onChange={(event) => { if (event.target.value) { setMonth(event.target.value); setWeekIndex(0); } }} /></label>}
           {period === "1W" && <CustomSelect className="stock-period-field" label="Week" value={String(Math.min(weekIndex, weeks.length - 1))} options={weeks.map((week, index) => ({ label: week.label, value: String(index) }))} onChange={(value) => setWeekIndex(Number(value))} />}
           <div className="stock-period-buttons" aria-label="Sales period">{(["1D", "1W", "1M", "1Y"] as Period[]).map((value) => <button className={period === value ? "active" : ""} type="button" key={value} onClick={() => setPeriod(value)}>{{ "1D": "Day", "1W": "Week", "1M": "Month", "1Y": "Year" }[value]}</button>)}</div>
         </div><label className="stock-product-search"><span className="sr-only">Search sales</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label></div>

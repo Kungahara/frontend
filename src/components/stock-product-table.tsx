@@ -3,12 +3,14 @@
 import { ArrowLeft, Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
 import { apiErrorMessage } from "@/lib/api/client";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
+import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 
 type Product = {
   id: string;
@@ -53,13 +55,13 @@ function monthParts(value: string) {
   return { year, monthIndex: month - 1 };
 }
 
-function monthWeekRanges(value: string) {
+function monthWeekRanges(value: string, locale = "en") {
   const { year, monthIndex } = monthParts(value);
   const days = new Date(year, monthIndex + 1, 0).getDate();
   return Array.from({ length: Math.ceil(days / 7) }, (_, index) => {
     const startDay = index * 7 + 1;
     const endDay = Math.min(days, startDay + 6);
-    return { startDay, endDay, label: `${new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
+    return { startDay, endDay, label: `${new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(year, monthIndex, 1))} ${startDay}–${endDay}` };
   });
 }
 
@@ -93,18 +95,19 @@ function niceAxisMaximum(value: number) {
 }
 
 function StockAnalysisChart({ products, sales, categoryId, productId, period, year, month, weekIndex }: { products: Product[]; sales: Sale[]; categoryId: string; productId: string; period: AnalysisPeriod; year: number; month: string; weekIndex: number }) {
+  const locale = useLocale();
   const [hoveredPoint, setHoveredPoint] = useState<{ index: number; series: "Income" | "Expenses" } | null>(null);
   const categoryProducts = categoryId === "all" ? products : products.filter((product) => product.categoryId === categoryId);
   const selected = productId === "all" ? categoryProducts : categoryProducts.filter((product) => product.id === productId);
   const selectedIds = new Set(selected.map((product) => product.id));
   const costs = new Map(selected.map((product) => [product.id, Number(product.costPrice)]));
   const { year: selectedMonthYear, monthIndex } = monthParts(month);
-  const weekRanges = monthWeekRanges(month);
+  const weekRanges = monthWeekRanges(month, locale);
   const selectedWeek = weekRanges[Math.min(weekIndex, weekRanges.length - 1)] ?? weekRanges[0];
   const dates = period === "1Y"
     ? Array.from({ length: 12 }, (_, index) => new Date(year, index, 1))
     : period === "1M"
-      ? monthWeekRanges(month).map((range) => new Date(selectedMonthYear, monthIndex, range.startDay))
+      ? monthWeekRanges(month, locale).map((range) => new Date(selectedMonthYear, monthIndex, range.startDay))
       : Array.from({ length: selectedWeek.endDay - selectedWeek.startDay + 1 }, (_, index) => new Date(selectedMonthYear, monthIndex, selectedWeek.startDay + index));
   const series = dates.map((date, index) => {
     const end = period === "1Y"
@@ -132,8 +135,8 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
   const expensePath = smoothLinePath(expensePoints);
   const formatRwf = (value: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
   const formatDate = (date: Date) => period === "1W"
-    ? `${new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)} ${date.getDate()}`
-    : new Intl.DateTimeFormat("en", period === "1Y" ? { month: "short" } : { month: "short", day: "numeric" }).format(date);
+    ? `${new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date)} ${date.getDate()}`
+    : new Intl.DateTimeFormat(locale, period === "1Y" ? { month: "short" } : { month: "short", day: "numeric" }).format(date);
   const hoveredValues = hoveredPoint?.series === "Income" ? income : expenses;
   const tooltipX = hoveredPoint ? Math.min(438, Math.max(64, x(hoveredPoint.index) - 46)) : 0;
   const tooltipY = hoveredPoint ? Math.max(8, y(hoveredValues[hoveredPoint.index]) - 50) : 0;
@@ -159,6 +162,10 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
 }
 
 export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { initialAnalysisOpen?: boolean; onSettled?: () => void }) {
+  const loadingText = useTranslations("Loading");
+  const commonText = useTranslations("Common");
+  const locale = useLocale();
+  const tr = useWorkspaceCopy();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -432,15 +439,15 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     const selectedCategoryName = selectedCategoryId === "all" ? "All categories" : categories.find((category) => category.id === selectedCategoryId)?.name ?? "Category";
     const categoryProducts = selectedCategoryId === "all" ? products : products.filter((product) => product.categoryId === selectedCategoryId);
     const selectedProductName = selectedAnalysisProductId === "all" ? selectedCategoryName : products.find((product) => product.id === selectedAnalysisProductId)?.name ?? selectedCategoryName;
-    const weekRanges = monthWeekRanges(analysisMonth);
+    const weekRanges = monthWeekRanges(analysisMonth, locale);
     return <div className="stock-analysis-replacement" id="stock-analysis">
       <section className="stock-profit-section" aria-labelledby="stock-analysis-title">
-        <header><div><h2 id="stock-analysis-title">Income and expenses</h2><p>{selectedProductName} · Recorded sales in RWF</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />Back to Stock products</button></header>
+        <header><div><h2 id="stock-analysis-title">{tr("Income and expenses")}</h2><p>{selectedCategoryId === "all" ? tr("All categories") : selectedProductName} · {tr("Recorded sales in RWF")}</p></div><button type="button" onClick={() => setAnalysisOpen(false)}><ArrowLeft aria-hidden="true" />{tr("Back to Stock products")}</button></header>
         <div className="stock-analysis-meta">
           <div className="stock-analysis-legend"><span className="income">Income</span><span className="expenses">Expenses</span></div>
           <div className="stock-period-controls">
-            {analysisPeriod === "1Y" && <label className="stock-period-field"><span>Year</span><input type="number" min="2000" max="2100" value={analysisYear} onChange={(event) => setAnalysisYear(Number(event.target.value) || new Date().getFullYear())} /></label>}
-            {analysisPeriod !== "1Y" && <label className="stock-period-field"><span>Month</span><input type="month" value={analysisMonth} onChange={(event) => { if (event.target.value) { setAnalysisMonth(event.target.value); setAnalysisWeekIndex(0); } }} /></label>}
+            {analysisPeriod === "1Y" && <label className="stock-period-field"><span>{tr("Year")}</span><input type="number" min="2000" max="2100" value={analysisYear} onChange={(event) => setAnalysisYear(Number(event.target.value) || new Date().getFullYear())} /></label>}
+            {analysisPeriod !== "1Y" && <label className="stock-period-field"><span>{tr("Month")}</span><input lang={locale} type="month" value={analysisMonth} onChange={(event) => { if (event.target.value) { setAnalysisMonth(event.target.value); setAnalysisWeekIndex(0); } }} /></label>}
             {analysisPeriod === "1W" && <CustomSelect className="stock-period-field" label="Week" value={String(analysisWeekIndex)} options={weekRanges.map((range, index) => ({ label: range.label, value: String(index) }))} onChange={(value) => setAnalysisWeekIndex(Number(value))} />}
             <div className="stock-period-buttons" aria-label="Graph period">
               {(["1W", "1M", "1Y"] as AnalysisPeriod[]).map((period) => <button className={analysisPeriod === period ? "active" : ""} type="button" aria-pressed={analysisPeriod === period} key={period} onClick={() => setAnalysisPeriod(period)}>{{ "1W": "Week", "1M": "Month", "1Y": "Year" }[period]}</button>)}
@@ -450,16 +457,16 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
         <StockAnalysisChart products={products} sales={sales} categoryId={selectedCategoryId} productId={selectedAnalysisProductId} period={analysisPeriod} year={analysisYear} month={analysisMonth} weekIndex={analysisWeekIndex} />
       </section>
       <aside className="stock-product-section" aria-labelledby="product-analysis-title">
-        <header><h2 id="product-analysis-title">Products</h2><p>Choose what to show on the graph.</p></header>
+        <header><h2 id="product-analysis-title">{tr("Products")}</h2><p>{tr("Choose what to show on the graph.")}</p></header>
         <div className="stock-product-choice">
-          <button className={selectedAnalysisProductId === "all" ? "active" : ""} type="button" onClick={() => setSelectedAnalysisProductId("all")}><span>All in {selectedCategoryName}</span></button>
+          <button className={selectedAnalysisProductId === "all" ? "active" : ""} type="button" onClick={() => setSelectedAnalysisProductId("all")}><span>{tr("All items")}</span></button>
           {categoryProducts.map((product) => <button className={selectedAnalysisProductId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setSelectedAnalysisProductId(product.id)}><span>{product.name}</span></button>)}
         </div>
       </aside>
       <aside className="stock-category-section" aria-labelledby="category-analysis-title">
-        <header><h2 id="category-analysis-title">Categories</h2><p>Choose a category to analyze.</p></header>
+        <header><h2 id="category-analysis-title">{tr("Categories")}</h2><p>{tr("Choose a category to analyze.")}</p></header>
         <div className="stock-category-list">
-          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>All categories</span></button>
+          <button className={selectedCategoryId === "all" ? "active" : ""} type="button" onClick={() => { setSelectedCategoryId("all"); setSelectedAnalysisProductId("all"); }}><span>{tr("All categories")}</span></button>
           {categories.map((category) => <button className={selectedCategoryId === category.id ? "active" : ""} type="button" key={category.id} onClick={() => { setSelectedCategoryId(category.id); setSelectedAnalysisProductId("all"); }}><span>{category.name}</span></button>)}
         </div>
       </aside>
@@ -492,7 +499,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
             </tr>;
           })}
           {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
-          {loading && <tr><td className="stock-product-empty" colSpan={6}>Loading stock products…</td></tr>}
+          {loading && <tr><td className="stock-product-empty" colSpan={6}>{loadingText("stockProducts")}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -502,7 +509,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
         <h3 id="delete-product-title">Delete {deleting.name}?</h3>
         <p>This permanently removes the product and its stock history. Type <strong>{deleting.name}</strong> to confirm.</p>
         <label>Product name<input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label>
-        <button className="stock-delete-confirm" type="button" disabled={busy || confirmation !== deleting.name} onClick={remove}>{busy ? "Deleting…" : "Delete product"}</button>
+        <button className="stock-delete-confirm" type="button" disabled={busy || confirmation !== deleting.name} onClick={remove}>{busy ? commonText("deleting") : "Delete product"}</button>
       </div>
     </div>}
     {adding && <div className="stock-delete-backdrop" role="presentation">
@@ -558,7 +565,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
           <label>Price bought for<input required type="number" min="0" step="0.01" value={editing.costPrice} onChange={(event) => change("costPrice", event.target.value)} /></label>
           <label>Low-stock alert (20%)<input readOnly type="number" value={editing.lowStockLevelText} title="Calculated automatically as 20% of the entered quantity" /></label>
         </div>
-        <button className="stock-add-submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>
+        <button className="stock-add-submit" disabled={busy}>{busy ? commonText("saving") : "Save changes"}</button>
       </form>
     </div>}
   </section>;

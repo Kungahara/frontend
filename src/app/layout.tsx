@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -24,11 +26,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
-    <html lang="en" className={outfit.variable}>
-      <head><link rel="preload" href="/images/kungahara-logo-optimized.png" as="image" type="image/png" /></head>
-      <body>{children}</body>
+    <html lang={locale} className={outfit.variable} translate="no">
+      <head><meta name="google" content="notranslate" /><link rel="preload" href="/images/kungahara-logo-optimized.png" as="image" type="image/png" /></head>
+      <body><NextIntlClientProvider>{children}</NextIntlClientProvider></body>
     </html>
   );
 }

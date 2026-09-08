@@ -2,8 +2,10 @@
 
 import { Coins, PackageMinus, ShoppingBag, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { MoneyAmount } from "@/components/money-amount";
+import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
@@ -17,18 +19,20 @@ export function StockStatusIcon() {
 }
 
 function SellingCard({ title, itemName, percentage, remainingStock, tone }: { title: string; itemName?: string; percentage: number; remainingStock: number; tone: "best" | "least" }) {
+  const tr = useWorkspaceCopy();
   return <article className={`stock-summary-card selling-summary-card ${tone}`} aria-label={title}>
     <span className="stock-summary-title">{title}</span>
     <span className="stock-summary-icon selling-summary-icon"><ShoppingBag aria-hidden="true" /></span>
     <div className="stock-summary-value-row">
       <strong>{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(percentage)}%</strong>
-      <span className="selling-item-name">{itemName || "No sales yet"}</span>
+      <span className="selling-item-name">{itemName || tr("No sales yet")}</span>
     </div>
-    <span className="stock-summary-previous">Remaining Stock: <strong>{new Intl.NumberFormat("en").format(remainingStock)}</strong></span>
+    <span className="stock-summary-previous">{tr("Remaining stock:")} <strong>{new Intl.NumberFormat("en").format(remainingStock)}</strong></span>
   </article>;
 }
 
 function StockValueCard({ products, movements }: { products: Product[]; movements: StockMovement[] }) {
+  const tr = useWorkspaceCopy();
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
@@ -44,26 +48,28 @@ function StockValueCard({ products, movements }: { products: Product[]; movement
   const change = lastMonthValue ? ((currentValue - lastMonthValue) / lastMonthValue) * 100 : currentValue > 0 ? 100 : 0;
   const ChangeIcon = change >= 0 ? TrendingUp : TrendingDown;
 
-  return <article className="stock-summary-card stock-value-card" aria-label="Stock value">
-    <span className="stock-summary-title">Stock value</span>
+  return <article className="stock-summary-card stock-value-card" aria-label={tr("Stock value")}>
+    <span className="stock-summary-title">{tr("Stock value")}</span>
     <span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span>
     <div className="stock-value-amount"><MoneyAmount value={currentValue} /></div>
     <div className="stock-value-comparison">
-      <span className={`stock-summary-change${change >= 0 ? " increase" : " decrease"}`}><ChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(change))}%</span><span>than last month</span>
+      <span className={`stock-summary-change${change >= 0 ? " increase" : " decrease"}`}><ChangeIcon aria-hidden="true" />{new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(Math.abs(change))}%</span><span>{tr("than last month")}</span>
     </div>
   </article>;
 }
 
 function LeastStockCard({ product }: { product?: Product }) {
-  return <article className="stock-summary-card least-stock-card" aria-label="Least item in stock">
-    <span className="stock-summary-title">Least item in stock</span>
+  const tr = useWorkspaceCopy();
+  return <article className="stock-summary-card least-stock-card" aria-label={tr("Least item in stock")}>
+    <span className="stock-summary-title">{tr("Least item in stock")}</span>
     <span className="stock-summary-icon least-stock-icon"><PackageMinus aria-hidden="true" /></span>
     <div className="least-stock-name"><span>{product?.name || "No products"}</span></div>
-    <span className="least-stock-remaining">Remaining stock: <strong>{new Intl.NumberFormat("en").format(product?.quantity ?? 0)}</strong></span>
+    <span className="least-stock-remaining">{tr("Remaining stock:")} <strong>{new Intl.NumberFormat("en").format(product?.quantity ?? 0)}</strong></span>
   </article>;
 }
 
 function SalesSummaryCards({ products, sales }: { products: Product[]; sales: SaleRecord[] }) {
+  const tr = useWorkspaceCopy();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -124,6 +130,8 @@ function SalesSummaryCards({ products, sales }: { products: Product[]; sales: Sa
 }
 
 export function StockSummaryCard({ variant = "stock", onSettled }: { variant?: "stock" | "sales"; onSettled?: () => void }) {
+  const loadingText = useTranslations("Loading");
+  const tr = useWorkspaceCopy();
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [sales, setSales] = useState<SaleRecord[]>([]);
@@ -170,8 +178,8 @@ export function StockSummaryCard({ variant = "stock", onSettled }: { variant?: "
     if (!loading) onSettled?.();
   }, [loading, onSettled]);
 
-  if (loading) return <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{variant === "sales" ? "Loading sales data…" : "Loading stock data…"}</strong><small>Please wait while we prepare your summary.</small></div>;
-  if (error) return <div className="sales-page-loading" role="alert"><strong>Unable to load this summary.</strong><small>Please refresh the page and try again.</small></div>;
+  if (loading) return <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{variant === "sales" ? loadingText("sales") : loadingText("stock")}</strong><small>{loadingText("summaryBody")}</small></div>;
+  if (error) return <div className="sales-page-loading" role="alert"><strong>{loadingText("summaryError")}</strong><small>{loadingText("summaryErrorBody")}</small></div>;
 
   const totalUnits = products.reduce((total, product) => total + product.quantity, 0);
   const totalSoldUnits = sales.reduce((total, sale) => total + sale.quantity, 0);
@@ -200,7 +208,7 @@ export function StockSummaryCard({ variant = "stock", onSettled }: { variant?: "
   return <div className="stock-summary-grid">
     <StockValueCard products={products} movements={movements} />
     <article className="stock-summary-card" aria-label="Total stock status">
-      <span className="stock-summary-title">Stock status</span>
+      <span className="stock-summary-title">{tr("Stock status")}</span>
       <span className="stock-summary-icon stock-status-icon"><StockStatusIcon /></span>
       <div className="stock-summary-value-row">
         <strong>{formattedPercentage}</strong>
@@ -208,10 +216,10 @@ export function StockSummaryCard({ variant = "stock", onSettled }: { variant?: "
           {change !== 0 && <ChangeIcon aria-hidden="true" />}{formattedChange}%
         </span>
       </div>
-      <span className="stock-summary-previous">Stock size: <strong>{formattedTotal}</strong></span>
+      <span className="stock-summary-previous">{tr("Stock size:")} <strong>{formattedTotal}</strong></span>
     </article>
-    <SellingCard title="Most selling item" itemName={mostSelling?.name} percentage={mostSelling?.sold ? Math.min(100, (mostSelling.sold / (mostSelling.supplied || mostSelling.quantity + mostSelling.sold)) * 100) : 0} remainingStock={mostSelling?.quantity ?? 0} tone="best" />
-    <SellingCard title="Least selling item" itemName={leastSelling?.name} percentage={leastSelling?.sold ? Math.min(100, (leastSelling.sold / (leastSelling.supplied || leastSelling.quantity + leastSelling.sold)) * 100) : 0} remainingStock={leastSelling?.quantity ?? 0} tone="least" />
+    <SellingCard title={tr("Most selling item")} itemName={mostSelling?.name} percentage={mostSelling?.sold ? Math.min(100, (mostSelling.sold / (mostSelling.supplied || mostSelling.quantity + mostSelling.sold)) * 100) : 0} remainingStock={mostSelling?.quantity ?? 0} tone="best" />
+    <SellingCard title={tr("Least selling item")} itemName={leastSelling?.name} percentage={leastSelling?.sold ? Math.min(100, (leastSelling.sold / (leastSelling.supplied || leastSelling.quantity + leastSelling.sold)) * 100) : 0} remainingStock={leastSelling?.quantity ?? 0} tone="least" />
     <LeastStockCard product={leastStockProduct} />
   </div>;
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 
 import { SettingsContent } from "@/components/settings-content";
 
-export const metadata: Metadata = { title: "Settings" };
+export async function generateMetadata(): Promise<Metadata> { return { title: await getLocale() === "fr" ? "Paramètres" : "Settings" }; }
 
 export default function SettingsPage() {
   return <SettingsContent />;

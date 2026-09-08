@@ -2,10 +2,12 @@
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { authRequest } from "@/lib/api/client";
 
 export function PasswordRecoveryForm({ reset = false }: { reset?: boolean }) {
+  const commonText = useTranslations("Common");
   const search = useSearchParams(); const [message, setMessage] = useState(""); const [error, setError] = useState("");
   const [busy, setBusy] = useState(false); const [show, setShow] = useState(false); const [showConfirm, setShowConfirm] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -25,6 +27,6 @@ export function PasswordRecoveryForm({ reset = false }: { reset?: boolean }) {
     <form className="auth-form recovery-form" onSubmit={submit}>
       {reset ? <><label>New password<span className="password-wrap"><input name="password" type={show ? "text" : "password"} autoComplete="new-password" minLength={8} required /><button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow(!show)}>{show ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}</button></span></label><label>Confirm new password<span className="password-wrap"><input name="confirmPassword" type={showConfirm ? "text" : "password"} autoComplete="new-password" minLength={8} required /><button type="button" aria-label={showConfirm ? "Hide confirmation password" : "Show confirmation password"} onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}</button></span></label></> : <label>Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required /></label>}
       {error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success" role="status">{message}</p>}
-      <button className="submit-button" disabled={busy}>{busy ? "Please wait…" : reset ? "Reset password" : "Send reset link"}</button>
+      <button className="submit-button" disabled={busy}>{busy ? commonText("pleaseWait") : reset ? "Reset password" : "Send reset link"}</button>
     </form><p className="switch-auth recovery-link"><Link href="/login">Back to sign in</Link></p></>;
 }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth-shell";
 import { VerifyEmail } from "@/components/email-verification";
-export default function VerifyEmailPage() { return <AuthShell mode="signup"><Suspense fallback={<p className="form-loading">Verifying…</p>}><VerifyEmail /></Suspense></AuthShell>; }
+import { FormLoading } from "@/components/form-loading";
+export default function VerifyEmailPage() { return <AuthShell mode="signup"><Suspense fallback={<FormLoading message="verifying" />}><VerifyEmail /></Suspense></AuthShell>; }

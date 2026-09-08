@@ -2,10 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { apiErrorMessage } from "@/lib/api/client";
 
 export function MarketingContactForm() {
+  const commonText = useTranslations("Common");
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -42,6 +44,6 @@ export function MarketingContactForm() {
     <div><label htmlFor="contact-message">How can we help?</label><textarea id="contact-message" name="message" rows={4} maxLength={1000} required placeholder="Tell us what you need" /></div>
     <div className="marketing-contact-honeypot" aria-hidden="true"><label htmlFor="contact-website">Website</label><input id="contact-website" name="website" tabIndex={-1} autoComplete="off" /></div>
     {(success || error) && <p className={`marketing-contact-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}>{error || success}</p>}
-    <button type="submit" disabled={busy}>{busy ? "Sending…" : "Send message"}<Send aria-hidden="true" /></button>
+    <button type="submit" disabled={busy}>{busy ? commonText("sending") : "Send message"}<Send aria-hidden="true" /></button>
   </form>;
 }

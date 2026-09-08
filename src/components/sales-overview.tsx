@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { SalesHistoryTable } from "@/components/sales-history-table";
 import { SalesAnalytics } from "@/components/sales-analytics";
@@ -16,6 +17,7 @@ const salesViews: Array<{ id: SalesView; label: string }> = [
 ];
 
 export function SalesOverview({ initialView = "today" }: { initialView?: SalesView }) {
+  const t = useTranslations("Loading");
   const [view, setView] = useState<SalesView>(initialView);
   const [summaryReady, setSummaryReady] = useState(false);
   const [tableReady, setTableReady] = useState(false);
@@ -35,6 +37,6 @@ export function SalesOverview({ initialView = "today" }: { initialView?: SalesVi
         {view === "analytics" && <SalesAnalytics />}
       </div>}
     </div>
-    {!ready && <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>Loading sales data…</strong><small>Please wait while we prepare your sales workspace.</small></div>}
+    {!ready && <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{t("sales")}</strong><small>{t("salesBody")}</small></div>}
   </>;
 }

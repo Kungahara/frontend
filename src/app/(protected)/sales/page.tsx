@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 
 import { SalesOverview } from "@/components/sales-overview";
 
-export const metadata: Metadata = { title: "Sales" };
+export async function generateMetadata(): Promise<Metadata> { return { title: await getLocale() === "fr" ? "Ventes" : "Sales" }; }
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view } = await searchParams;

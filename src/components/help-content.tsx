@@ -2,8 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { Plus, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { apiErrorMessage } from "@/lib/api/client";
+import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 
 const questions = [
   {
@@ -29,6 +31,8 @@ const questions = [
 ];
 
 export function HelpContent() {
+  const commonText = useTranslations("Common");
+  const tr = useWorkspaceCopy();
   const [openItem, setOpenItem] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [sent, setSent] = useState(false);
@@ -62,9 +66,9 @@ export function HelpContent() {
         const answerId = `help-answer-${index}`;
         return <article className={`help-item${isOpen ? " open" : ""}`} key={item.question}>
           <button className="help-question" type="button" aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenItem(isOpen ? -1 : index)}>
-            <span className="help-number">{index + 1}</span><strong>{item.question}</strong><span className="help-toggle"><Plus aria-hidden="true" /></span>
+            <span className="help-number">{index + 1}</span><strong>{tr(item.question)}</strong><span className="help-toggle"><Plus aria-hidden="true" /></span>
           </button>
-          {isOpen && <div className="help-answer" id={answerId}><p>{item.answer}</p></div>}
+          {isOpen && <div className="help-answer" id={answerId}><p>{tr(item.answer)}</p></div>}
         </article>;
       })}
 
@@ -73,7 +77,7 @@ export function HelpContent() {
         <form onSubmit={submitFeedback}>
           <label htmlFor="help-feedback">Suggestion or problem</label>
           <textarea id="help-feedback" rows={2} maxLength={1000} value={feedback} placeholder="Type your message here…" onChange={(event) => { setFeedback(event.target.value); setSent(false); }} />
-          <button type="submit" disabled={!feedback.trim() || sending}><Send aria-hidden="true" /><span>{sending ? "Sending…" : "Send"}</span></button>
+          <button type="submit" disabled={!feedback.trim() || sending}><Send aria-hidden="true" /><span>{sending ? commonText("sending") : "Send"}</span></button>
         </form>
         {sent && <p className="help-feedback-sent" role="status">Your message was emailed to Kungahara support.</p>}
         {sendError && <p className="help-feedback-error" role="alert">{sendError}</p>}

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthModalShell } from "@/components/auth-modal-shell";
 import { LoginForm } from "@/components/login-form";
 import { SignupForm } from "@/components/signup-form";
+import { FormLoading } from "@/components/form-loading";
 
 type AuthMode = "login" | "signup";
 
@@ -23,7 +24,7 @@ export function AuthModalHost() {
 
   return <AuthModalShell mode={mode} onClose={() => setMode(null)} onModeChange={setMode}>
     {mode === "login"
-      ? <Suspense fallback={<p className="form-loading">Preparing sign in…</p>}><LoginForm /></Suspense>
+      ? <Suspense fallback={<FormLoading message="preparingSignIn" />}><LoginForm /></Suspense>
       : <SignupForm />}
   </AuthModalShell>;
 }

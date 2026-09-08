@@ -2,6 +2,7 @@
 
 import { Plus, TrendingDown, TrendingUp, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
 
@@ -30,28 +31,35 @@ function formatPrice(value: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 }).format(value);
 }
 
-function movementAlert(currency: CurrencyPosition): CurrencyAlert | null {
+function movementAlert(currency: CurrencyPosition, copy: { title: (pair: string) => string; message: (values: { pair: string; direction: string; percentage: string; change: string; previous: string; current: string }) => string; increased: string; decreased: string }): CurrencyAlert | null {
   if (currency.lastPrice === null || currency.currentPrice === null) return null;
   if (currency.pair.split("/")[1] !== "RWF") return null;
   if (currency.lastPrice === 0) return null;
   const change = currency.currentPrice - currency.lastPrice;
   const percentageChange = (change / currency.lastPrice) * 100;
   if (Math.abs(percentageChange) < 0.15) return null;
-  const direction = change > 0 ? "increased" : "decreased";
+  const direction = change > 0 ? copy.increased : copy.decreased;
   return {
     id: `${currency.id}-${currency.currentPrice}`,
-    title: `${currency.pair} moved significantly`,
-    message: `${currency.pair} ${direction} by ${Math.abs(percentageChange).toFixed(2)}% (${formatPrice(Math.abs(change))} RWF), from ${formatPrice(currency.lastPrice)} to ${formatPrice(currency.currentPrice)}.`,
+    title: copy.title(currency.pair),
+    message: copy.message({ pair: currency.pair, direction, percentage: Math.abs(percentageChange).toFixed(2), change: formatPrice(Math.abs(change)), previous: formatPrice(currency.lastPrice), current: formatPrice(currency.currentPrice) }),
   };
 }
 
 export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?: (alert: CurrencyAlert) => void }) {
+  const loadingText = useTranslations("Loading");
+  const t = useTranslations("Currency");
+  const locale = useLocale();
   const [currencies, setCurrencies] = useState(initialCurrencies);
   const [adding, setAdding] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState("USD");
   const [quoteCurrency, setQuoteCurrency] = useState("RWF");
   const alertedRates = useRef(new Set<string>());
   const trackedPairs = currencies.map((currency) => `${currency.id}:${currency.pair}`).join("|");
+
+  useEffect(() => {
+    alertedRates.current.clear();
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,7 +79,12 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
       if (cancelled) return;
       setCurrencies((current) => current.map((currency) => updates.find((item) => item.id === currency.id) ?? currency));
       updates.forEach((currency) => {
-        const alert = movementAlert(currency);
+        const alert = movementAlert(currency, {
+          title: (pair) => t("alertTitle", { pair }),
+          message: (values) => t("alertMessage", values),
+          increased: t("increased"),
+          decreased: t("decreased"),
+        });
         if (alert && !alertedRates.current.has(alert.id)) {
           alertedRates.current.add(alert.id);
           onSignificantChange?.(alert);
@@ -82,7 +95,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
     void refreshRates();
     const timer = window.setInterval(refreshRates, 30 * 60 * 1000);
     return () => { cancelled = true; window.clearInterval(timer); };
-  }, [trackedPairs, onSignificantChange]);
+  }, [trackedPairs, onSignificantChange, t]);
 
   function addCurrency(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,7 +116,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
     setAdding(false);
   }
 
-  return <section className="currency-monitor" aria-label="Monitored currencies">
+  return <section className="currency-monitor" aria-label={t("monitored")}>
     <div className="currency-card-list">
       {currencies.map((currency) => {
         const movement = currency.lastPrice && currency.currentPrice ? ((currency.currentPrice - currency.lastPrice) / currency.lastPrice) * 100 : null;
@@ -115,24 +128,24 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
             <span className="currency-symbols" aria-hidden="true"><i>{base.slice(0, 1)}</i><i>{quote.slice(0, 1)}</i></span>
             <div className="currency-card-pair"><span>{base}/</span><small>{quote}</small></div>
           </div>
-          <div className="currency-movement">{currency.error ? <strong>Unavailable</strong> : movement === null ? <strong>Loading</strong> : <><TrendIcon aria-hidden="true" /><strong>{Math.abs(movement).toFixed(2)}%</strong></>}</div>
-          <button className="currency-remove" type="button" onClick={() => setCurrencies((current) => current.filter((item) => item.id !== currency.id))}><X aria-hidden="true" /><span>Remove</span></button>
+          <div className="currency-movement">{currency.error ? <strong>{t("unavailable")}</strong> : movement === null ? <strong>{loadingText("currency")}</strong> : <><TrendIcon aria-hidden="true" /><strong>{Math.abs(movement).toFixed(2)}%</strong></>}</div>
+          <button className="currency-remove" type="button" onClick={() => setCurrencies((current) => current.filter((item) => item.id !== currency.id))}><X aria-hidden="true" /><span>{t("remove")}</span></button>
         </article>;
       })}
     </div>
-    <button className="add-currency-button" type="button" disabled={currencies.length >= MAX_CURRENCY_CARDS} title={currencies.length >= MAX_CURRENCY_CARDS ? "You can monitor up to three currency pairs." : undefined} onClick={() => setAdding(true)}><Plus aria-hidden="true" /><span>{currencies.length >= MAX_CURRENCY_CARDS ? "Limit reached" : "Add currency"}</span></button>
+    <button className="add-currency-button" type="button" disabled={currencies.length >= MAX_CURRENCY_CARDS} title={currencies.length >= MAX_CURRENCY_CARDS ? t("limitHelp") : undefined} onClick={() => setAdding(true)}><Plus aria-hidden="true" /><span>{currencies.length >= MAX_CURRENCY_CARDS ? t("limitReached") : t("add")}</span></button>
 
     {adding && <div className="currency-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAdding(false); }}>
       <section className="currency-dialog" role="dialog" aria-modal="true" aria-labelledby="add-currency-title">
-        <button className="currency-dialog-close" type="button" aria-label="Close" onClick={() => setAdding(false)}><X aria-hidden="true" /></button>
-        <h2 id="add-currency-title">Add a currency</h2>
-        <p>Choose two currencies. Kungahara will fetch and monitor their exchange rate automatically.</p>
+        <button className="currency-dialog-close" type="button" aria-label={t("close")} onClick={() => setAdding(false)}><X aria-hidden="true" /></button>
+        <h2 id="add-currency-title">{t("dialogTitle")}</h2>
+        <p>{t("dialogBody")}</p>
         <form onSubmit={addCurrency}>
           <div className="currency-form-row">
-            <CustomSelect label="Currency" name="base" value={baseCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setBaseCurrency} />
-            <CustomSelect label="Compared with" name="quote" value={quoteCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setQuoteCurrency} />
+            <CustomSelect label={t("currency")} name="base" value={baseCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setBaseCurrency} />
+            <CustomSelect label={t("comparedWith")} name="quote" value={quoteCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setQuoteCurrency} />
           </div>
-          <button className="currency-dialog-submit" type="submit">Start monitoring</button>
+          <button className="currency-dialog-submit" type="submit">{t("start")}</button>
         </form>
       </section>
     </div>}
