@@ -22,6 +22,8 @@ import { MarketingFaqList } from "@/components/marketing-faq-list";
 import { TrackedAuthLink } from "@/components/tracked-auth-link";
 import { AuthModalHost } from "@/components/auth-modal-host";
 import { MarketingContactForm } from "@/components/marketing-contact-form";
+import { MarketingLanguageToggle } from "@/components/marketing-language-toggle";
+import { landingText, type LandingLanguage } from "@/lib/landing-copy";
 
 const features = [
   { icon: BarChart3, title: "A dashboard that makes sense", copy: "See income, expenses, profit, stock value, and business activity without digging through separate tools." },
@@ -47,20 +49,25 @@ const faqs = [
 ] as const;
 
 export default async function HomePage() {
-  const hasSession = (await cookies()).has("kungahara_session");
+  const cookieStore = await cookies();
+  const hasSession = cookieStore.has("kungahara_session");
+  const savedLanguage = cookieStore.get("kungahara-language")?.value;
+  const language: LandingLanguage = savedLanguage === "fr" || savedLanguage === "rw" ? savedLanguage : "en";
+  const tr = (value: string) => landingText(value, language);
 
   return <main className="marketing-page">
     <AuthModalHost />
     <header className="marketing-header">
       <Brand />
-      <MarketingNavigation />
+      <MarketingNavigation language={language} />
       <div className="marketing-auth-actions">
+        <MarketingLanguageToggle initialLanguage={language} />
         {hasSession ? <>
-          <Link className="marketing-login" href="/dashboard">Dashboard</Link>
-          <LogoutButton className="marketing-signup" label="Log out" redirectTo="/" />
+          <Link className="marketing-login" href="/dashboard">{tr("Dashboard")}</Link>
+          <LogoutButton className="marketing-signup" label={tr("Log out")} redirectTo="/" />
         </> : <>
-          <TrackedAuthLink className="marketing-login" href="/login">Log in</TrackedAuthLink>
-          <TrackedAuthLink className="marketing-signup" href="/signup">Sign up</TrackedAuthLink>
+          <TrackedAuthLink className="marketing-login" href="/login">{tr("Log in")}</TrackedAuthLink>
+          <TrackedAuthLink className="marketing-signup" href="/signup">{tr("Sign up")}</TrackedAuthLink>
         </>}
       </div>
     </header>
@@ -68,16 +75,16 @@ export default async function HomePage() {
     <section className="marketing-hero" id="home">
 
       <div className="marketing-hero-copy">
-        <p className="marketing-trust marketing-hero-trust"><span className="marketing-trust-label">New</span><span>Trusted by Modern Sellers</span></p>
-        <h1>One clear place to run<br /><em>your whole business.</em></h1>
-        <p className="marketing-hero-description">Kungahara brings your stock, sales, finances, and documents into one calm workspace—so you spend less time chasing numbers and more time growing.</p>
+        <p className="marketing-trust marketing-hero-trust"><span className="marketing-trust-label">{tr("New")}</span><span>{tr("Trusted by Modern Sellers")}</span></p>
+        <h1>{tr("One clear place to run")}<br /><em>{tr("your whole business.")}</em></h1>
+        <p className="marketing-hero-description">{tr("Kungahara brings your stock, sales, finances, and documents into one calm workspace—so you spend less time chasing numbers and more time growing.")}</p>
         <div className="marketing-hero-actions">
-          <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>{hasSession ? "Open dashboard" : "Get started free"}<ArrowRight aria-hidden="true" /></TrackedAuthLink>
-          <TrackedAuthLink className="marketing-secondary-cta" href={hasSession ? "/dashboard" : "/login"}>Continue to workplace<ArrowRight aria-hidden="true" /></TrackedAuthLink>
+          <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>{tr(hasSession ? "Open dashboard" : "Get started free")}<ArrowRight aria-hidden="true" /></TrackedAuthLink>
+          <TrackedAuthLink className="marketing-secondary-cta" href={hasSession ? "/dashboard" : "/login"}>{tr("Continue to workplace")}<ArrowRight aria-hidden="true" /></TrackedAuthLink>
         </div>
       </div>
 
-      <div className="marketing-product-stage" aria-label="Kungahara dashboard preview">
+      <div className="marketing-product-stage" aria-label={tr("Kungahara dashboard preview")}>
         <span className="marketing-orb marketing-orb-one" />
         <span className="marketing-orb marketing-orb-two" />
         <div className="marketing-browser-frame">
@@ -85,7 +92,7 @@ export default async function HomePage() {
           <div className="marketing-dashboard-image">
             <Image
               src="/images/landing/dashboard-preview-enhanced.png"
-              alt="Kungahara dashboard showing finances, stock, sales, and business insights"
+              alt={tr("Kungahara dashboard showing finances, stock, sales, and business insights")}
               fill
               sizes="(max-width: 1200px) 100vw, 1200px"
               unoptimized
@@ -98,25 +105,25 @@ export default async function HomePage() {
 
     <section className="marketing-section marketing-features" id="features">
       <div className="marketing-section-heading">
-        <h2>Run the business.<br /><em>See the whole picture.</em></h2>
-        <p>Each tool is useful on its own. Together, they give you one dependable view of how your business is doing.</p>
+        <h2>{tr("Run the business.")}<br /><em>{tr("See the whole picture.")}</em></h2>
+        <p>{tr("Each tool is useful on its own. Together, they give you one dependable view of how your business is doing.")}</p>
       </div>
       <div className="marketing-feature-grid">{features.map(({ icon: Icon, title, copy }, index) => <article className="marketing-feature-card" key={title}>
         <span className="marketing-feature-number">0{index + 1}</span>
         <span className="marketing-feature-icon"><Icon aria-hidden="true" /></span>
         <div className="marketing-feature-copy">
-          <h3>{title}</h3><p>{copy}</p>
-          <a href="#contact">Learn more <ChevronRight aria-hidden="true" /></a>
+          <h3>{tr(title)}</h3><p>{tr(copy)}</p>
+          <a href="#contact">{tr("Learn more")} <ChevronRight aria-hidden="true" /></a>
         </div>
       </article>)}</div>
     </section>
 
     <section className="marketing-section marketing-process" id="how-it-works">
       <div className="marketing-process-intro">
-        <p className="marketing-kicker marketing-trust marketing-process-trust"><span className="marketing-trust-dot" />How it works</p>
-        <h2>From scattered details<br /><em>to confident decisions.</em></h2>
-        <p>Kungahara keeps the process simple. Add what happens in your business, and your workspace turns it into a clear, useful picture.</p>
-        <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>Start your workspace<ArrowRight aria-hidden="true" /></TrackedAuthLink>
+        <p className="marketing-kicker marketing-trust marketing-process-trust"><span className="marketing-trust-dot" />{tr("How it works")}</p>
+        <h2>{tr("From scattered details")}<br /><em>{tr("to confident decisions.")}</em></h2>
+        <p>{tr("Kungahara keeps the process simple. Add what happens in your business, and your workspace turns it into a clear, useful picture.")}</p>
+        <TrackedAuthLink className="marketing-primary-cta" href={hasSession ? "/dashboard" : "/signup"}>{tr("Start your workspace")}<ArrowRight aria-hidden="true" /></TrackedAuthLink>
       </div>
       <div className="marketing-step-list">
         <svg className="marketing-step-path" viewBox="0 0 640 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
@@ -124,41 +131,41 @@ export default async function HomePage() {
           <path d="M 640 315 C 678 320 688 346 688 372 C 688 410 645 429 580 429 L 120 429 C 50 429 -60 460 -60 490 C -60 520 -35 535 0 535" />
         </svg>
         {steps.map((step) => <article key={step.number}>
-          <span>{step.number}</span><div><h3>{step.title}</h3><p>{step.copy}</p></div>
+          <span>{step.number}</span><div><h3>{tr(step.title)}</h3><p>{tr(step.copy)}</p></div>
         </article>)}
       </div>
     </section>
 
     <section className="marketing-section marketing-about" id="about">
       <div className="marketing-about-visual">
-        <div className="marketing-about-card main"><p>Built for the way growing businesses really work.</p><strong>Clarity for every business day.</strong></div>
-        <div className="marketing-about-card stat"><strong>5</strong><span>connected workspaces</span></div>
-        <div className="marketing-about-card note"><Focus aria-hidden="true" /><span>Designed with simplicity at the center.</span></div>
+        <div className="marketing-about-card main"><p>{tr("Built for the way growing businesses really work.")}</p><strong>{tr("Clarity for every business day.")}</strong></div>
+        <div className="marketing-about-card stat"><strong>5</strong><span>{tr("connected workspaces")}</span></div>
+        <div className="marketing-about-card note"><Focus aria-hidden="true" /><span>{tr("Designed with simplicity at the center.")}</span></div>
       </div>
       <div className="marketing-about-copy">
-        <p className="marketing-kicker marketing-trust marketing-about-trust"><span className="marketing-trust-dot" aria-hidden="true" />About Kungahara</p>
-        <h2>Business software<br /><em>should feel human.</em></h2>
-        <p>Kungahara exists to make everyday business management easier to understand. We bring essential tools together in a focused experience shaped around clarity, confidence, and steady growth.</p>
-        <p>From a first sale to a growing product catalogue, the workspace helps business owners stay close to the details without becoming overwhelmed by them.</p>
-        <a className="marketing-text-cta" href="#contact">Talk to our team<ArrowRight aria-hidden="true" /></a>
+        <p className="marketing-kicker marketing-trust marketing-about-trust"><span className="marketing-trust-dot" aria-hidden="true" />{tr("About Kungahara")}</p>
+        <h2>{tr("Business software")}<br /><em>{tr("should feel human.")}</em></h2>
+        <p>{tr("Kungahara exists to make everyday business management easier to understand. We bring essential tools together in a focused experience shaped around clarity, confidence, and steady growth.")}</p>
+        <p>{tr("From a first sale to a growing product catalogue, the workspace helps business owners stay close to the details without becoming overwhelmed by them.")}</p>
+        <a className="marketing-text-cta" href="#contact">{tr("Talk to our team")}<ArrowRight aria-hidden="true" /></a>
       </div>
     </section>
 
     <section className="marketing-section marketing-faq" id="faq">
       <div className="marketing-section-heading">
-        <h2>Everything you need<br /><em>to get started.</em></h2>
+        <h2>{tr("Everything you need")}<br /><em>{tr("to get started.")}</em></h2>
       </div>
-      <MarketingFaqList items={faqs} />
+      <MarketingFaqList items={faqs.map(([question, answer]) => [tr(question), tr(answer)] as const)} />
     </section>
 
     <section className="marketing-section marketing-contact" id="contact">
       <div className="marketing-contact-copy">
-        <p className="marketing-kicker marketing-trust marketing-contact-trust"><span className="marketing-trust-dot" aria-hidden="true" />Contact us</p>
-        <h2>Let&apos;s build a clearer<br /><em>business together.</em></h2>
-        <p>Have a question, need help getting started, or want to learn whether Kungahara fits your business? Send us a message.</p>
+        <p className="marketing-kicker marketing-trust marketing-contact-trust"><span className="marketing-trust-dot" aria-hidden="true" />{tr("Contact us")}</p>
+        <h2>{tr("Let's build a clearer")}<br /><em>{tr("business together.")}</em></h2>
+        <p>{tr("Have a question, need help getting started, or want to learn whether Kungahara fits your business? Send us a message.")}</p>
         <a href="mailto:hervendizeye0@gmail.com"><Mail aria-hidden="true" /> hervendizeye0@gmail.com</a>
       </div>
-      <MarketingContactForm />
+      <MarketingContactForm language={language} />
     </section>
 
     <footer className="marketing-footer">
@@ -166,37 +173,37 @@ export default async function HomePage() {
         <div className="marketing-footer-top">
           <div className="marketing-footer-intro">
             <Brand />
-            <p>One clear place to manage stock, sales, finances, and records, built for growing businesses.</p>
+            <p>{tr("One clear place to manage stock, sales, finances, and records, built for growing businesses.")}</p>
           </div>
-          <nav className="marketing-footer-column" aria-label="Product links">
-            <strong>Product</strong>
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How it works</a>
-            <TrackedAuthLink href={hasSession ? "/dashboard" : "/signup"}>{hasSession ? "Dashboard" : "Get started"}</TrackedAuthLink>
+          <nav className="marketing-footer-column" aria-label={tr("Product links")}>
+            <strong>{tr("Product")}</strong>
+            <a href="#features">{tr("Features")}</a>
+            <a href="#how-it-works">{tr("How it works")}</a>
+            <TrackedAuthLink href={hasSession ? "/dashboard" : "/signup"}>{tr(hasSession ? "Dashboard" : "Get started")}</TrackedAuthLink>
           </nav>
-          <nav className="marketing-footer-column" aria-label="Company links">
-            <strong>Company</strong>
-            <a href="#about">About us</a>
+          <nav className="marketing-footer-column" aria-label={tr("Company links")}>
+            <strong>{tr("Company")}</strong>
+            <a href="#about">{tr("About us")}</a>
             <a href="#faq">FAQ</a>
-            <a href="#contact">Contact</a>
+            <a href="#contact">{tr("Contact")}</a>
           </nav>
-          <nav className="marketing-footer-column" aria-label="Legal links">
-            <strong>Legal</strong>
-            <Link href="/terms">Terms of service</Link>
-            <Link href="/privacy">Privacy policy</Link>
+          <nav className="marketing-footer-column" aria-label={tr("Legal links")}>
+            <strong>{tr("Legal")}</strong>
+            <Link href="/terms">{tr("Terms of service")}</Link>
+            <Link href="/privacy">{tr("Privacy policy")}</Link>
           </nav>
           <div className="marketing-footer-socials">
-            <strong>Follow Kungahara</strong>
+            <strong>{tr("Follow Kungahara")}</strong>
             <div>
-              <a href="https://github.com/Kungahara" target="_blank" rel="noreferrer" aria-label="Kungahara on GitHub"><Code2 aria-hidden="true" /></a>
-              <a href="mailto:hervendizeye0@gmail.com" aria-label="Email Kungahara"><Mail aria-hidden="true" /></a>
+              <a href="https://github.com/Kungahara" target="_blank" rel="noreferrer" aria-label={tr("Kungahara on GitHub")}><Code2 aria-hidden="true" /></a>
+              <a href="mailto:hervendizeye0@gmail.com" aria-label={tr("Email Kungahara")}><Mail aria-hidden="true" /></a>
             </div>
           </div>
         </div>
         <span className="marketing-footer-orb one" aria-hidden="true" />
         <span className="marketing-footer-orb two" aria-hidden="true" />
         <p aria-label="Kungahara">Kungahara</p>
-        <small>© 2026 Kungahara. All rights reserved.</small>
+        <small>{tr("© 2026 Kungahara. All rights reserved.")}</small>
       </div>
     </footer>
   </main>;

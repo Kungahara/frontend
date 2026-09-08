@@ -2,6 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { landingText, type LandingLanguage } from "@/lib/landing-copy";
 
 const links = [
   { id: "home", label: "Home" },
@@ -12,7 +13,7 @@ const links = [
   { id: "contact", label: "Contact us" },
 ];
 
-export function MarketingNavigation() {
+export function MarketingNavigation({ language }: { language: LandingLanguage }) {
   const [activeSection, setActiveSection] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -106,14 +107,14 @@ export function MarketingNavigation() {
     <button
       className="marketing-menu-toggle"
       type="button"
-      aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-label={landingText(menuOpen ? "Close navigation menu" : "Open navigation menu", language)}
       aria-controls="marketing-navigation-links"
       aria-expanded={menuOpen}
       onClick={() => setMenuOpen((open) => !open)}
     >
       {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
     </button>
-    <nav className="marketing-nav" id="marketing-navigation-links" aria-label="Main navigation">
+    <nav className="marketing-nav" id="marketing-navigation-links" aria-label={landingText("Main navigation", language)}>
       {links.map(({ id, label }) => <a
         className={activeSection === id ? "active" : undefined}
         href={`#${id}`}
@@ -123,7 +124,7 @@ export function MarketingNavigation() {
           closeMenu();
         }}
         key={id}
-      >{label}</a>)}
+      >{landingText(label, language)}</a>)}
     </nav>
   </div>;
 }
