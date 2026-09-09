@@ -869,6 +869,7 @@ button.marketing-signup { cursor: pointer; }
 .marketing-step-list article:nth-of-type(2):hover { transform: translateY(-0.4rem) rotate(2.5deg); }
 .marketing-step-list article:nth-of-type(3):hover { transform: translateY(3.1rem) rotate(-1.8deg); }
 .marketing-step-list article > span { color: var(--step-color); font-family: Georgia, serif; font-size: calc(2.5rem * var(--ui-text-scale)); font-style: italic; line-height: 1; }
+.marketing-step-list article:first-of-type > span { color: white; }
 .marketing-step-list h3 { color: white; font-size: calc(1.25rem * var(--ui-text-scale)); }
 .marketing-step-list p { max-width: 31rem; margin-top: 0.15rem; color: rgb(255 255 255 / 62%); font-size: calc(0.82rem * var(--ui-text-scale)); line-height: 1.6; }
 .marketing-section.marketing-about { display: grid; padding-top: clamp(3rem, 6vw, 5.4rem); padding-bottom: clamp(2.5rem, 5vw, 4.5rem); grid-template-columns: minmax(22rem, 1fr) minmax(0, 0.9fr); gap: clamp(3rem, 8vw, 8rem); align-items: center; background: #edf8ff; }
