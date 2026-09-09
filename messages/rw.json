@@ -123,7 +123,9 @@
     "currency": "Ifaranga", "comparedWith": "Rigereranywa na", "start": "Tangira gukurikirana",
     "alertTitle": "{pair} yahindutse cyane",
     "alertMessage": "{pair} {direction} ku kigero cya {percentage}% ({change} RWF), kuva kuri {previous} kugera kuri {current}.",
-    "increased": "yazamutse", "decreased": "yamanutse"
+    "increased": "yazamutse", "decreased": "yamanutse",
+    "loadError": "Ntibyashobotse kubona amafaranga akurikiranwa.", "saveError": "Ntibyashobotse kongeramo iri faranga.",
+    "removeError": "Ntibyashobotse gukuraho iri faranga."
   },
   "Profile": {
     "openOptions": "Fungura amahitamo y’umwirondoro", "businessName": "Izina ry’ubucuruzi", "notSet": "Ntirashyirwaho",

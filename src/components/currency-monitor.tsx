@@ -5,9 +5,11 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
+import { apiErrorMessage } from "@/lib/api/client";
+import { inventoryFetch } from "@/lib/inventory-client";
 
 type CurrencyPosition = {
-  id: number;
+  id: string;
   pair: string;
   lastPrice: number | null;
   currentPrice: number | null;
@@ -19,10 +21,6 @@ export type CurrencyAlert = {
   title: string;
   message: string;
 };
-
-const initialCurrencies: CurrencyPosition[] = [
-  { id: 1, pair: "USD/RWF", lastPrice: null, currentPrice: null },
-];
 
 const MAX_CURRENCY_CARDS = 3;
 const currencyOptions = ["RWF", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "CAD", "CNY", "JPY", "AUD", "CHF"];
@@ -50,7 +48,10 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
   const loadingText = useTranslations("Loading");
   const t = useTranslations("Currency");
   const locale = useLocale();
-  const [currencies, setCurrencies] = useState(initialCurrencies);
+  const [currencies, setCurrencies] = useState<CurrencyPosition[]>([]);
+  const [loadingCurrencies, setLoadingCurrencies] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState("USD");
   const [quoteCurrency, setQuoteCurrency] = useState("RWF");
@@ -62,10 +63,28 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
   }, [locale]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    inventoryFetch("/api/currencies", { signal: controller.signal }).then(async (response) => {
+      const body = await response.json().catch(() => null) as { currencies?: Array<{ id: string; pair: string }> } | null;
+      if (!response.ok) throw new Error(apiErrorMessage(body, t("loadError")));
+      setCurrencies((body?.currencies ?? []).map((currency) => ({
+        id: currency.id, pair: currency.pair, lastPrice: null, currentPrice: null,
+      })));
+      setError("");
+    }).catch((loadError) => {
+      if (loadError instanceof DOMException && loadError.name === "AbortError") return;
+      setError(loadError instanceof Error ? loadError.message : t("loadError"));
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoadingCurrencies(false);
+    });
+    return () => controller.abort();
+  }, [t]);
+
+  useEffect(() => {
     let cancelled = false;
     const tracked = trackedPairs.split("|").filter(Boolean).map((item) => {
       const [id, pair] = item.split(":");
-      return { id: Number(id), pair };
+      return { id, pair };
     });
 
     async function refreshRates() {
@@ -97,23 +116,53 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [trackedPairs, onSignificantChange, t]);
 
-  function addCurrency(event: FormEvent<HTMLFormElement>) {
+  async function addCurrency(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (currencies.length >= MAX_CURRENCY_CARDS) return;
+    if (currencies.length >= MAX_CURRENCY_CARDS || busy) return;
     const data = new FormData(event.currentTarget);
     const base = String(data.get("base") ?? "").trim().toUpperCase();
     const quote = String(data.get("quote") ?? "").trim().toUpperCase();
     if (!base || !quote || base === quote || currencies.some((currency) => currency.pair === `${base}/${quote}`)) return;
 
-    const currency = {
-      id: Date.now(),
-      pair: `${base}/${quote}`,
-      lastPrice: null,
-      currentPrice: null,
-    };
-    setCurrencies((current) => [...current, currency]);
-    event.currentTarget.reset();
-    setAdding(false);
+    setBusy(true);
+    setError("");
+    try {
+      const response = await inventoryFetch("/api/currencies", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ base, quote }),
+      });
+      const body = await response.json().catch(() => null) as { currency?: { id: string; pair: string } } | null;
+      if (!response.ok || !body?.currency) {
+        setError(apiErrorMessage(body, t("saveError")));
+        return;
+      }
+      setCurrencies((current) => [...current, {
+        id: body.currency!.id, pair: body.currency!.pair, lastPrice: null, currentPrice: null,
+      }]);
+      setAdding(false);
+    } catch {
+      setError(t("saveError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeCurrency(id: string) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await inventoryFetch(`/api/currencies/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setError(apiErrorMessage(body, t("removeError")));
+        return;
+      }
+      setCurrencies((current) => current.filter((item) => item.id !== id));
+    } catch {
+      setError(t("removeError"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return <section className="currency-monitor" aria-label={t("monitored")}>
@@ -129,11 +178,12 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
             <div className="currency-card-pair"><span>{base}/</span><small>{quote}</small></div>
           </div>
           <div className="currency-movement">{currency.error ? <strong>{t("unavailable")}</strong> : movement === null ? <strong>{loadingText("currency")}</strong> : <><TrendIcon aria-hidden="true" /><strong>{Math.abs(movement).toFixed(2)}%</strong></>}</div>
-          <button className="currency-remove" type="button" onClick={() => setCurrencies((current) => current.filter((item) => item.id !== currency.id))}><X aria-hidden="true" /><span>{t("remove")}</span></button>
+          <button className="currency-remove" type="button" disabled={busy} onClick={() => void removeCurrency(currency.id)}><X aria-hidden="true" /><span>{t("remove")}</span></button>
         </article>;
       })}
     </div>
-    <button className="add-currency-button" type="button" disabled={currencies.length >= MAX_CURRENCY_CARDS} title={currencies.length >= MAX_CURRENCY_CARDS ? t("limitHelp") : undefined} onClick={() => setAdding(true)}><Plus aria-hidden="true" /><span>{currencies.length >= MAX_CURRENCY_CARDS ? t("limitReached") : t("add")}</span></button>
+    <button className="add-currency-button" type="button" disabled={loadingCurrencies || busy || currencies.length >= MAX_CURRENCY_CARDS} title={currencies.length >= MAX_CURRENCY_CARDS ? t("limitHelp") : undefined} onClick={() => setAdding(true)}><Plus aria-hidden="true" /><span>{currencies.length >= MAX_CURRENCY_CARDS ? t("limitReached") : t("add")}</span></button>
+    {error && <p className="currency-monitor-error" role="alert">{error}</p>}
 
     {adding && <div className="currency-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAdding(false); }}>
       <section className="currency-dialog" role="dialog" aria-modal="true" aria-labelledby="add-currency-title">
@@ -145,7 +195,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
             <CustomSelect label={t("currency")} name="base" value={baseCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setBaseCurrency} />
             <CustomSelect label={t("comparedWith")} name="quote" value={quoteCurrency} options={currencyOptions.map((code) => ({ label: code, value: code }))} onChange={setQuoteCurrency} />
           </div>
-          <button className="currency-dialog-submit" type="submit">{t("start")}</button>
+          <button className="currency-dialog-submit" type="submit" disabled={busy}>{t("start")}</button>
         </form>
       </section>
     </div>}

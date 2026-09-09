@@ -123,7 +123,9 @@
     "currency": "Currency", "comparedWith": "Compared with", "start": "Start monitoring",
     "alertTitle": "{pair} moved significantly",
     "alertMessage": "{pair} {direction} by {percentage}% ({change} RWF), from {previous} to {current}.",
-    "increased": "increased", "decreased": "decreased"
+    "increased": "increased", "decreased": "decreased",
+    "loadError": "Unable to load monitored currencies.", "saveError": "Unable to add this currency.",
+    "removeError": "Unable to remove this currency."
   },
   "Profile": {
     "openOptions": "Open profile options", "businessName": "Business name", "notSet": "Not set",

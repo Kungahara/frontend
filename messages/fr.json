@@ -123,7 +123,9 @@
     "currency": "Devise", "comparedWith": "Comparée à", "start": "Commencer le suivi",
     "alertTitle": "Variation importante de {pair}",
     "alertMessage": "{pair} a {direction} de {percentage} % ({change} RWF), passant de {previous} à {current}.",
-    "increased": "augmenté", "decreased": "diminué"
+    "increased": "augmenté", "decreased": "diminué",
+    "loadError": "Impossible de charger les devises suivies.", "saveError": "Impossible d’ajouter cette devise.",
+    "removeError": "Impossible de retirer cette devise."
   },
   "Profile": {
     "openOptions": "Ouvrir les options du profil", "businessName": "Nom de l’entreprise", "notSet": "Non défini",

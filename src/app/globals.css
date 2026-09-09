@@ -2650,6 +2650,7 @@ button.marketing-signup { cursor: pointer; }
   .stock-summary-grid { grid-template-columns: minmax(0, 13rem); }
 }
 .currency-monitor { display: flex; min-width: 0; align-items: center; gap: 0.35rem; }
+.currency-monitor-error { max-width: 12rem; margin: 0; color: #dc2626; font-size: 0.68rem; line-height: 1.2; }
 .add-currency-button { display: inline-flex; min-height: 2.55rem; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.45rem 0.65rem; color: white; font-size: calc(0.62rem * var(--ui-text-scale)); font-weight: 550; background: var(--app-blue); border: 0; border-radius: 0.6rem; box-shadow: 0 4px 11px rgb(var(--app-blue-rgb) / 20%); cursor: pointer; }
 .add-currency-button:hover { background: var(--app-blue); }
 .add-currency-button:disabled { cursor: not-allowed; opacity: 0.5; box-shadow: none; }
