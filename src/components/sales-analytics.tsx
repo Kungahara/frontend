@@ -129,12 +129,12 @@ export function SalesAnalytics() {
     </div></div>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-analysis-chart sales-items-chart"><svg viewBox="0 0 560 225" role="img" aria-label="Items sold in the selected period" onMouseLeave={() => setHoveredIndex(null)}>
-      <defs><linearGradient id="sales-items-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#35b866" stopOpacity="0.28" /><stop offset="1" stopColor="#35b866" stopOpacity="0.02" /></linearGradient></defs>
+      <defs><linearGradient id="sales-items-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--app-blue)" stopOpacity="0.28" /><stop offset="1" stopColor="var(--app-blue)" stopOpacity="0.02" /></linearGradient></defs>
       {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 145} y2={190 - ratio * 145} /><text x="49" y={194 - ratio * 145} textAnchor="end">{Math.round(maximum * ratio)}</text></g>)}
       <line className="stock-axis" x1="58" x2="58" y1="45" y2="190" /><line className="stock-axis" x1="58" x2="526" y1="190" y2="190" />
       {points.map((point, index) => <text x={x(index)} y="209" textAnchor="middle" key={point.label}>{point.label}</text>)}
       <text className="stock-axis-label" x="14" y="116" textAnchor="middle" transform="rotate(-90 14 116)">Items sold</text>
-      <path className="sales-items-area" d={`${line} L 526 190 L 58 190 Z`} /><path className="stock-chart-line sales-items-line" d={line} />
+      <path className="sales-items-area" d={`${line} L 526 190 L 58 190 Z`} /><path className="stock-chart-line sales-items-line" pathLength="1" d={line} />
       {points.map((point, index) => <g className="sales-items-point-group" key={`point-${point.label}`} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)}><circle className="sales-items-point-hit" cx={x(index)} cy={y(point.value)} r="15" /><circle className="sales-items-point-ring" cx={x(index)} cy={y(point.value)} r="5.5" /><circle className="sales-items-point-core" cx={x(index)} cy={y(point.value)} r="2.5" /></g>)}
       {hoveredPoint && <g className="stock-chart-tooltip sales-items-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="136" height="52" rx="8" /><text x={tooltipX + 11} y={tooltipY + 20}>{hoveredPoint.label}</text><text className="value" x={tooltipX + 11} y={tooltipY + 40}>{hoveredPoint.value} items sold</text></g>}
     </svg></div>
