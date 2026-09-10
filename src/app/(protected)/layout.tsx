@@ -24,6 +24,7 @@ import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monit
 import { InactivityLogout } from "@/components/inactivity-logout";
 import { LogoutButton } from "@/components/logout-button";
 import { ProfileMenu } from "@/components/profile-menu";
+import { UsageHeartbeat } from "@/components/usage-heartbeat";
 import { WorkspaceCopyTranslator } from "@/components/workspace-copy-translator";
 import { localizedFullDate } from "@/lib/localized-date";
 import { authRequest, type AuthUser } from "@/lib/api/client";
@@ -398,6 +399,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
     <InactivityLogout />
+    <UsageHeartbeat />
     <WorkspaceCopyTranslator />
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">

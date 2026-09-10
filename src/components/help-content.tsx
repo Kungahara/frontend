@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Plus, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -38,6 +38,19 @@ export function HelpContent() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [managedQuestions, setManagedQuestions] = useState<{ id: string; title: string; content: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/help-content")
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((body) => setManagedQuestions(Array.isArray(body.items) ? body.items : []))
+      .catch(() => setManagedQuestions([]));
+  }, []);
+
+  const visibleQuestions = [
+    ...questions.map((item, index) => ({ id: `built-in-${index}`, title: item.question, content: item.answer })),
+    ...managedQuestions,
+  ];
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,14 +74,14 @@ export function HelpContent() {
     <header className="help-heading"><h1 id="help-title">How can we help?</h1></header>
 
     <div className="help-list">
-      {questions.map((item, index) => {
+      {visibleQuestions.map((item, index) => {
         const isOpen = openItem === index;
         const answerId = `help-answer-${index}`;
-        return <article className={`help-item${isOpen ? " open" : ""}`} key={item.question}>
+        return <article className={`help-item${isOpen ? " open" : ""}`} key={item.id}>
           <button className="help-question" type="button" aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenItem(isOpen ? -1 : index)}>
-            <span className="help-number">{index + 1}</span><strong>{tr(item.question)}</strong><span className="help-toggle"><Plus aria-hidden="true" /></span>
+            <span className="help-number">{index + 1}</span><strong>{tr(item.title)}</strong><span className="help-toggle"><Plus aria-hidden="true" /></span>
           </button>
-          {isOpen && <div className="help-answer" id={answerId}><p>{tr(item.answer)}</p></div>}
+          {isOpen && <div className="help-answer" id={answerId}><p>{tr(item.content)}</p></div>}
         </article>;
       })}
 
