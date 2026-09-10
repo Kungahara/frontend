@@ -26,9 +26,24 @@
     "chooseHighlight": "Choisir un aperçu",
     "showHighlight": "Afficher {title}",
     "slides": {
-      "stock": { "title": "Inventaire", "heading": "Évitez les ruptures de stock imprévues.", "point1": "Surveillez les niveaux de stock", "point2": "Réapprovisionnez au bon moment" },
-      "sales": { "title": "Ventes", "heading": "Comprenez ce qui génère vos revenus.", "point1": "Découvrez vos meilleurs produits", "point2": "Suivez clairement vos revenus" },
-      "finance": { "title": "Finances", "heading": "Gardez votre entreprise en bonne santé financière.", "point1": "Comprenez votre bénéfice", "point2": "Ne manquez aucun paiement" }
+      "stock": {
+        "title": "Inventaire",
+        "heading": "Évitez les ruptures de stock imprévues.",
+        "point1": "Surveillez les niveaux de stock",
+        "point2": "Réapprovisionnez au bon moment"
+      },
+      "sales": {
+        "title": "Ventes",
+        "heading": "Comprenez ce qui génère vos revenus.",
+        "point1": "Découvrez vos meilleurs produits",
+        "point2": "Suivez clairement vos revenus"
+      },
+      "finance": {
+        "title": "Finances",
+        "heading": "Gardez votre entreprise en bonne santé financière.",
+        "point1": "Comprenez votre bénéfice",
+        "point2": "Ne manquez aucun paiement"
+      }
     },
     "alerts": {
       "middayTitle": "Rappel des ventes de midi",
@@ -94,45 +109,238 @@
   },
   "Dashboard": {
     "summaryLabel": "Résumé financier du tableau de bord",
-    "scope": { "today": "aujourd’hui", "month": "ce mois-ci", "year": "cette année" },
+    "scope": {
+      "today": "aujourd’hui",
+      "month": "ce mois-ci",
+      "year": "cette année"
+    },
     "cards": {
-      "moneyInvested": "Argent investi {scope}", "stockPurchased": "Stock acheté",
-      "income": "Revenus {scope}", "moneyFromSales": "Revenus des ventes",
-      "profit": "Bénéfice {scope}", "profitMade": "Bénéfice réalisé {scope}",
-      "lossesSuffered": "Pertes subies", "moneyLost": "Argent perdu {scope}",
-      "stockValue": "Valeur du stock", "thanLastMonth": "par rapport au mois dernier",
-      "expectedIncome": "Revenus prévus", "expectedIncomeLabel": "Revenus prévus du stock",
-      "allStockSold": "Si tout le stock actuel est vendu", "mostSelling": "Article du stock le plus vendu",
-      "leastSelling": "Article du stock le moins vendu", "noSales": "Aucune vente pour le moment",
+      "moneyInvested": "Argent investi {scope}",
+      "stockPurchased": "Stock acheté",
+      "income": "Revenus {scope}",
+      "moneyFromSales": "Revenus des ventes",
+      "profit": "Bénéfice {scope}",
+      "profitMade": "Bénéfice réalisé {scope}",
+      "lossesSuffered": "Pertes subies",
+      "moneyLost": "Argent perdu {scope}",
+      "stockValue": "Valeur du stock",
+      "thanLastMonth": "par rapport au mois dernier",
+      "expectedIncome": "Revenus prévus",
+      "expectedIncomeLabel": "Revenus prévus du stock",
+      "allStockSold": "Si tout le stock actuel est vendu",
+      "mostSelling": "Article du stock le plus vendu",
+      "leastSelling": "Article du stock le moins vendu",
+      "noSales": "Aucune vente pour le moment",
       "remainingStock": "Stock restant : {quantity}"
     },
     "graph": {
-      "graphsLabel": "Graphiques du tableau de bord", "financeTab": "Revenus et dépenses", "salesTab": "Ventes",
-      "continue": "Continuer vers la page", "itemsSold": "Articles vendus", "income": "Revenus", "expenses": "Dépenses",
-      "amount": "Montant (RWF)", "itemsSoldValue": "{count} articles vendus",
-      "salesGraphLabel": "Graphique général des ventes", "financeGraphLabel": "Graphique des revenus et dépenses",
+      "graphsLabel": "Graphiques du tableau de bord",
+      "financeTab": "Revenus et dépenses",
+      "salesTab": "Ventes",
+      "continue": "Continuer vers la page",
+      "itemsSold": "Articles vendus",
+      "income": "Revenus",
+      "expenses": "Dépenses",
+      "amount": "Montant (RWF)",
+      "itemsSoldValue": "{count} articles vendus",
+      "salesGraphLabel": "Graphique général des ventes",
+      "financeGraphLabel": "Graphique des revenus et dépenses",
       "salesSevenDaysLabel": "Articles vendus au cours des sept derniers jours",
       "financeSevenDaysLabel": "Revenus et dépenses des sept derniers jours"
     }
   },
   "Currency": {
-    "monitored": "Devises suivies", "unavailable": "Indisponible", "remove": "Retirer",
-    "limitHelp": "Vous pouvez suivre jusqu’à trois paires de devises.", "limitReached": "Limite atteinte",
-    "add": "Ajouter une devise", "close": "Fermer", "dialogTitle": "Ajouter une devise",
+    "monitored": "Devises suivies",
+    "unavailable": "Indisponible",
+    "remove": "Retirer",
+    "limitHelp": "Vous pouvez suivre jusqu’à trois paires de devises.",
+    "limitReached": "Limite atteinte",
+    "add": "Ajouter une devise",
+    "close": "Fermer",
+    "dialogTitle": "Ajouter une devise",
     "dialogBody": "Choisissez deux devises. Kungahara récupérera et suivra automatiquement leur taux de change.",
-    "currency": "Devise", "comparedWith": "Comparée à", "start": "Commencer le suivi",
+    "currency": "Devise",
+    "comparedWith": "Comparée à",
+    "start": "Commencer le suivi",
     "alertTitle": "Variation importante de {pair}",
     "alertMessage": "{pair} a {direction} de {percentage} % ({change} RWF), passant de {previous} à {current}.",
-    "increased": "augmenté", "decreased": "diminué",
-    "loadError": "Impossible de charger les devises suivies.", "saveError": "Impossible d’ajouter cette devise.",
+    "increased": "augmenté",
+    "decreased": "diminué",
+    "loadError": "Impossible de charger les devises suivies.",
+    "saveError": "Impossible d’ajouter cette devise.",
     "removeError": "Impossible de retirer cette devise."
   },
   "Profile": {
-    "openOptions": "Ouvrir les options du profil", "businessName": "Nom de l’entreprise", "notSet": "Non défini",
-    "saveBusinessName": "Enregistrer le nom de l’entreprise", "cancelBusinessEdit": "Annuler la modification du nom de l’entreprise",
-    "changePicture": "Changer la photo de profil", "uploadPicture": "Ajouter une photo de profil",
-    "removePicture": "Supprimer la photo de profil", "pictureHint": "JPEG, PNG ou WebP, jusqu’à 5 Mo.",
-    "uploadError": "Impossible de téléverser la photo de profil.", "removeError": "Impossible de supprimer la photo de profil.",
+    "openOptions": "Ouvrir les options du profil",
+    "businessName": "Nom de l’entreprise",
+    "notSet": "Non défini",
+    "saveBusinessName": "Enregistrer le nom de l’entreprise",
+    "cancelBusinessEdit": "Annuler la modification du nom de l’entreprise",
+    "changePicture": "Changer la photo de profil",
+    "uploadPicture": "Ajouter une photo de profil",
+    "removePicture": "Supprimer la photo de profil",
+    "pictureHint": "JPEG, PNG ou WebP, jusqu’à 5 Mo.",
+    "uploadError": "Impossible de téléverser la photo de profil.",
+    "removeError": "Impossible de supprimer la photo de profil.",
     "businessError": "Impossible de modifier le nom de l’entreprise."
+  },
+  "Auth": {
+    "secureAccess": "Accès sécurisé",
+    "welcomeBack": "Bon retour",
+    "signInIntro": "Connectez-vous pour continuer à développer votre entreprise.",
+    "inactive": "Vous avez été déconnecté après 2 jours d’inactivité. Connectez-vous pour continuer.",
+    "unableSignIn": "Impossible de se connecter.",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signIn": "Se connecter",
+    "orContinueWith": "ou continuer avec",
+    "newToKungahara": "Nouveau sur Kungahara ?",
+    "createAccount": "Créer un compte",
+    "joinKungahara": "Rejoignez Kungahara",
+    "joinUs": "Rejoignez-nous",
+    "signupIntro": "Créez votre compte et commencez votre parcours.",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "businessName": "Nom de l’entreprise",
+    "businessExample": "p. ex. Uwera Foods",
+    "confirmPassword": "Confirmer le mot de passe",
+    "hideConfirmPassword": "Masquer la confirmation du mot de passe",
+    "showConfirmPassword": "Afficher la confirmation du mot de passe",
+    "passwordHint": "Utilisez au moins 8 caractères et évitez les mots de passe courants.",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
+    "unableCreateAccount": "Impossible de créer le compte.",
+    "creatingAccount": "Création du compte…",
+    "orSignUpWith": "ou s’inscrire avec",
+    "alreadyAccount": "Vous avez déjà un compte ?",
+    "agreementPrefix": "En vous inscrivant, vous acceptez les",
+    "terms": "Conditions d’utilisation",
+    "and": "et la",
+    "privacy": "Politique de confidentialité",
+    "continueWith": "Continuer avec {provider}",
+    "signUpWith": "S’inscrire avec {provider}",
+    "closeAuthentication": "Fermer l’authentification",
+    "kungaharaHome": "Accueil Kungahara",
+    "carousel": {
+      "slidesLabel": "Aperçus des fonctionnalités",
+      "showSlide": "Afficher {title}",
+      "dashboard": {
+        "title": "Votre entreprise en un coup d’œil",
+        "description": "Consultez les chiffres essentiels de votre entreprise sur un tableau de bord clair.",
+        "alt": "Tableau de bord professionnel Kungahara"
+      },
+      "stock": {
+        "title": "Gardez une longueur d’avance sur votre stock",
+        "description": "Suivez vos produits, quantités et articles en stock faible en toute confiance.",
+        "alt": "Espace de gestion de l’inventaire Kungahara"
+      },
+      "sales": {
+        "title": "Comprenez chaque vente",
+        "description": "Suivez vos ventes et découvrez les produits préférés de vos clients.",
+        "alt": "Espace de vente Kungahara"
+      },
+      "finance": {
+        "title": "Gardez des finances saines",
+        "description": "Surveillez revenus, bénéfices, dépenses et échéances de prêts.",
+        "alt": "Espace des finances et prêts Kungahara"
+      },
+      "documents": {
+        "title": "Gardez vos documents à portée de main",
+        "description": "Classez reçus, contrats et documents professionnels au même endroit.",
+        "alt": "Espace de gestion des documents Kungahara"
+      }
+    }
+  },
+  "Legal": {
+    "kungaharaHome": "Accueil Kungahara",
+    "backHome": "Retour à l’accueil",
+    "effectiveDate": "En vigueur depuis le 25 août 2026",
+    "onThisPage": "Sur cette page",
+    "sectionsLabel": "Sections de {title}",
+    "questions": "Des questions ?",
+    "contact": "Contactez Kungahara au sujet de ce document à",
+    "terms": {
+      "label": "Mentions légales",
+      "title": "Conditions d’utilisation",
+      "summary": "Les règles essentielles pour utiliser Kungahara de manière claire, sûre et responsable.",
+      "acceptance": {
+        "title": "Acceptation de ces conditions",
+        "body": "En créant un compte ou en utilisant Kungahara, vous acceptez ces conditions. Si vous utilisez Kungahara pour une entreprise, vous confirmez être autorisé à accepter ces conditions en son nom."
+      },
+      "service": {
+        "title": "Utilisation de Kungahara",
+        "body1": "Kungahara fournit des outils pour gérer des informations professionnelles telles que l’inventaire, les ventes, les finances, les prêts et les documents. Vous ne pouvez utiliser le service qu’à des fins professionnelles légales.",
+        "body2": "Vous ne devez pas détourner le service, perturber son fonctionnement, tenter un accès non autorisé ni l’utiliser pour porter atteinte aux droits d’autrui."
+      },
+      "accounts": {
+        "title": "Comptes et sécurité",
+        "body1": "Fournissez des informations d’inscription exactes et tenez-les à jour. Vous êtes responsable de l’activité de votre compte ainsi que de la protection de votre mot de passe et de vos méthodes de connexion.",
+        "body2": "Informez-nous rapidement si vous pensez que votre compte a été consulté sans autorisation."
+      },
+      "businessData": {
+        "title": "Vos données professionnelles",
+        "body1": "Vous restez propriétaire des informations et documents ajoutés à Kungahara. Vous nous autorisez à les traiter uniquement pour exploiter, sécuriser, maintenir et améliorer le service.",
+        "body2": "Vous devez vous assurer que vous avez le droit de téléverser et d’utiliser les données enregistrées dans votre espace."
+      },
+      "availability": {
+        "title": "Disponibilité du service",
+        "body": "Nous veillons à la fiabilité de Kungahara, mais le service peut parfois être interrompu pour maintenance, sécurité ou en raison de circonstances indépendantes de notre volonté. Les fonctionnalités peuvent évoluer avec le produit."
+      },
+      "decisions": {
+        "title": "Décisions professionnelles",
+        "body": "Kungahara organise les informations que vous fournissez, mais ne constitue pas un conseil comptable, fiscal, juridique ou financier. Vérifiez les chiffres importants et consultez un professionnel qualifié avant de prendre une décision professionnelle lorsque cela est nécessaire."
+      },
+      "suspension": {
+        "title": "Suspension et résiliation",
+        "body": "Nous pouvons limiter ou mettre fin à l’accès lorsqu’un compte enfreint gravement ces conditions, menace le service ou d’autres utilisateurs, ou lorsque la loi l’exige. Vous pouvez cesser d’utiliser Kungahara à tout moment et demander la suppression de votre compte dans les paramètres disponibles."
+      },
+      "changes": {
+        "title": "Modification de ces conditions",
+        "body": "Nous pouvons mettre à jour ces conditions à mesure que Kungahara évolue. Si une modification affecte sensiblement vos droits ou responsabilités, nous vous en informerons dans un délai raisonnable avant son entrée en vigueur. Continuer à utiliser le service après cette date vaut acceptation des nouvelles conditions."
+      }
+    },
+    "privacy": {
+      "label": "Confidentialité",
+      "title": "Politique de confidentialité",
+      "summary": "Une explication claire des données collectées par Kungahara et de la façon dont elles sont traitées.",
+      "information": {
+        "title": "Informations que nous collectons",
+        "body1": "Nous collectons les renseignements de votre compte, notamment votre nom, adresse e-mail, nom d’entreprise, photo de profil et informations d’authentification. Nous traitons également les données d’inventaire, de ventes, de finances, de prêts et de documents que vous ajoutez à votre espace.",
+        "body2": "Des informations techniques de base peuvent être traitées pour garantir la sécurité et le bon fonctionnement du service."
+      },
+      "use": {
+        "title": "Utilisation des informations",
+        "body": "Nous utilisons les informations pour créer et authentifier les comptes, fournir les fonctions de l’espace de travail, envoyer les notifications demandées, répondre aux demandes d’assistance, protéger le service, résoudre les problèmes et améliorer Kungahara."
+      },
+      "authentication": {
+        "title": "Authentification et mots de passe",
+        "body1": "Les mots de passe sont conservés sous forme d’empreintes sécurisées et non en clair. La confirmation du mot de passe sert uniquement à vérifier la correspondance et n’est jamais enregistrée.",
+        "body2": "Si vous choisissez la connexion Google ou Microsoft, le fournisseur transmet des informations d’identité de base après votre consentement. Nous ne recevons pas le mot de passe de ce fournisseur."
+      },
+      "sharing": {
+        "title": "Partage des informations",
+        "body1": "Kungahara ne vend pas vos informations personnelles. Elles peuvent être partagées avec des fournisseurs d’infrastructure et de services uniquement pour assurer des fonctions telles que l’hébergement, l’envoi d’e-mails, l’authentification, le stockage de fichiers et les notifications du navigateur.",
+        "body2": "Nous pouvons aussi divulguer des informations lorsque la loi l’exige ou pour protéger les utilisateurs, le service ou le public."
+      },
+      "retention": {
+        "title": "Stockage et conservation",
+        "body": "Nous conservons les informations pendant que votre compte est actif et aussi longtemps que nécessaire pour exploiter le service, respecter nos obligations légales, résoudre les litiges et maintenir la sécurité. La durée varie selon le type de donnée et sa finalité."
+      },
+      "choices": {
+        "title": "Vos choix",
+        "body": "Vous pouvez modifier votre profil et les informations de votre entreprise, gérer les notifications, exporter les dossiers professionnels pris en charge et demander la suppression de votre compte dans les paramètres de Kungahara. Vous pouvez également nous contacter pour une question de confidentialité ou une demande de correction."
+      },
+      "security": {
+        "title": "Protection des informations",
+        "body": "Nous utilisons des contrôles d’accès, une authentification sécurisée, des jetons à durée limitée et d’autres mesures techniques pour protéger vos informations. Aucun système en ligne ne peut garantir une sécurité absolue ; vous devez donc aussi protéger vos identifiants."
+      },
+      "changes": {
+        "title": "Mises à jour de la politique",
+        "body": "Nous pouvons réviser cette politique à mesure que Kungahara et ses pratiques de confidentialité évoluent. Les changements importants seront communiqués avant leur entrée en vigueur et la date ci-dessus sera actualisée."
+      }
+    }
   }
 }

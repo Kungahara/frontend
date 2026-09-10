@@ -26,9 +26,24 @@
     "chooseHighlight": "Hitamo icy’ingenzi",
     "showHighlight": "Erekana {title}",
     "slides": {
-      "stock": { "title": "Ububiko", "heading": "Irinde kubura ibicuruzwa utabiteguye.", "point1": "Kurikirana ingano y’ibicuruzwa", "point2": "Ongera ibicuruzwa ku gihe" },
-      "sales": { "title": "Ibyagurishijwe", "heading": "Menya ibizana amafaranga mu bucuruzi bwawe.", "point1": "Menya ibicuruzwa bigurwa cyane", "point2": "Kurikirana amafaranga yinjira neza" },
-      "finance": { "title": "Imari", "heading": "Komeza ubucuruzi bwawe buhagaze neza mu by’imari.", "point1": "Menya inyungu yawe", "point2": "Ntucikwe n’igihe cyo kwishyura" }
+      "stock": {
+        "title": "Ububiko",
+        "heading": "Irinde kubura ibicuruzwa utabiteguye.",
+        "point1": "Kurikirana ingano y’ibicuruzwa",
+        "point2": "Ongera ibicuruzwa ku gihe"
+      },
+      "sales": {
+        "title": "Ibyagurishijwe",
+        "heading": "Menya ibizana amafaranga mu bucuruzi bwawe.",
+        "point1": "Menya ibicuruzwa bigurwa cyane",
+        "point2": "Kurikirana amafaranga yinjira neza"
+      },
+      "finance": {
+        "title": "Imari",
+        "heading": "Komeza ubucuruzi bwawe buhagaze neza mu by’imari.",
+        "point1": "Menya inyungu yawe",
+        "point2": "Ntucikwe n’igihe cyo kwishyura"
+      }
     },
     "alerts": {
       "middayTitle": "Icyibutsa cy’ibyagurishijwe saa sita",
@@ -94,45 +109,238 @@
   },
   "Dashboard": {
     "summaryLabel": "Incamake y’imari ku rubuga rw’ibanze",
-    "scope": { "today": "uyu munsi", "month": "uku kwezi", "year": "uyu mwaka" },
+    "scope": {
+      "today": "uyu munsi",
+      "month": "uku kwezi",
+      "year": "uyu mwaka"
+    },
     "cards": {
-      "moneyInvested": "Amafaranga yashowe {scope}", "stockPurchased": "Ibicuruzwa byaguzwe",
-      "income": "Ayinjijwe {scope}", "moneyFromSales": "Amafaranga yavuye mu byagurishijwe",
-      "profit": "Inyungu {scope}", "profitMade": "Inyungu yabonetse {scope}",
-      "lossesSuffered": "Igihombo", "moneyLost": "Amafaranga yahombye {scope}",
-      "stockValue": "Agaciro k’ububiko", "thanLastMonth": "ugereranyije n’ukwezi gushize",
-      "expectedIncome": "Amafaranga ategerejwe", "expectedIncomeLabel": "Amafaranga ategerejwe mu bubiko",
-      "allStockSold": "Ibicuruzwa byose bihari nibigurishwa", "mostSelling": "Igicuruzwa kigurishwa cyane",
-      "leastSelling": "Igicuruzwa kigurishwa gake", "noSales": "Nta cyagurishijwe kiraboneka",
+      "moneyInvested": "Amafaranga yashowe {scope}",
+      "stockPurchased": "Ibicuruzwa byaguzwe",
+      "income": "Ayinjijwe {scope}",
+      "moneyFromSales": "Amafaranga yavuye mu byagurishijwe",
+      "profit": "Inyungu {scope}",
+      "profitMade": "Inyungu yabonetse {scope}",
+      "lossesSuffered": "Igihombo",
+      "moneyLost": "Amafaranga yahombye {scope}",
+      "stockValue": "Agaciro k’ububiko",
+      "thanLastMonth": "ugereranyije n’ukwezi gushize",
+      "expectedIncome": "Amafaranga ategerejwe",
+      "expectedIncomeLabel": "Amafaranga ategerejwe mu bubiko",
+      "allStockSold": "Ibicuruzwa byose bihari nibigurishwa",
+      "mostSelling": "Igicuruzwa kigurishwa cyane",
+      "leastSelling": "Igicuruzwa kigurishwa gake",
+      "noSales": "Nta cyagurishijwe kiraboneka",
       "remainingStock": "Ibicuruzwa bisigaye: {quantity}"
     },
     "graph": {
-      "graphsLabel": "Ibishushanyo byo ku rubuga rw’ibanze", "financeTab": "Ayinjira n’asohoka", "salesTab": "Ibyagurishijwe",
-      "continue": "Komeza kuri paji", "itemsSold": "Ibicuruzwa byagurishijwe", "income": "Ayinjira", "expenses": "Ayasohoka",
-      "amount": "Amafaranga (RWF)", "itemsSoldValue": "Ibicuruzwa {count} byagurishijwe",
-      "salesGraphLabel": "Igishushanyo rusange cy’ibyagurishijwe", "financeGraphLabel": "Igishushanyo cy’ayinjira n’asohoka",
+      "graphsLabel": "Ibishushanyo byo ku rubuga rw’ibanze",
+      "financeTab": "Ayinjira n’asohoka",
+      "salesTab": "Ibyagurishijwe",
+      "continue": "Komeza kuri paji",
+      "itemsSold": "Ibicuruzwa byagurishijwe",
+      "income": "Ayinjira",
+      "expenses": "Ayasohoka",
+      "amount": "Amafaranga (RWF)",
+      "itemsSoldValue": "Ibicuruzwa {count} byagurishijwe",
+      "salesGraphLabel": "Igishushanyo rusange cy’ibyagurishijwe",
+      "financeGraphLabel": "Igishushanyo cy’ayinjira n’asohoka",
       "salesSevenDaysLabel": "Ibicuruzwa byagurishijwe mu minsi irindwi ishize",
       "financeSevenDaysLabel": "Ayinjira n’asohoka mu minsi irindwi ishize"
     }
   },
   "Currency": {
-    "monitored": "Amafaranga akurikiranwa", "unavailable": "Ntibihari", "remove": "Kuraho",
-    "limitHelp": "Ushobora gukurikirana amatsinda y’amafaranga atatu.", "limitReached": "Umubare ntarengwa wagezweho",
-    "add": "Ongeramo ifaranga", "close": "Funga", "dialogTitle": "Ongeramo ifaranga",
+    "monitored": "Amafaranga akurikiranwa",
+    "unavailable": "Ntibihari",
+    "remove": "Kuraho",
+    "limitHelp": "Ushobora gukurikirana amatsinda y’amafaranga atatu.",
+    "limitReached": "Umubare ntarengwa wagezweho",
+    "add": "Ongeramo ifaranga",
+    "close": "Funga",
+    "dialogTitle": "Ongeramo ifaranga",
     "dialogBody": "Hitamo amafaranga abiri. Kungahara izashaka kandi ikurikirane igipimo cy’ivunjisha ryayo.",
-    "currency": "Ifaranga", "comparedWith": "Rigereranywa na", "start": "Tangira gukurikirana",
+    "currency": "Ifaranga",
+    "comparedWith": "Rigereranywa na",
+    "start": "Tangira gukurikirana",
     "alertTitle": "{pair} yahindutse cyane",
     "alertMessage": "{pair} {direction} ku kigero cya {percentage}% ({change} RWF), kuva kuri {previous} kugera kuri {current}.",
-    "increased": "yazamutse", "decreased": "yamanutse",
-    "loadError": "Ntibyashobotse kubona amafaranga akurikiranwa.", "saveError": "Ntibyashobotse kongeramo iri faranga.",
+    "increased": "yazamutse",
+    "decreased": "yamanutse",
+    "loadError": "Ntibyashobotse kubona amafaranga akurikiranwa.",
+    "saveError": "Ntibyashobotse kongeramo iri faranga.",
     "removeError": "Ntibyashobotse gukuraho iri faranga."
   },
   "Profile": {
-    "openOptions": "Fungura amahitamo y’umwirondoro", "businessName": "Izina ry’ubucuruzi", "notSet": "Ntirashyirwaho",
-    "saveBusinessName": "Bika izina ry’ubucuruzi", "cancelBusinessEdit": "Hagarika guhindura izina ry’ubucuruzi",
-    "changePicture": "Hindura ifoto y’umwirondoro", "uploadPicture": "Shyiraho ifoto y’umwirondoro",
-    "removePicture": "Kuraho ifoto y’umwirondoro", "pictureHint": "JPEG, PNG cyangwa WebP, kugeza kuri 5 MB.",
-    "uploadError": "Ntibyashobotse gushyiraho ifoto y’umwirondoro.", "removeError": "Ntibyashobotse gukuraho ifoto y’umwirondoro.",
+    "openOptions": "Fungura amahitamo y’umwirondoro",
+    "businessName": "Izina ry’ubucuruzi",
+    "notSet": "Ntirashyirwaho",
+    "saveBusinessName": "Bika izina ry’ubucuruzi",
+    "cancelBusinessEdit": "Hagarika guhindura izina ry’ubucuruzi",
+    "changePicture": "Hindura ifoto y’umwirondoro",
+    "uploadPicture": "Shyiraho ifoto y’umwirondoro",
+    "removePicture": "Kuraho ifoto y’umwirondoro",
+    "pictureHint": "JPEG, PNG cyangwa WebP, kugeza kuri 5 MB.",
+    "uploadError": "Ntibyashobotse gushyiraho ifoto y’umwirondoro.",
+    "removeError": "Ntibyashobotse gukuraho ifoto y’umwirondoro.",
     "businessError": "Ntibyashobotse guhindura izina ry’ubucuruzi."
+  },
+  "Auth": {
+    "secureAccess": "Kwinjira byizewe",
+    "welcomeBack": "Murakaza neza nanone",
+    "signInIntro": "Injira ukomeze guteza imbere ubucuruzi bwawe.",
+    "inactive": "Wasohowe nyuma y’iminsi 2 udakoresha urubuga. Injira kugira ngo ukomeze.",
+    "unableSignIn": "Kwinjira ntibyashobotse.",
+    "email": "Aderesi ya e-mail",
+    "password": "Ijambo ry’ibanga",
+    "hidePassword": "Hisha ijambo ry’ibanga",
+    "showPassword": "Erekana ijambo ry’ibanga",
+    "rememberMe": "Unyibuke",
+    "forgotPassword": "Wibagiwe ijambo ry’ibanga?",
+    "signIn": "Injira",
+    "orContinueWith": "cyangwa ukomeze ukoresheje",
+    "newToKungahara": "Uri mushya kuri Kungahara?",
+    "createAccount": "Fungura konti",
+    "joinKungahara": "Injira muri Kungahara",
+    "joinUs": "Twiyungeho",
+    "signupIntro": "Fungura konti maze utangire urugendo rwawe.",
+    "firstName": "Izina",
+    "lastName": "Izina ry’umuryango",
+    "businessName": "Izina ry’ubucuruzi",
+    "businessExample": "urugero: Uwera Foods",
+    "confirmPassword": "Emeza ijambo ry’ibanga",
+    "hideConfirmPassword": "Hisha ijambo ry’ibanga ryemeza",
+    "showConfirmPassword": "Erekana ijambo ry’ibanga ryemeza",
+    "passwordHint": "Koresha nibura inyuguti 8 kandi wirinde amagambo y’ibanga asanzwe.",
+    "passwordsDoNotMatch": "Amagambo y’ibanga ntahura.",
+    "unableCreateAccount": "Gufungura konti ntibyashobotse.",
+    "creatingAccount": "Konti irimo gufungurwa…",
+    "orSignUpWith": "cyangwa iyandikishe ukoresheje",
+    "alreadyAccount": "Usanzwe ufite konti?",
+    "agreementPrefix": "Kwiyandikisha bivuze ko wemeye",
+    "terms": "Amabwiriza y’imikoreshereze",
+    "and": "na",
+    "privacy": "Politiki y’ibanga",
+    "continueWith": "Komeza ukoresheje {provider}",
+    "signUpWith": "Iyandikishe ukoresheje {provider}",
+    "closeAuthentication": "Funga aho binjirira",
+    "kungaharaHome": "Ahabanza ha Kungahara",
+    "carousel": {
+      "slidesLabel": "Ibyerekanwa bya porogaramu",
+      "showSlide": "Erekana {title}",
+      "dashboard": {
+        "title": "Reba ubucuruzi bwawe muri make",
+        "description": "Reba imibare y’ingenzi y’ubucuruzi bwawe ahantu hamwe hagaragara neza.",
+        "alt": "Ahabanza h’ubucuruzi muri Kungahara"
+      },
+      "stock": {
+        "title": "Menya uko ububiko bwawe buhagaze",
+        "description": "Kurikirana ibicuruzwa, ingano yabyo n’ibiri hafi gushira.",
+        "alt": "Ahakorerwa gucunga ububiko muri Kungahara"
+      },
+      "sales": {
+        "title": "Sobanukirwa n’ibyagurishijwe byose",
+        "description": "Kurikirana ibyagurishijwe kandi umenye ibyo abakiriya bagura cyane.",
+        "alt": "Ahakorerwa ibyagurishijwe muri Kungahara"
+      },
+      "finance": {
+        "title": "Gumana imari ihagaze neza",
+        "description": "Kurikirana ayinjira, inyungu, ayasohoka n’igihe cyo kwishyura imyenda.",
+        "alt": "Ahakorerwa imari n’imyenda muri Kungahara"
+      },
+      "documents": {
+        "title": "Gumana inyandiko zawe hafi",
+        "description": "Bika fagitire, amasezerano n’izindi nyandiko z’ubucuruzi ahantu hamwe.",
+        "alt": "Ahakorerwa gucunga inyandiko muri Kungahara"
+      }
+    }
+  },
+  "Legal": {
+    "kungaharaHome": "Ahabanza ha Kungahara",
+    "backHome": "Subira ahabanza",
+    "effectiveDate": "Byatangiye gukurikizwa ku wa 25 Kanama 2026",
+    "onThisPage": "Ibiri kuri uru rupapuro",
+    "sectionsLabel": "Ibice bya {title}",
+    "questions": "Ufite ibibazo?",
+    "contact": "Baza Kungahara ibijyanye n’iyi nyandiko kuri",
+    "terms": {
+      "label": "Amategeko",
+      "title": "Amabwiriza n’amategeko y’imikoreshereze",
+      "summary": "Amabwiriza shingiro yo gukoresha Kungahara neza, mu mutekano kandi ufite inshingano.",
+      "acceptance": {
+        "title": "Kwemera aya mabwiriza",
+        "body": "Gufungura konti cyangwa gukoresha Kungahara bivuze ko wemeye aya mabwiriza. Niba ukoresha Kungahara mu izina ry’ubucuruzi, wemeza ko ufite ububasha bwo kuyemera mu izina ryabwo."
+      },
+      "service": {
+        "title": "Gukoresha Kungahara",
+        "body1": "Kungahara itanga ibikoresho byo gucunga amakuru y’ubucuruzi nk’ububiko, ibyagurishijwe, imari, imyenda n’inyandiko. Ugomba kuyikoresha gusa mu bikorwa by’ubucuruzi byemewe n’amategeko.",
+        "body2": "Ntugomba gukoresha nabi urubuga, kubangamira imikorere yarwo, kugerageza kurwinjiramo utabyemerewe cyangwa kurukoresha mu guhonyora uburenganzira bw’undi muntu."
+      },
+      "accounts": {
+        "title": "Konti n’umutekano",
+        "body1": "Tanga amakuru y’ukuri igihe wiyandikisha kandi uyavugurure. Ni wowe ushinzwe ibikorwa bikorerwa kuri konti yawe no kurinda ijambo ry’ibanga n’uburyo ukoresha winjira.",
+        "body2": "Tumenyeshe vuba niba ukeka ko hari uwinjiye muri konti yawe atabyemerewe."
+      },
+      "businessData": {
+        "title": "Amakuru y’ubucuruzi bwawe",
+        "body1": "Amakuru n’inyandiko ushyira muri Kungahara bikomeza kuba ibyawe. Utwemerera kubitunganya gusa kugira ngo dukoreshe, turinde, tubungabunge kandi tunoze serivisi.",
+        "body2": "Ni wowe ugomba kwemeza ko ufite uburenganzira bwo kohereza no gukoresha amakuru abitswe aho ukorera."
+      },
+      "availability": {
+        "title": "Kuboneka kwa serivisi",
+        "body": "Dukora kugira ngo Kungahara ikomeze gukora neza, ariko ishobora rimwe na rimwe guhagarara kubera kuyitunganya, umutekano cyangwa impamvu tudashobora kugenzura. Ibiyigize bishobora kuvugururwa uko porogaramu itera imbere."
+      },
+      "decisions": {
+        "title": "Ibyemezo by’ubucuruzi",
+        "body": "Kungahara itunganya amakuru utanga, ariko si ubujyanama mu ibaruramari, imisoro, amategeko cyangwa imari. Genza neza imibare y’ingenzi kandi ugishe inama inzobere ibifitiye ubumenyi mbere yo gufata ibyemezo bikomeye."
+      },
+      "suspension": {
+        "title": "Guhagarika cyangwa gufunga konti",
+        "body": "Dushobora kugabanya cyangwa guhagarika uburenganzira bwo gukoresha urubuga igihe konti yishe aya mabwiriza bikomeye, ibangamiye serivisi cyangwa abandi bakoresha, cyangwa amategeko abidusabye. Ushobora guhagarika gukoresha Kungahara igihe icyo ari cyo cyose no gusaba ko konti yawe isibwa mu igenamiterere."
+      },
+      "changes": {
+        "title": "Impinduka kuri aya mabwiriza",
+        "body": "Dushobora kuvugurura aya mabwiriza uko Kungahara itera imbere. Niba impinduka igira ingaruka zikomeye ku burenganzira cyangwa inshingano zawe, tuzakumenyesha mbere y’uko itangira gukurikizwa. Gukomeza gukoresha serivisi nyuma y’itariki yatangiriyeho bivuze ko wemeye amabwiriza avuguruye."
+      }
+    },
+    "privacy": {
+      "label": "Ibanga",
+      "title": "Politiki y’ibanga",
+      "summary": "Ibisobanuro byoroshye by’amakuru Kungahara ikusanya n’uko amakuru yawe acungwa.",
+      "information": {
+        "title": "Amakuru dukusanya",
+        "body1": "Dukusanya amakuru ya konti nk’amazina yawe, aderesi ya e-mail, izina ry’ubucuruzi, ifoto y’umwirondoro n’amakuru akoreshwa mu kwinjira. Dutunganya kandi amakuru y’ububiko, ibyagurishijwe, imari, imyenda n’inyandiko uhitamo gushyira aho ukorera.",
+        "body2": "Amakuru y’ibanze ya tekiniki ashobora gukoreshwa kugira ngo serivisi ikomeze kuba mu mutekano kandi ikore neza."
+      },
+      "use": {
+        "title": "Uko dukoresha amakuru",
+        "body": "Dukoresha amakuru mu gufungura no kugenzura konti, gutanga ibikoresho byo gukoreramo, kohereza amatangazo wasabye, gusubiza ubutumwa bw’ubufasha, kurinda serivisi, gukemura ibibazo no kunoza Kungahara."
+      },
+      "authentication": {
+        "title": "Kwinjira n’amagambo y’ibanga",
+        "body1": "Amagambo y’ibanga abikwa ahinduwe mu buryo burinzwe aho kubikwa uko yanditswe. Ijambo ry’ibanga ryemeza rikoreshwa gusa kureba ko amagambo ahura kandi ntirigera ribikwa.",
+        "body2": "Nuhitamo kwinjira ukoresheje Google cyangwa Microsoft, uwo mutanga serivisi azaduha amakuru y’ibanze akuranga umaze kubyemera. Ntitubona ijambo ry’ibanga ukoresha kuri uwo mutanga serivisi."
+      },
+      "sharing": {
+        "title": "Igihe amakuru asangizwa abandi",
+        "body1": "Kungahara ntigurisha amakuru yawe bwite. Amakuru ashobora gusangizwa abatanga ibikorwa remezo na serivisi gusa igihe bikenewe mu kwakira urubuga, kohereza e-mail, kugenzura abinjira, kubika dosiye no kohereza amatangazo kuri mudasobwa.",
+        "body2": "Dushobora kandi gutanga amakuru igihe amategeko abidusabye cyangwa igihe bikenewe mu kurinda abakoresha, serivisi cyangwa abaturage."
+      },
+      "retention": {
+        "title": "Kubika amakuru n’igihe amara",
+        "body": "Tubika amakuru igihe konti yawe igikora n’igihe gikenewe mu gukoresha serivisi, kubahiriza amategeko, gukemura impaka no kubungabunga umutekano. Igihe amakuru abikwa gishobora gutandukana bitewe n’ubwoko bwayo n’impamvu abitswe."
+      },
+      "choices": {
+        "title": "Amahitamo yawe",
+        "body": "Ushobora guhindura umwirondoro n’amakuru y’ubucuruzi, kugenzura uko wakira amatangazo, kubika inyandiko z’ubucuruzi zemewe no gusaba ko konti isibwa mu igenamiterere rya Kungahara. Ushobora no kutwandikira ufite ikibazo cy’ibanga cyangwa ushaka gukosora amakuru."
+      },
+      "security": {
+        "title": "Uko turinda amakuru",
+        "body": "Dukoresha uburyo bwo kugenzura abinjira, kwinjira mu mutekano, ibimenyetso bimara igihe gito n’ubundi buryo bwa tekiniki bugenewe kurinda amakuru yawe. Nta sisitemu yo kuri interineti ishobora gutanga umutekano wuzuye, bityo nawe ugomba kurinda amakuru ya konti yawe."
+      },
+      "changes": {
+        "title": "Ivugururwa rya politiki",
+        "body": "Dushobora kuvugurura iyi politiki uko Kungahara n’uburyo bwo kurinda ibanga bitera imbere. Impinduka zikomeye zizamenyeshwa mbere y’uko zitangira gukurikizwa kandi itariki iri hejuru izavugururwa."
+      }
+    }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 type Provider = "google" | "microsoft";
 
@@ -18,6 +19,7 @@ const config = {
 };
 
 export function OAuthButtons({ mode }: { mode: "login" | "signup" }) {
+  const t = useTranslations("Auth");
   function start(provider: Provider) {
     const item = config[provider];
     if (!item.clientId) return;
@@ -30,9 +32,9 @@ export function OAuthButtons({ mode }: { mode: "login" | "signup" }) {
   }
 
   return <div className={`oauth-grid ${mode}`}>
-    {(["google", "microsoft"] as Provider[]).map((provider) => <button className="oauth-button" type="button" aria-label={`${mode === "login" ? "Continue" : "Sign up"} with ${config[provider].label}`} key={provider} disabled={!config[provider].clientId} onClick={() => start(provider)}>
+    {(["google", "microsoft"] as Provider[]).map((provider) => <button className="oauth-button" type="button" aria-label={t(mode === "login" ? "continueWith" : "signUpWith", { provider: config[provider].label })} key={provider} disabled={!config[provider].clientId} onClick={() => start(provider)}>
       <Image className="provider-mark" src={provider === "google" ? "/google-g.png" : "/microsoft-logo.png"} width={18} height={18} alt="" />
-      <span className="oauth-button-label">{mode === "login" ? "Continue" : "Sign up"} with {config[provider].label}</span>
+      <span className="oauth-button-label">{t(mode === "login" ? "continueWith" : "signUpWith", { provider: config[provider].label })}</span>
     </button>)}
   </div>;
 }

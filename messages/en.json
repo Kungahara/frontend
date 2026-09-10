@@ -26,9 +26,24 @@
     "chooseHighlight": "Choose highlight",
     "showHighlight": "Show {title}",
     "slides": {
-      "stock": { "title": "Stock", "heading": "Never run out unexpectedly.", "point1": "Monitor stock levels", "point2": "Restock at the right time" },
-      "sales": { "title": "Sales", "heading": "Understand what drives your income.", "point1": "Discover top products", "point2": "Track revenue clearly" },
-      "finance": { "title": "Finance", "heading": "Keep your business financially healthy.", "point1": "Understand your profit", "point2": "Never miss a payment" }
+      "stock": {
+        "title": "Stock",
+        "heading": "Never run out unexpectedly.",
+        "point1": "Monitor stock levels",
+        "point2": "Restock at the right time"
+      },
+      "sales": {
+        "title": "Sales",
+        "heading": "Understand what drives your income.",
+        "point1": "Discover top products",
+        "point2": "Track revenue clearly"
+      },
+      "finance": {
+        "title": "Finance",
+        "heading": "Keep your business financially healthy.",
+        "point1": "Understand your profit",
+        "point2": "Never miss a payment"
+      }
     },
     "alerts": {
       "middayTitle": "Midday sales reminder",
@@ -94,45 +109,238 @@
   },
   "Dashboard": {
     "summaryLabel": "Dashboard financial summary",
-    "scope": { "today": "today", "month": "this month", "year": "this year" },
+    "scope": {
+      "today": "today",
+      "month": "this month",
+      "year": "this year"
+    },
     "cards": {
-      "moneyInvested": "Money invested {scope}", "stockPurchased": "Stock purchased",
-      "income": "Income {scope}", "moneyFromSales": "Money from sales",
-      "profit": "Profit {scope}", "profitMade": "Profit made {scope}",
-      "lossesSuffered": "Losses suffered", "moneyLost": "Money lost {scope}",
-      "stockValue": "Stock value", "thanLastMonth": "than last month",
-      "expectedIncome": "Expected income", "expectedIncomeLabel": "Expected income from stock",
-      "allStockSold": "If all current stock is sold", "mostSelling": "Most selling item in stock",
-      "leastSelling": "Least selling item in stock", "noSales": "No sales yet",
+      "moneyInvested": "Money invested {scope}",
+      "stockPurchased": "Stock purchased",
+      "income": "Income {scope}",
+      "moneyFromSales": "Money from sales",
+      "profit": "Profit {scope}",
+      "profitMade": "Profit made {scope}",
+      "lossesSuffered": "Losses suffered",
+      "moneyLost": "Money lost {scope}",
+      "stockValue": "Stock value",
+      "thanLastMonth": "than last month",
+      "expectedIncome": "Expected income",
+      "expectedIncomeLabel": "Expected income from stock",
+      "allStockSold": "If all current stock is sold",
+      "mostSelling": "Most selling item in stock",
+      "leastSelling": "Least selling item in stock",
+      "noSales": "No sales yet",
       "remainingStock": "Remaining stock: {quantity}"
     },
     "graph": {
-      "graphsLabel": "Dashboard graphs", "financeTab": "Income & expenses", "salesTab": "Sales",
-      "continue": "Continue to page", "itemsSold": "Items sold", "income": "Income", "expenses": "Expenses",
-      "amount": "Amount (RWF)", "itemsSoldValue": "{count} items sold",
-      "salesGraphLabel": "General sales graph", "financeGraphLabel": "Income and expenses graph",
+      "graphsLabel": "Dashboard graphs",
+      "financeTab": "Income & expenses",
+      "salesTab": "Sales",
+      "continue": "Continue to page",
+      "itemsSold": "Items sold",
+      "income": "Income",
+      "expenses": "Expenses",
+      "amount": "Amount (RWF)",
+      "itemsSoldValue": "{count} items sold",
+      "salesGraphLabel": "General sales graph",
+      "financeGraphLabel": "Income and expenses graph",
       "salesSevenDaysLabel": "Items sold over the last seven days",
       "financeSevenDaysLabel": "Income and expenses over the last seven days"
     }
   },
   "Currency": {
-    "monitored": "Monitored currencies", "unavailable": "Unavailable", "remove": "Remove",
-    "limitHelp": "You can monitor up to three currency pairs.", "limitReached": "Limit reached",
-    "add": "Add currency", "close": "Close", "dialogTitle": "Add a currency",
+    "monitored": "Monitored currencies",
+    "unavailable": "Unavailable",
+    "remove": "Remove",
+    "limitHelp": "You can monitor up to three currency pairs.",
+    "limitReached": "Limit reached",
+    "add": "Add currency",
+    "close": "Close",
+    "dialogTitle": "Add a currency",
     "dialogBody": "Choose two currencies. Kungahara will fetch and monitor their exchange rate automatically.",
-    "currency": "Currency", "comparedWith": "Compared with", "start": "Start monitoring",
+    "currency": "Currency",
+    "comparedWith": "Compared with",
+    "start": "Start monitoring",
     "alertTitle": "{pair} moved significantly",
     "alertMessage": "{pair} {direction} by {percentage}% ({change} RWF), from {previous} to {current}.",
-    "increased": "increased", "decreased": "decreased",
-    "loadError": "Unable to load monitored currencies.", "saveError": "Unable to add this currency.",
+    "increased": "increased",
+    "decreased": "decreased",
+    "loadError": "Unable to load monitored currencies.",
+    "saveError": "Unable to add this currency.",
     "removeError": "Unable to remove this currency."
   },
   "Profile": {
-    "openOptions": "Open profile options", "businessName": "Business name", "notSet": "Not set",
-    "saveBusinessName": "Save business name", "cancelBusinessEdit": "Cancel editing business name",
-    "changePicture": "Change profile picture", "uploadPicture": "Upload profile picture",
-    "removePicture": "Remove profile picture", "pictureHint": "JPEG, PNG or WebP, up to 5 MB.",
-    "uploadError": "Unable to upload the profile picture.", "removeError": "Unable to remove the profile picture.",
+    "openOptions": "Open profile options",
+    "businessName": "Business name",
+    "notSet": "Not set",
+    "saveBusinessName": "Save business name",
+    "cancelBusinessEdit": "Cancel editing business name",
+    "changePicture": "Change profile picture",
+    "uploadPicture": "Upload profile picture",
+    "removePicture": "Remove profile picture",
+    "pictureHint": "JPEG, PNG or WebP, up to 5 MB.",
+    "uploadError": "Unable to upload the profile picture.",
+    "removeError": "Unable to remove the profile picture.",
     "businessError": "Unable to update the business name."
+  },
+  "Auth": {
+    "secureAccess": "Secure access",
+    "welcomeBack": "Welcome back",
+    "signInIntro": "Sign in to continue growing your business.",
+    "inactive": "You were signed out after 2 days of inactivity. Sign in to continue.",
+    "unableSignIn": "Unable to sign in.",
+    "email": "Email address",
+    "password": "Password",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "orContinueWith": "or continue with",
+    "newToKungahara": "New to Kungahara?",
+    "createAccount": "Create an account",
+    "joinKungahara": "Join Kungahara",
+    "joinUs": "Join Us",
+    "signupIntro": "Create your account and start your journey.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "businessName": "Business name",
+    "businessExample": "e.g. Uwera Foods",
+    "confirmPassword": "Confirm password",
+    "hideConfirmPassword": "Hide confirmation password",
+    "showConfirmPassword": "Show confirmation password",
+    "passwordHint": "Use at least 8 characters and avoid common passwords.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "unableCreateAccount": "Unable to create account.",
+    "creatingAccount": "Creating account…",
+    "orSignUpWith": "or sign up with",
+    "alreadyAccount": "Already have an account?",
+    "agreementPrefix": "By signing up, you agree to Kungahara’s",
+    "terms": "Terms of Service",
+    "and": "and",
+    "privacy": "Privacy Policy",
+    "continueWith": "Continue with {provider}",
+    "signUpWith": "Sign up with {provider}",
+    "closeAuthentication": "Close authentication",
+    "kungaharaHome": "Kungahara home",
+    "carousel": {
+      "slidesLabel": "Feature slides",
+      "showSlide": "Show {title}",
+      "dashboard": {
+        "title": "Your business at a glance",
+        "description": "See your most important business numbers from one clear dashboard.",
+        "alt": "Kungahara business dashboard"
+      },
+      "stock": {
+        "title": "Stay ahead of your stock",
+        "description": "Track products, quantities, and low-stock items with confidence.",
+        "alt": "Kungahara stock management workspace"
+      },
+      "sales": {
+        "title": "Understand every sale",
+        "description": "Follow sales performance and discover what your customers buy most.",
+        "alt": "Kungahara sales workspace"
+      },
+      "finance": {
+        "title": "Keep your finances healthy",
+        "description": "Monitor income, profit, expenses, and upcoming loan deadlines.",
+        "alt": "Kungahara finance and loans workspace"
+      },
+      "documents": {
+        "title": "Keep every document close",
+        "description": "Organize receipts, agreements, and business records in one place.",
+        "alt": "Kungahara document management workspace"
+      }
+    }
+  },
+  "Legal": {
+    "kungaharaHome": "Kungahara home",
+    "backHome": "Back to home",
+    "effectiveDate": "Effective August 25, 2026",
+    "onThisPage": "On this page",
+    "sectionsLabel": "{title} sections",
+    "questions": "Questions?",
+    "contact": "Contact Kungahara about this document at",
+    "terms": {
+      "label": "Legal",
+      "title": "Terms & Conditions",
+      "summary": "The ground rules for using Kungahara clearly, safely, and responsibly.",
+      "acceptance": {
+        "title": "Accepting these terms",
+        "body": "By creating an account or using Kungahara, you agree to these terms. If you use Kungahara for a business, you confirm that you have authority to accept these terms on its behalf."
+      },
+      "service": {
+        "title": "Using Kungahara",
+        "body1": "Kungahara provides tools for managing business information such as stock, sales, finances, loans, and documents. You may use the service only for lawful business purposes.",
+        "body2": "You must not misuse the service, interfere with its operation, attempt unauthorized access, or use it to violate another person’s rights."
+      },
+      "accounts": {
+        "title": "Accounts and security",
+        "body1": "Provide accurate registration information and keep it current. You are responsible for activity under your account and for protecting your password and sign-in methods.",
+        "body2": "Notify us promptly if you believe your account has been accessed without permission."
+      },
+      "businessData": {
+        "title": "Your business data",
+        "body1": "You retain ownership of the information and documents you add to Kungahara. You give us permission to process that data only as needed to operate, secure, maintain, and improve the service.",
+        "body2": "You are responsible for ensuring that you have the right to upload and use the data stored in your workspace."
+      },
+      "availability": {
+        "title": "Service availability",
+        "body": "We work to keep Kungahara reliable, but the service may occasionally be interrupted for maintenance, security, or circumstances outside our control. Features may evolve as the product improves."
+      },
+      "decisions": {
+        "title": "Business decisions",
+        "body": "Kungahara organizes information you provide, but it is not accounting, tax, legal, or financial advice. Review important figures and consult a qualified professional when appropriate before making business decisions."
+      },
+      "suspension": {
+        "title": "Suspension and termination",
+        "body": "We may restrict or end access when an account seriously violates these terms, threatens the service or other users, or when required by law. You may stop using Kungahara at any time and may request account deletion through the available account settings."
+      },
+      "changes": {
+        "title": "Changes to these terms",
+        "body": "We may update these terms as Kungahara develops. If a change materially affects your rights or responsibilities, we will provide reasonable notice before it takes effect. Continued use after the effective date means you accept the updated terms."
+      }
+    },
+    "privacy": {
+      "label": "Privacy",
+      "title": "Privacy Policy",
+      "summary": "A straightforward explanation of what Kungahara collects and how your information is handled.",
+      "information": {
+        "title": "Information we collect",
+        "body1": "We collect account details such as your name, email address, business name, profile picture, and authentication information. We also process the stock, sales, finance, loan, and document information you choose to add to your workspace.",
+        "body2": "Basic technical information may be processed to keep the service secure and working correctly."
+      },
+      "use": {
+        "title": "How we use information",
+        "body": "We use information to create and authenticate accounts, provide workspace features, deliver requested notifications, respond to support messages, protect the service, troubleshoot problems, and improve Kungahara."
+      },
+      "authentication": {
+        "title": "Authentication and passwords",
+        "body1": "Passwords are stored as secure hashes rather than readable passwords. Confirmation passwords are used only to check that entries match and are never stored.",
+        "body2": "If you choose Google or Microsoft sign-in, the provider shares basic identity information after you consent. We do not receive your provider password."
+      },
+      "sharing": {
+        "title": "When information is shared",
+        "body1": "Kungahara does not sell your personal information. Information may be shared with infrastructure and service providers only when needed to operate features such as hosting, email delivery, authentication, file storage, and browser notifications.",
+        "body2": "We may also disclose information when legally required or when necessary to protect users, the service, or the public."
+      },
+      "retention": {
+        "title": "Storage and retention",
+        "body": "We retain information while your account is active and as reasonably needed to operate the service, meet legal obligations, resolve disputes, and maintain security. Retention periods may differ depending on the type of data and why it is held."
+      },
+      "choices": {
+        "title": "Your choices",
+        "body": "You can update profile and business details, control notification delivery, export supported business records, and request account deletion through Kungahara’s settings. You may also contact us with a privacy question or correction request."
+      },
+      "security": {
+        "title": "How we protect information",
+        "body": "We use access controls, secure authentication, limited token lifetimes, and other technical safeguards designed to protect your information. No online system can guarantee absolute security, so you should also protect your account credentials."
+      },
+      "changes": {
+        "title": "Policy updates",
+        "body": "We may revise this policy as Kungahara and its privacy practices develop. Material changes will be communicated before they take effect, and the effective date above will be updated."
+      }
+    }
   }
 }
