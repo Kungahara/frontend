@@ -7,29 +7,6 @@ import { useTranslations } from "next-intl";
 import { apiErrorMessage } from "@/lib/api/client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 
-const questions = [
-  {
-    question: "How do I record a sale?",
-    answer: "Open Sales from the sidebar, choose the products and quantities sold, then confirm the sale. Your stock and dashboard totals update automatically.",
-  },
-  {
-    question: "How do I add or update stock?",
-    answer: "Go to Stock to add a product, change its quantity, update its price, or organize it into a category.",
-  },
-  {
-    question: "How do loan reminders work?",
-    answer: "Kungahara shows in-app reminders as repayment deadlines approach. You can turn these reminders on or off from Settings.",
-  },
-  {
-    question: "Can I download my business records?",
-    answer: "Yes. Open Settings, find Data & account, and choose the sales, stock, loans, or documents export you need.",
-  },
-  {
-    question: "How do I change my account details?",
-    answer: "Use Settings to update your name, business name, profile picture, password, appearance, and notification preferences.",
-  },
-];
-
 export function HelpContent() {
   const commonText = useTranslations("Common");
   const tr = useWorkspaceCopy();
@@ -46,11 +23,6 @@ export function HelpContent() {
       .then((body) => setManagedQuestions(Array.isArray(body.items) ? body.items : []))
       .catch(() => setManagedQuestions([]));
   }, []);
-
-  const visibleQuestions = [
-    ...questions.map((item, index) => ({ id: `built-in-${index}`, title: item.question, content: item.answer })),
-    ...managedQuestions,
-  ];
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,7 +46,7 @@ export function HelpContent() {
     <header className="help-heading"><h1 id="help-title">How can we help?</h1></header>
 
     <div className="help-list">
-      {visibleQuestions.map((item, index) => {
+      {managedQuestions.map((item, index) => {
         const isOpen = openItem === index;
         const answerId = `help-answer-${index}`;
         return <article className={`help-item${isOpen ? " open" : ""}`} key={item.id}>
@@ -92,7 +64,7 @@ export function HelpContent() {
           <textarea id="help-feedback" rows={2} maxLength={1000} value={feedback} placeholder="Type your message here…" onChange={(event) => { setFeedback(event.target.value); setSent(false); }} />
           <button type="submit" disabled={!feedback.trim() || sending}><Send aria-hidden="true" /><span>{sending ? commonText("sending") : "Send"}</span></button>
         </form>
-        {sent && <p className="help-feedback-sent" role="status">Your message was emailed to Kungahara support.</p>}
+        {sent && <p className="help-feedback-sent" role="status">Your message was sent to Kungahara support.</p>}
         {sendError && <p className="help-feedback-error" role="alert">{sendError}</p>}
       </article>
     </div>
