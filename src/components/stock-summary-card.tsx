@@ -4,6 +4,7 @@ import { Coins, PackageMinus, ShoppingBag, TrendingDown, TrendingUp } from "luci
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { AppSummarySkeleton } from "@/components/app-page-skeleton";
 import { MoneyAmount } from "@/components/money-amount";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { inventoryFetch } from "@/lib/inventory-client";
@@ -69,7 +70,6 @@ function LeastStockCard({ product }: { product?: Product }) {
 }
 
 function SalesSummaryCards({ products, sales }: { products: Product[]; sales: SaleRecord[] }) {
-  const tr = useWorkspaceCopy();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -178,7 +178,7 @@ export function StockSummaryCard({ variant = "stock", onSettled }: { variant?: "
     if (!loading) onSettled?.();
   }, [loading, onSettled]);
 
-  if (loading) return <div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{variant === "sales" ? loadingText("sales") : loadingText("stock")}</strong><small>{loadingText("summaryBody")}</small></div>;
+  if (loading) return <div role="status" aria-label={variant === "sales" ? loadingText("sales") : loadingText("stock")} aria-busy="true"><AppSummarySkeleton count={variant === "sales" ? 4 : 5} className={variant === "sales" ? "sales-summary-grid" : "stock-summary-grid"} /></div>;
   if (error) return <div className="sales-page-loading" role="alert"><strong>{loadingText("summaryError")}</strong><small>{loadingText("summaryErrorBody")}</small></div>;
 
   const totalUnits = products.reduce((total, product) => total + product.quantity, 0);

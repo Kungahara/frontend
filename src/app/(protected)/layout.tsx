@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState } from "react";
 
 import { Brand } from "@/components/brand";
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monitor";
 import { InactivityLogout } from "@/components/inactivity-logout";
 import { LogoutButton } from "@/components/logout-button";
@@ -157,11 +158,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [notificationsUnread, setNotificationsUnread] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarTransitioning, setSidebarTransitioning] = useState(false);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [alertsHydrated, setAlertsHydrated] = useState(false);
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
+  const sidebarTransitionTimers = useRef<number[]>([]);
   const sidebarSlideChangedAt = useRef(0);
   const alertsDate = useRef(businessTime().dateKey);
   const deliveryAttemptIds = useRef(new Set<string>());
@@ -385,8 +388,21 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     setPendingPath(null);
   }, [pathname]);
 
+  useEffect(() => () => sidebarTransitionTimers.current.forEach((timer) => window.clearTimeout(timer)), []);
+
+  function transitionSidebar(collapsed: boolean) {
+    if (sidebarTransitioning || collapsed === sidebarCollapsed) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setSidebarCollapsed(collapsed); return; }
+    sidebarTransitionTimers.current.forEach((timer) => window.clearTimeout(timer));
+    setSidebarTransitioning(true);
+    setSidebarCollapsed(collapsed);
+    sidebarTransitionTimers.current = [
+      window.setTimeout(() => setSidebarTransitioning(false), 700),
+    ];
+  }
+
   if (!user) {
-    return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`} suppressHydrationWarning><span aria-hidden="true" /><p>{t("workspaceLoading")}</p></main>;
+    return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`} aria-label={t("workspaceLoading")} role="status" suppressHydrationWarning><span aria-hidden="true" /><p suppressHydrationWarning>{t("workspaceLoading")}</p></main>;
   }
 
   const displayedPath = pendingPath ?? pathname;
@@ -397,15 +413,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const SlideIcon = activeSlide.icon;
   const currentDate = localizedFullDate(new Date(), language);
 
-  return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+  return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}${sidebarTransitioning ? " sidebar-transitioning" : ""}`}>
     <InactivityLogout />
     <UsageHeartbeat />
     <WorkspaceCopyTranslator />
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
-        <Brand subtitle={user.businessName} ariaLabel={sidebarCollapsed ? t("expandSidebar") : t("home")} onClick={sidebarCollapsed ? (event) => { event.preventDefault(); setSidebarCollapsed(false); } : undefined} />
+        <Brand subtitle={user.businessName} ariaLabel={sidebarCollapsed ? t("expandSidebar") : t("home")} onClick={sidebarCollapsed ? (event) => { event.preventDefault(); transitionSidebar(false); } : undefined} />
         {sidebarCollapsed && <span className="sidebar-logo-expand-icon" aria-hidden="true"><PanelLeftOpen /></span>}
-        {!sidebarCollapsed && <button className="sidebar-collapse-toggle" type="button" aria-label={t("collapseSidebar")} title={t("collapseSidebar")} onClick={() => setSidebarCollapsed(true)}><PanelLeftClose aria-hidden="true" /></button>}
+        {!sidebarCollapsed && <button className="sidebar-collapse-toggle" type="button" aria-label={t("collapseSidebar")} title={t("collapseSidebar")} onClick={() => transitionSidebar(true)}><PanelLeftClose aria-hidden="true" /></button>}
       </div>
       <p className="dashboard-nav-label">{t("menu")}</p>
       <nav className="dashboard-nav" aria-label={t("menu")}>
@@ -470,11 +486,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       </header>
       <main className={`dashboard-workspace${displayedPath === "/stock" || displayedPath === "/sales" || displayedPath === "/finance" || displayedPath === "/documents" ? " data-page-workspace" : ""}${displayedPath === "/help" ? " help-page-workspace" : ""}`}>
         {children}
-        {routeLoading && <div className="route-loading-screen" role="status" aria-live="polite">
-          <span className="route-loading-spinner" aria-hidden="true" />
-          <strong>{t("loadingPage")}</strong>
-          <small>{t("waitMoment")}</small>
-        </div>}
+        {routeLoading && <div className="route-loading-screen route-loading-structure"><AppPageSkeleton variant={(["stock", "sales", "finance", "documents", "settings", "help"].includes(displayedPath.slice(1)) ? displayedPath.slice(1) : "dashboard") as "dashboard" | "stock" | "sales" | "finance" | "documents" | "settings" | "help"} label={t("loadingPage")} embedded /></div>}
       </main>
     </section>
   </div>;

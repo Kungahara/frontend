@@ -8,6 +8,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Clock3, FileText, Folder, HardDrive, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
 
 import { apiErrorMessage } from "@/lib/api/client";
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 type DocumentPeriod = "today" | "month" | "all";
@@ -186,7 +187,7 @@ export function DocumentsOverview() {
     } catch (error) { setMoveError(error instanceof Error ? error.message : "Could not move the document."); }
   }
 
-  if (documentsLoading) return <div className="documents-page-content"><div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{loadingText("documents")}</strong><small>{loadingText("documentsBody")}</small></div></div>;
+  if (documentsLoading) return <AppPageSkeleton variant="documents" label={loadingText("documents")} embedded />;
 
   const folderPhotos = photos.filter((photo) => photo.folderId !== null);
   const totalBytes = folderPhotos.reduce((total, photo) => total + photo.fileSize, 0);

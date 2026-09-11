@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { formatRwf } from "@/lib/format-money";
@@ -94,6 +95,7 @@ function DashboardGraph({ products, sales }: { products: Product[]; sales: Sale[
   const y = (value: number) => 180 - ((value - minimum) / range) * 135;
   const formatAxisValue = (value: number) => view === "sales" ? new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value) : new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value);
   const path = (key: "sales" | "income" | "expense") => smoothLinePath(points.map((point, index) => [x(index), y(point[key])]));
+  const financeSeriesOverlap = points.every((point) => Math.abs(point.income - point.expense) < 0.01);
   const hoveredPoint = hovered ? points[hovered.index] : null;
   const hoveredValue = hoveredPoint && hovered ? hoveredPoint[hovered.series] : 0;
   const tooltipWidth = 142;
@@ -110,7 +112,7 @@ function DashboardGraph({ products, sales }: { products: Product[]; sales: Sale[
       <line className="stock-axis" x1="50" x2="50" y1="45" y2="180" /><line className="stock-axis" x1="50" x2="520" y1="180" y2="180" />
       {points.map((point, index) => <text x={x(index)} y="200" textAnchor="middle" key={point.label}>{point.label}</text>)}
       <text className="stock-axis-label dashboard-axis-label" x="13" y="112" textAnchor="middle" transform="rotate(-90 13 112)">{view === "sales" ? t("itemsSold") : t("amount")}</text>
-      {view === "sales" ? <path className="stock-chart-line dashboard-sales-line" pathLength="1" d={path("sales")} /> : <><path className="stock-chart-line dashboard-income-line" pathLength="1" d={path("income")} /><path className="stock-chart-line dashboard-expense-line" pathLength="1" d={path("expense")} /></>}
+      {view === "sales" ? <path className="stock-chart-line dashboard-sales-line" pathLength="1" d={path("sales")} /> : <><path className={`stock-chart-line dashboard-expense-line${financeSeriesOverlap ? " overlapping" : ""}`} pathLength="1" d={path("expense")} /><path className="stock-chart-line dashboard-income-line" pathLength="1" d={path("income")} /></>}
       {points.map((point, index) => view === "sales" ? <g className="dashboard-chart-point dashboard-sales-point" key={point.label} onMouseEnter={() => setHovered({ index, series: "sales" })} onMouseLeave={() => setHovered(null)}><circle className="dashboard-chart-point-hit" cx={x(index)} cy={y(point.sales)} r="15" /><circle className="dashboard-chart-point-ring" cx={x(index)} cy={y(point.sales)} r="5.5" /><circle className="dashboard-chart-point-core" cx={x(index)} cy={y(point.sales)} r="2.5" /></g> : <g key={point.label}><g className="dashboard-chart-point dashboard-income-point" onMouseEnter={() => setHovered({ index, series: "income" })} onMouseLeave={() => setHovered(null)}><circle className="dashboard-chart-point-hit" cx={x(index)} cy={y(point.income)} r="14" /><circle className="dashboard-chart-point-ring" cx={x(index)} cy={y(point.income)} r="5.5" /><circle className="dashboard-chart-point-core" cx={x(index)} cy={y(point.income)} r="2.5" /></g><g className="dashboard-chart-point dashboard-expense-point" onMouseEnter={() => setHovered({ index, series: "expense" })} onMouseLeave={() => setHovered(null)}><circle className="dashboard-chart-point-hit" cx={x(index)} cy={y(point.expense)} r="14" /><circle className="dashboard-chart-point-ring" cx={x(index)} cy={y(point.expense)} r="5.5" /><circle className="dashboard-chart-point-core" cx={x(index)} cy={y(point.expense)} r="2.5" /></g></g>)}
       {hoveredPoint && hovered && <g className="stock-chart-tooltip dashboard-graph-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width={tooltipWidth} height="52" rx="8" /><text x={tooltipX + 11} y={tooltipY + 18}>{hoveredPoint.label} · {seriesLabel}</text><text className="value" x={tooltipX + 11} y={tooltipY + 39}>{tooltipValue}</text></g>}
     </svg></div>
@@ -163,7 +165,7 @@ export function DashboardSummaryCards() {
     return () => window.removeEventListener("kungahara:settings-changed", updateScope);
   }, []);
 
-  if (loading) return <section className="stock-data-body dashboard-summary-body dashboard-summary-loading"><div className="sales-page-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{loadingText("dashboard")}</strong><small>{loadingText("dashboardBody")}</small></div></section>;
+  if (loading) return <section className="stock-data-body dashboard-summary-body dashboard-summary-loading"><AppPageSkeleton variant="dashboard" label={loadingText("dashboard")} embedded /></section>;
   if (error) return <section className="stock-data-body dashboard-summary-body dashboard-summary-loading"><div className="sales-page-loading" role="alert"><strong>{loadingText("dashboardError")}</strong><small>{loadingText("summaryErrorBody")}</small></div></section>;
 
   const costs = new Map(products.map((product) => [product.id, Number(product.costPrice)]));

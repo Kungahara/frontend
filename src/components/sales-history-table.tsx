@@ -2,7 +2,7 @@
 
 import { BadgeDollarSign, ClipboardList, Coins, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 
 import { CustomSelect } from "@/components/custom-select";
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
@@ -35,8 +35,7 @@ function monthWeekRanges(value: string, locale = "en") {
   });
 }
 
-export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
-  const loadingText = useTranslations("Loading");
+export function SalesHistoryTable({ navigation, onSettled }: { navigation?: ReactNode; onSettled?: () => void }) {
   const locale = useLocale();
   const tr = useWorkspaceCopy();
   const now = new Date();
@@ -61,10 +60,10 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     }).catch((reason) => {
       if (active && !(reason instanceof DOMException && reason.name === "AbortError")) setError("Unable to load historical sales. Please reopen Historical sales to try again.");
     }).finally(() => {
-      if (active) setLoading(false);
+      if (active) { setLoading(false); onSettled?.(); }
     });
     return () => { active = false; controller.abort(); };
-  }, []);
+  }, [onSettled]);
 
   const weeks = monthWeekRanges(month, locale);
   const analysis = useMemo(() => {
@@ -89,7 +88,7 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
     });
     const top = buckets.reduce((best, bucket) => bucket.value > best.value ? bucket : best, buckets[0] ?? { label: "No sales", value: 0 });
     return { selected, buckets, top, total: buckets.reduce((sum, bucket) => sum + bucket.value, 0) };
-  }, [sales, period, day, year, month, weekIndex, weeks]);
+  }, [sales, period, day, year, month, weekIndex, weeks, locale, tr]);
 
   const visibleSales = useMemo(() => {
     const value = query.trim().toLowerCase();
@@ -117,12 +116,6 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
       ? `Sales in ${localizedMonth(new Date(selectedMonthYear, selectedMonthIndex, 1), locale)}`
       : `Sales in ${localizedMonth(new Date(selectedMonthYear, selectedMonthIndex, 1), locale, "short")} ${selectedWeek.startDay}–${selectedWeek.endDay}`;
 
-  if (loading) return <div className="sales-history-view">
-    <div className="sales-page-loading sales-history-loading" role="status" aria-live="polite" aria-busy="true">
-      <span aria-hidden="true" /><strong>{loadingText("history")}</strong><small>{loadingText("historyBody")}</small>
-    </div>
-  </div>;
-
   if (error) return <div className="sales-history-view">
     {navigation}
     <div className="sales-page-loading sales-history-loading" role="alert" aria-live="polite">
@@ -149,10 +142,11 @@ export function SalesHistoryTable({ navigation }: { navigation?: ReactNode }) {
         </div><label className="stock-product-search"><span className="sr-only">Search sales</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label></div>
       </header>
 
-      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!visibleSales.length ? "empty" : ""}>
+      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
 
-        {visibleSales.map((sale) => <tr key={sale.id}><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.total ?? Number(sale.unitPrice) * sale.quantity)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
-        {!visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
+        {!loading && visibleSales.map((sale) => <tr key={sale.id}><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.total ?? Number(sale.unitPrice) * sale.quantity)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
+        {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`history-skeleton-${row}`}>{Array.from({ length: 6 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
+        {!loading && !visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
       </tbody></table></div>
     </section>
   </div>;

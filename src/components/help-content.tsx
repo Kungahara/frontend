@@ -4,11 +4,13 @@ import { FormEvent, useEffect, useState } from "react";
 import { Plus, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { apiErrorMessage } from "@/lib/api/client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 
 export function HelpContent() {
   const commonText = useTranslations("Common");
+  const shellText = useTranslations("Shell");
   const tr = useWorkspaceCopy();
   const [openItem, setOpenItem] = useState(0);
   const [feedback, setFeedback] = useState("");
@@ -16,12 +18,14 @@ export function HelpContent() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [managedQuestions, setManagedQuestions] = useState<{ id: string; title: string; content: string }[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/help-content")
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((body) => setManagedQuestions(Array.isArray(body.items) ? body.items : []))
-      .catch(() => setManagedQuestions([]));
+      .catch(() => setManagedQuestions([]))
+      .finally(() => setQuestionsLoading(false));
   }, []);
 
   async function submitFeedback(event: FormEvent<HTMLFormElement>) {
@@ -41,6 +45,8 @@ export function HelpContent() {
       setSendError(reason instanceof Error ? reason.message : "Unable to send your message.");
     } finally { setSending(false); }
   }
+
+  if (questionsLoading) return <AppPageSkeleton variant="help" label={shellText("loadingPage")} embedded />;
 
   return <section className="help-page" aria-labelledby="help-title">
     <header className="help-heading"><h1 id="help-title">How can we help?</h1></header>

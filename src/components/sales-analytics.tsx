@@ -57,7 +57,7 @@ function niceMaximum(value: number) {
   return step * magnitude * 4;
 }
 
-export function SalesAnalytics() {
+export function SalesAnalytics({ onSettled }: { onSettled?: () => void }) {
   const now = new Date();
   const [sales, setSales] = useState<Sale[]>([]);
   const [period, setPeriod] = useState<Period>("1M");
@@ -68,18 +68,20 @@ export function SalesAnalytics() {
   const [productId, setProductId] = useState("all");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     inventoryFetch("/api/sales", { signal: controller.signal }).then(async (response) => {
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error();
       setSales(Array.isArray(body?.sales) ? body.sales : []);
     }).catch((reason) => {
       if (!(reason instanceof DOMException && reason.name === "AbortError")) setError("Unable to load sales analytics.");
-    });
-    return () => controller.abort();
-  }, []);
+    }).finally(() => { if (active) { setLoading(false); onSettled?.(); } });
+    return () => { active = false; controller.abort(); };
+  }, [onSettled]);
 
   const weeks = monthWeekRanges(month);
   const categories = useMemo(() => [...new Set(sales.map((sale) => sale.categoryName))].sort(), [sales]);
@@ -128,7 +130,7 @@ export function SalesAnalytics() {
       <div className="stock-period-buttons" aria-label="Analytics period">{(["1W", "1M", "1Y"] as Period[]).map((value) => <button className={period === value ? "active" : ""} type="button" key={value} onClick={() => setPeriod(value)}>{{ "1W": "Week", "1M": "Month", "1Y": "Year" }[value]}</button>)}</div>
     </div></div>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
-    <div className="stock-analysis-chart sales-items-chart"><svg viewBox="0 0 560 225" role="img" aria-label="Items sold in the selected period" onMouseLeave={() => setHoveredIndex(null)}>
+    <div className={`stock-analysis-chart sales-items-chart${loading ? " loading" : ""}`}><svg viewBox="0 0 560 225" role="img" aria-label="Items sold in the selected period" onMouseLeave={() => setHoveredIndex(null)}>
       <defs><linearGradient id="sales-items-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--app-blue)" stopOpacity="0.28" /><stop offset="1" stopColor="var(--app-blue)" stopOpacity="0.02" /></linearGradient></defs>
       {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <g key={ratio}><line x1="58" x2="526" y1={190 - ratio * 145} y2={190 - ratio * 145} /><text x="49" y={194 - ratio * 145} textAnchor="end">{Math.round(maximum * ratio)}</text></g>)}
       <line className="stock-axis" x1="58" x2="58" y1="45" y2="190" /><line className="stock-axis" x1="58" x2="526" y1="190" y2="190" />
@@ -137,15 +139,15 @@ export function SalesAnalytics() {
       <path className="sales-items-area" d={`${line} L 526 190 L 58 190 Z`} /><path className="stock-chart-line sales-items-line" pathLength="1" d={line} />
       {points.map((point, index) => <g className="sales-items-point-group" key={`point-${point.label}`} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)}><circle className="sales-items-point-hit" cx={x(index)} cy={y(point.value)} r="15" /><circle className="sales-items-point-ring" cx={x(index)} cy={y(point.value)} r="5.5" /><circle className="sales-items-point-core" cx={x(index)} cy={y(point.value)} r="2.5" /></g>)}
       {hoveredPoint && <g className="stock-chart-tooltip sales-items-tooltip" pointerEvents="none"><rect x={tooltipX} y={tooltipY} width="136" height="52" rx="8" /><text x={tooltipX + 11} y={tooltipY + 20}>{hoveredPoint.label}</text><text className="value" x={tooltipX + 11} y={tooltipY + 40}>{hoveredPoint.value} items sold</text></g>}
-    </svg></div>
+    </svg>{loading && <span className="sales-chart-skeleton" aria-hidden="true" />}</div>
     </section>
     <aside className="stock-product-section" aria-labelledby="sales-items-title"><header><h2 id="sales-items-title">Items</h2><p>Choose what to show on the graph.</p></header><div className="stock-product-choice">
       <button className={productId === "all" ? "active" : ""} type="button" onClick={() => setProductId("all")}><span>{categoryName === "all" ? "All items" : `All in ${categoryName}`}</span></button>
-      {products.map((product) => <button className={productId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setProductId(product.id)}><span>{product.name}</span></button>)}
+      {loading ? Array.from({ length: 5 }, (_, item) => <span className="analytics-option-skeleton" aria-hidden="true" key={item} />) : products.map((product) => <button className={productId === product.id ? "active" : ""} type="button" key={product.id} onClick={() => setProductId(product.id)}><span>{product.name}</span></button>)}
     </div></aside>
     <aside className="stock-category-section" aria-labelledby="sales-categories-title"><header><h2 id="sales-categories-title">Categories</h2><p>Choose a category to analyze.</p></header><div className="stock-category-list">
       <button className={categoryName === "all" ? "active" : ""} type="button" onClick={() => { setCategoryName("all"); setProductId("all"); }}><span>All categories</span></button>
-      {categories.map((category) => <button className={categoryName === category ? "active" : ""} type="button" key={category} onClick={() => { setCategoryName(category); setProductId("all"); }}><span>{category}</span></button>)}
+      {loading ? Array.from({ length: 5 }, (_, item) => <span className="analytics-option-skeleton" aria-hidden="true" key={item} />) : categories.map((category) => <button className={categoryName === category ? "active" : ""} type="button" key={category} onClick={() => { setCategoryName(category); setProductId("all"); }}><span>{category}</span></button>)}
     </div></aside>
   </div>;
 }

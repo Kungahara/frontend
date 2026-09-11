@@ -163,7 +163,6 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
 }
 
 export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { initialAnalysisOpen?: boolean; onSettled?: () => void }) {
-  const loadingText = useTranslations("Loading");
   const commonText = useTranslations("Common");
   const locale = useLocale();
   const tr = useWorkspaceCopy();
@@ -500,7 +499,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
             </tr>;
           })}
           {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
-          {loading && <tr><td className="stock-product-empty" colSpan={6}>{loadingText("stockProducts")}</td></tr>}
+          {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`stock-skeleton-${row}`}>{Array.from({ length: 6 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
         </tbody>
       </table>
     </div>

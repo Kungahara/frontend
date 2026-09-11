@@ -9,6 +9,7 @@ import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 import { MoneySortButton, type SortDirection } from "@/components/money-sort-button";
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 
 type Period = "month" | "year";
 type Product = { id: string; quantity: number; costPrice: string };
@@ -104,7 +105,7 @@ export function FinanceOverview() {
   }) : periodLoans;
   const toggleLoanSort = (key: "amount" | "interest") => setLoanSort((current) => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
 
-  if (loading) return <div className="sales-page-loading" role="status"><span /><strong>{loadingText("finance")}</strong><small>{loadingText("financeBody")}</small></div>;
+  if (loading) return <AppPageSkeleton variant="finance" label={loadingText("finance")} embedded />;
   return <div className="finance-page-content">
     <div className="finance-summary-grid">{cards.map(({ title, value, description, icon: Icon, tone }) => { const blueCard = tone === "blue"; return <article className={`stock-summary-card finance-summary-card ${tone}${blueCard ? " stock-value-card" : ""}`} key={title}><span className="stock-summary-title">{title}</span><span className="stock-summary-icon finance-card-icon"><Icon aria-hidden="true" /></span><div className={blueCard ? "stock-value-amount" : "stock-summary-value-row"}>{blueCard ? responsiveMoney(value) : <strong>{responsiveMoney(value)}</strong>}</div><span className={blueCard ? "historical-card-note" : "stock-summary-previous"}>{description}</span></article>; })}</div>
     <nav className="sales-view-tabs finance-period-tabs" aria-label="Finance period"><button className={period === "month" ? "active" : ""} type="button" aria-pressed={period === "month"} onClick={() => setPeriod("month")}>This month</button><button className={period === "year" ? "active" : ""} type="button" aria-pressed={period === "year"} onClick={() => setPeriod("year")}>This year</button></nav>

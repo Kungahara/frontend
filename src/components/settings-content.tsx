@@ -7,6 +7,7 @@ import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { CloudUpload, Download, Monitor, Moon, ShieldAlert, Sun, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
+import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { browserPushSupported, disableBrowserPush, enableBrowserPush } from "@/lib/browser-push";
 import { inventoryFetch } from "@/lib/inventory-client";
@@ -229,7 +230,7 @@ export function SettingsContent() {
   }
 
   const initials = `${user?.firstName[0] ?? ""}${user?.lastName[0] ?? ""}`.toUpperCase();
-  if (profileLoading) return <div className="settings-initial-state" role="status" aria-live="polite"><span className="settings-loading-spinner" aria-hidden="true" /><strong>{loadingText("settings")}</strong><small>{loadingText("settingsBody")}</small></div>;
+  if (profileLoading) return <AppPageSkeleton variant="settings" label={loadingText("settings")} embedded />;
   if (!user) return <div className="settings-initial-state error" role="alert"><strong>Settings could not be loaded</strong><small>{error || "Unable to load your profile and business details."}</small><button type="button" onClick={() => void loadProfile()}>Try again</button></div>;
   return <div className="settings-page">
     {(message || error) && <div className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}><span>{error || message}</span><button type="button" aria-label="Dismiss notification" onClick={() => { setMessage(""); setError(""); }}><X aria-hidden="true" /></button></div>}
