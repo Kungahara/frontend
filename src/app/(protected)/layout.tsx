@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState } from "react";
 
 import { Brand } from "@/components/brand";
+import { AuthUserProvider } from "@/components/auth-user-context";
 import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monitor";
 import { InactivityLogout } from "@/components/inactivity-logout";
@@ -413,7 +414,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const SlideIcon = activeSlide.icon;
   const currentDate = localizedFullDate(new Date(), language);
 
-  return <div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}${sidebarTransitioning ? " sidebar-transitioning" : ""}`}>
+  return <AuthUserProvider user={user} setUser={setUser}><div className={`dashboard-shell${dark ? " dashboard-theme-dark" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}${sidebarTransitioning ? " sidebar-transitioning" : ""}`}>
     <InactivityLogout />
     <UsageHeartbeat />
     <WorkspaceCopyTranslator />
@@ -489,5 +490,5 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         {routeLoading && <div className="route-loading-screen route-loading-structure"><AppPageSkeleton variant={(["stock", "sales", "finance", "documents", "settings", "help"].includes(displayedPath.slice(1)) ? displayedPath.slice(1) : "dashboard") as "dashboard" | "stock" | "sales" | "finance" | "documents" | "settings" | "help"} label={t("loadingPage")} embedded /></div>}
       </main>
     </section>
-  </div>;
+  </div></AuthUserProvider>;
 }

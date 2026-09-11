@@ -12,6 +12,7 @@ import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { localizedMonth, localizedWeekday } from "@/lib/localized-date";
+import { PersonAvatar, type PersonSummary } from "@/components/person-avatar";
 
 type Product = {
   id: string;
@@ -23,6 +24,8 @@ type Product = {
   costPrice: string;
   sellingPrice: string;
   lowStockLevel: number;
+  createdBy: PersonSummary | null;
+  updatedBy: PersonSummary | null;
 };
 
 type Category = { id: string; name: string };
@@ -483,13 +486,14 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     </header>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-product-table-wrap">
-      <table className="stock-product-table">
-        <thead><tr><th>Name</th><th><button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button></th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Price bought for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
+      <table className="stock-product-table stock-attribution-table">
+        <thead><tr><th>Last activity</th><th>Name</th><th><button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button></th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Price bought for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
         <tbody className={!loading && !visibleProducts.length ? "empty" : ""}>
           {visibleProducts.map((product) => {
             const quantity = availableQuantity(product);
             const isLowStock = quantity <= product.lowStockLevel;
             return <tr key={product.id}>
+              <td><PersonAvatar person={product.updatedBy ?? product.createdBy} label="Last activity" /></td>
               <td><strong>{product.name}</strong></td>
               <td><button className="stock-category-pill" type="button" onClick={() => setQuery(product.categoryName)}>{product.categoryName}</button></td>
               <td>{product.size || "—"}</td>
@@ -498,8 +502,8 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
               <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
             </tr>;
           })}
-          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={6}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
-          {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`stock-skeleton-${row}`}>{Array.from({ length: 6 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
+          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={7}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
+          {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`stock-skeleton-${row}`}>{Array.from({ length: 7 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
         </tbody>
       </table>
     </div>

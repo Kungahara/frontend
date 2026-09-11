@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BadgeDollarSign, Coins, ShoppingBag, TrendingDown, TrendingUp, WalletCards } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, Coins, TrendingDown, Users, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -9,11 +9,13 @@ import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { formatRwf } from "@/lib/format-money";
+import { PersonAvatar, type PersonSummary } from "@/components/person-avatar";
 
 type Product = { id: string; name: string; quantity: number; costPrice: string; sellingPrice: string };
 type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 type Movement = { productId: string; type: string; quantity: number; createdAt: string };
 type DashboardScope = "today" | "month" | "year";
+type MemberActivity = { id: string; actor: PersonSummary; action: string; entityType: string; count: number; items: string[]; happenedAt: string };
 
 function DashboardMoney({ value }: { value: number }) {
   return <MoneyAmount value={value} />;
@@ -27,15 +29,38 @@ function inDashboardScope(value: string, scope: DashboardScope) {
   return scope === "month" || date.getDate() === now.getDate();
 }
 
-function SellingItemCard({ title, product, percentage, tone }: { title: string; product?: Product; percentage: number; tone: "best" | "least" }) {
-  const t = useTranslations("Dashboard.cards");
+function MemberActivityList() {
   const locale = useLocale();
-  return <article className={`stock-summary-card selling-summary-card ${tone}`} aria-label={title}>
-    <span className="stock-summary-title">{title}</span>
-    <span className="stock-summary-icon selling-summary-icon"><ShoppingBag aria-hidden="true" /></span>
-    <div className="stock-summary-value-row"><strong>{new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(percentage)}%</strong><span className="selling-item-name">{product?.name || t("noSales")}</span></div>
-    <span className="stock-summary-previous">{t("remainingStock", { quantity: new Intl.NumberFormat(locale).format(product?.quantity ?? 0) })}</span>
-  </article>;
+  const actionCopy: Record<string, Record<string, string>> = {
+    fr: { added: "a ajouté", invited: "a invité", updated: "a modifié", recorded: "a enregistré", edited: "a modifié", uploaded: "a téléversé", removed: "a supprimé", restocked: "a réapprovisionné", "adjusted stock for": "a ajusté le stock de" },
+    rw: { added: "yongeyemo", invited: "yatumiye", updated: "yahinduye", recorded: "yanditse", edited: "yahinduye", uploaded: "yohereje", removed: "yakuyeho", restocked: "yongeye ibicuruzwa bya", "adjusted stock for": "yahinduye ububiko bwa" },
+  };
+  const entityCopy: Record<string, Record<string, string>> = {
+    fr: { member: "membres", product: "produits", sale: "ventes", loan: "prêts", document: "documents", stock: "mouvements de stock" },
+    rw: { member: "abanyamuryango", product: "ibicuruzwa", sale: "ibyagurishijwe", loan: "imyenda", document: "inyandiko", stock: "impinduka z’ububiko" },
+  };
+  const [activities, setActivities] = useState<MemberActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    inventoryFetch("/api/team/activity").then(async (response) => {
+      const body = await response.json().catch(() => null);
+      if (active && response.ok) setActivities(body?.activities ?? []);
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+  return <aside className="dashboard-member-activity" aria-label="Members activity">
+    <header><span><Users /></span><div><strong>Members activity</strong><small>Similar actions are grouped together.</small></div></header>
+    <div className="dashboard-member-activity-list">
+      {loading && Array.from({ length: 4 }, (_, index) => <div className="member-activity-skeleton" aria-hidden="true" key={index}><i /><span /></div>)}
+      {!loading && activities.map((activity) => {
+        const action = actionCopy[locale]?.[activity.action] ?? activity.action;
+        const groupedLabel = locale === "en" ? `${activity.count} ${activity.entityType} records` : `${activity.count} ${entityCopy[locale]?.[activity.entityType] ?? activity.entityType}`;
+        return <article key={activity.id}><PersonAvatar person={activity.actor} /><div><p><strong>{activity.actor.firstName || activity.actor.email}</strong> {action} {activity.count > 1 ? groupedLabel : activity.items[0] || activity.entityType}</p>{activity.count > 1 && activity.items.length > 0 && <small>{activity.items.join(", ")}</small>}<time dateTime={activity.happenedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(activity.happenedAt))}</time></div></article>;
+      })}
+      {!loading && !activities.length && <div className="dashboard-member-activity-empty"><Users /><strong>No member activity yet</strong><small>New stock, sales, finance, and document actions will appear here.</small></div>}
+    </div>
+  </aside>;
 }
 
 function sameDay(value: string, date: Date) {
@@ -122,7 +147,6 @@ function DashboardGraph({ products, sales }: { products: Product[]; sales: Sale[
 export function DashboardSummaryCards() {
   const loadingText = useTranslations("Loading");
   const t = useTranslations("Dashboard");
-  const locale = useLocale();
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -175,19 +199,6 @@ export function DashboardSummaryCards() {
   const costOfSales = selectedSales.reduce((total, sale) => total + sale.quantity * (costs.get(sale.productId) ?? 0), 0);
   const profit = income - costOfSales;
   const losses = selectedSales.reduce((total, sale) => total + Math.max(0, (costs.get(sale.productId) ?? 0) - Number(sale.unitPrice)) * sale.quantity, 0);
-  const stockValue = products.reduce((total, product) => total + product.quantity * Number(product.costPrice), 0);
-  const expectedIncome = products.reduce((total, product) => total + product.quantity * Number(product.sellingPrice), 0);
-  const scopedMovementValue = movements.filter((movement) => inDashboardScope(movement.createdAt, scope)).reduce((total, movement) => total + movement.quantity * (costs.get(movement.productId) ?? 0), 0);
-  const lastMonthStockValue = Math.max(0, stockValue - scopedMovementValue);
-  const stockValueChange = lastMonthStockValue ? ((stockValue - lastMonthStockValue) / lastMonthStockValue) * 100 : stockValue > 0 ? 100 : 0;
-  const StockValueChangeIcon = stockValueChange >= 0 ? TrendingUp : TrendingDown;
-  const rankedProducts = products.map((product) => {
-    const sold = sales.filter((sale) => sale.productId === product.id).reduce((total, sale) => total + sale.quantity, 0);
-    const supplied = movements.filter((movement) => movement.productId === product.id && movement.type === "stock_in").reduce((total, movement) => total + movement.quantity, 0);
-    return { product, sold, percentage: sold ? Math.min(100, (sold / (supplied || product.quantity + sold)) * 100) : 0 };
-  }).sort((first, second) => second.sold - first.sold);
-  const mostSelling = rankedProducts[0];
-  const leastSelling = rankedProducts.length > 1 ? rankedProducts[rankedProducts.length - 1] : rankedProducts[0];
   const scopeWords = t(`scope.${scope}`);
 
   return <section className="stock-data-body dashboard-summary-body" aria-label={t("summaryLabel")}>
@@ -199,12 +210,7 @@ export function DashboardSummaryCards() {
     </div>
     <div className="dashboard-lower-content">
     <DashboardGraph products={products} sales={sales} />
-    <div className="dashboard-stock-summary-grid">
-      <article className="stock-summary-card stock-value-card" aria-label={t("cards.stockValue")}><span className="stock-summary-title">{t("cards.stockValue")}</span><span className="stock-summary-icon stock-value-icon"><Coins aria-hidden="true" /></span><div className="stock-value-amount"><DashboardMoney value={stockValue} /></div><div className="stock-value-comparison"><span className={`stock-summary-change${stockValueChange >= 0 ? " increase" : " decrease"}`}><StockValueChangeIcon aria-hidden="true" />{new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(Math.abs(stockValueChange))}%</span><span>{t("cards.thanLastMonth")}</span></div></article>
-      <article className="stock-summary-card" aria-label={t("cards.expectedIncomeLabel")}><span className="stock-summary-title">{t("cards.expectedIncome")}</span><span className="stock-summary-icon stock-status-icon"><BadgeDollarSign aria-hidden="true" /></span><div className="stock-summary-value-row"><strong><DashboardMoney value={expectedIncome} /></strong></div><span className="stock-summary-previous">{t("cards.allStockSold")}</span></article>
-      <SellingItemCard title={t("cards.mostSelling")} product={mostSelling?.product} percentage={mostSelling?.percentage ?? 0} tone="best" />
-      <SellingItemCard title={t("cards.leastSelling")} product={leastSelling?.product} percentage={leastSelling?.percentage ?? 0} tone="least" />
-    </div>
+    <MemberActivityList />
     </div>
   </section>;
 }

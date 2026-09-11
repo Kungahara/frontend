@@ -7,7 +7,9 @@ import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { CloudUpload, Download, Monitor, Moon, ShieldAlert, Sun, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
+import { useAuthUser } from "@/components/auth-user-context";
 import { AppPageSkeleton } from "@/components/app-page-skeleton";
+import { TeamSettingsSection, type Invitation, type TeamMember } from "@/components/team-settings-section";
 import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { browserPushSupported, disableBrowserPush, enableBrowserPush } from "@/lib/browser-push";
 import { inventoryFetch } from "@/lib/inventory-client";
@@ -34,6 +36,8 @@ type NotificationPreferences = {
   vapidPublicKey: string;
 };
 
+type TeamData = { members: TeamMember[]; invitations: Invitation[] };
+
 const preferenceKey = "kungahara:settings";
 const languageKey = "kungahara:language";
 const defaultPreferences: Preferences = { theme: "light", scope: "month", salesReminders: true, noonReminder: true, eveningReminder: true, loanReminders: true, workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"], emailDelivery: false, browserPushDelivery: false };
@@ -58,11 +62,10 @@ function Switch({ checked, disabled = false, label, onChange }: { checked: boole
 
 export function SettingsContent() {
   const router = useRouter();
-  const loadingText = useTranslations("Loading");
   const commonText = useTranslations("Common");
+  const loadingText = useTranslations("Loading");
   const tr = useWorkspaceCopy();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const { user, setUser } = useAuthUser();
   const [preferences, setPreferences] = useState<Preferences>(() => {
     if (typeof window === "undefined") return defaultPreferences;
     try {
@@ -78,41 +81,47 @@ export function SettingsContent() {
     } catch { return defaultPreferences; }
   });
   const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [businessName, setBusinessName] = useState("");
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [businessName, setBusinessName] = useState(user.businessName ?? "");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [vapidPublicKey, setVapidPublicKey] = useState("");
-
-  async function loadProfile() {
-    setProfileLoading(true); setError("");
-    try {
-      const { user: current } = await authRequest<{ user: AuthUser }>("me");
-      setUser(current); setFirstName(current.firstName); setLastName(current.lastName); setBusinessName(current.businessName ?? "");
-    } catch (reason) {
-      setUser(null); setError(reason instanceof Error ? reason.message : "Unable to load settings.");
-    } finally { setProfileLoading(false); }
-  }
+  const [teamData, setTeamData] = useState<TeamData | null>(user.role === "owner" ? null : { members: [], invitations: [] });
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [initialError, setInitialError] = useState("");
 
   useEffect(() => {
-    authRequest<{ user: AuthUser }>("me").then(async ({ user: current }) => {
-      setUser(current); setFirstName(current.firstName); setLastName(current.lastName); setBusinessName(current.businessName ?? "");
-      const response = await inventoryFetch("/api/notifications/preferences", { cache: "no-store" });
-      const body = await response.json().catch(() => null) as NotificationPreferences | null;
-      if (!response.ok || !body) throw new Error("Unable to load notification delivery settings.");
-      setVapidPublicKey(body.vapidPublicKey);
-      setPreferences((current) => {
-        const next = { ...current, emailDelivery: body.emailEnabled, browserPushDelivery: body.browserPushEnabled };
-        window.localStorage.setItem(preferenceKey, JSON.stringify(next));
-        return next;
-      });
-    }).catch((reason) => {
-      setUser(null); setError(reason instanceof Error ? reason.message : "Unable to load settings.");
-    }).finally(() => setProfileLoading(false));
-  }, []);
+    let active = true;
+    async function initialize() {
+      try {
+        const [notificationResponse, teamResponse] = await Promise.all([
+          inventoryFetch("/api/notifications/preferences", { cache: "no-store" }),
+          user.role === "owner" ? inventoryFetch("/api/team", { cache: "no-store" }) : Promise.resolve(null),
+        ]);
+        const body = await notificationResponse.json().catch(() => null) as NotificationPreferences | null;
+        const loadedTeam = teamResponse ? await teamResponse.json().catch(() => null) as TeamData | null : { members: [], invitations: [] };
+        if (!notificationResponse.ok || !body) throw new Error("Unable to load notification delivery settings.");
+        if (teamResponse && (!teamResponse.ok || !loadedTeam)) throw new Error("Unable to load business members.");
+        if (!active) return;
+        setVapidPublicKey(body.vapidPublicKey);
+        setTeamData(loadedTeam);
+        setPreferences((saved) => {
+          const next = { ...saved, emailDelivery: body.emailEnabled, browserPushDelivery: body.browserPushEnabled };
+          window.localStorage.setItem(preferenceKey, JSON.stringify(next));
+          return next;
+        });
+      } catch (reason) {
+        if (active) setInitialError(reason instanceof Error ? reason.message : "Unable to load settings.");
+      } finally {
+        if (active) setSettingsLoading(false);
+      }
+    }
+    void initialize();
+    return () => { active = false; };
+  }, [user.role]);
 
   useEffect(() => {
     function syncLanguage(event: Event) {
@@ -174,7 +183,7 @@ export function SettingsContent() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy("profile"); setError(""); setMessage("");
     try {
-      const details = { firstName, lastName, ...(["owner", "admin"].includes(user?.role ?? "") ? { businessName } : {}) };
+      const details = { firstName, lastName, ...(user?.role === "owner" ? { businessName } : {}) };
       const result = await authRequest<{ user: AuthUser }>("me", { method: "PATCH", body: JSON.stringify(details) });
       setUser(result.user); setMessage("Profile and business details saved.");
       window.dispatchEvent(new CustomEvent("kungahara:user-changed", { detail: result.user }));
@@ -230,14 +239,14 @@ export function SettingsContent() {
   }
 
   const initials = `${user?.firstName[0] ?? ""}${user?.lastName[0] ?? ""}`.toUpperCase();
-  if (profileLoading) return <AppPageSkeleton variant="settings" label={loadingText("settings")} embedded />;
-  if (!user) return <div className="settings-initial-state error" role="alert"><strong>Settings could not be loaded</strong><small>{error || "Unable to load your profile and business details."}</small><button type="button" onClick={() => void loadProfile()}>Try again</button></div>;
+  if (settingsLoading) return <AppPageSkeleton variant="settings" label={loadingText("settings")} embedded />;
+  if (initialError || (user.role === "owner" && !teamData)) return <div className="settings-initial-state error" role="alert"><strong>Unable to load settings</strong><small>{initialError || "The complete member list could not be loaded."}</small><button type="button" onClick={() => window.location.reload()}>Try again</button></div>;
   return <div className="settings-page">
     {(message || error) && <div className={`settings-feedback${error ? " error" : ""}`} role={error ? "alert" : "status"}><span>{error || message}</span><button type="button" aria-label="Dismiss notification" onClick={() => { setMessage(""); setError(""); }}><X aria-hidden="true" /></button></div>}
 
     <section className="settings-section" aria-label="Profile and business settings">
       <div className="settings-picture-row"><span className={`settings-avatar${user?.profileImageUrl ? " has-image" : ""}`}>{user?.profileImageUrl ? <Image src={user.profileImageUrl} alt="Profile" width={72} height={72} unoptimized /> : initials || <Upload aria-hidden="true" />}</span><div><strong>Profile picture</strong><small>JPEG, PNG or WebP, up to 5 MB.</small></div><label className="settings-secondary-button"><CloudUpload aria-hidden="true" />{busy === "picture" ? commonText("uploading") : "Change picture"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!!busy} onChange={uploadPicture} /></label></div>
-      <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={!!user && !["owner", "admin"].includes(user.role)} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? commonText("saving") : "Save details"}</button></form>
+      <form className="settings-form-grid" onSubmit={saveProfile}><label>First name<input required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label><label>Last name<input required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label><label className="wide">Business name<input required maxLength={200} disabled={user.role !== "owner"} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label><button className="settings-primary-button" disabled={!!busy || !user} type="submit">{busy === "profile" ? commonText("saving") : "Save details"}</button></form>
     </section>
 
     <section className="settings-section settings-appearance-section" aria-label="Dashboard and appearance settings">
@@ -259,6 +268,8 @@ export function SettingsContent() {
     </section>
 
     <section className="settings-section" aria-label="Security settings"><div className="settings-row"><div><strong>Change password</strong><small>A secure password-change link will be sent to {user?.email ?? "your email"}.</small></div><button className="settings-secondary-button" type="button" disabled={!!busy || !user} onClick={() => void sendPasswordLink()}>{busy === "password" ? commonText("sending") : "Send change link"}</button></div></section>
+
+    {user.role === "owner" && teamData && <TeamSettingsSection currentUser={user} initialMembers={teamData.members} initialInvitations={teamData.invitations} />}
 
     <section className="settings-section" aria-label="Data and account settings">
       <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>

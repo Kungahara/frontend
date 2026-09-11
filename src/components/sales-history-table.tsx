@@ -11,8 +11,9 @@ import { MoneyAmount } from "@/components/money-amount";
 import { inventoryFetch } from "@/lib/inventory-client";
 import { useWorkspaceCopy } from "@/components/workspace-copy-translator";
 import { localizedFullDate, localizedMonth, localizedWeekday } from "@/lib/localized-date";
+import { PersonAvatar, type PersonSummary } from "@/components/person-avatar";
 
-type Sale = { id: string; productName: string; categoryName: string; size: string; quantity: number; unitPrice: string; total: string; createdAt: string };
+type Sale = { id: string; productName: string; categoryName: string; size: string; quantity: number; unitPrice: string; total: string; createdAt: string; createdBy: PersonSummary | null; updatedBy: PersonSummary | null };
 type Period = "1D" | "1W" | "1M" | "1Y";
 
 function currentMonthValue() {
@@ -142,11 +143,11 @@ export function SalesHistoryTable({ navigation, onSettled }: { navigation?: Reac
         </div><label className="stock-product-search"><span className="sr-only">Search sales</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label></div>
       </header>
 
-      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
+      <div className="stock-product-table-wrap"><table className="stock-product-table sales-product-table historical-attribution-table"><thead><tr><th>Last activity</th><th>Date</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "money" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "money" ? tableSort.direction : null} onToggle={() => toggleTableSort("money")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th></tr></thead><tbody className={!loading && !visibleSales.length ? "empty" : ""}>
 
-        {!loading && visibleSales.map((sale) => <tr key={sale.id}><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.total ?? Number(sale.unitPrice) * sale.quantity)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
-        {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`history-skeleton-${row}`}>{Array.from({ length: 6 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
-        {!loading && !visibleSales.length && <tr><td className="stock-product-empty" colSpan={6}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
+        {!loading && visibleSales.map((sale) => <tr key={sale.id}><td><PersonAvatar person={sale.updatedBy ?? sale.createdBy} label="Last activity" /></td><td>{new Intl.DateTimeFormat("en-RW", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sale.createdAt))}</td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.total ?? Number(sale.unitPrice) * sale.quantity)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td></tr>)}
+        {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`history-skeleton-${row}`}>{Array.from({ length: 7 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
+        {!loading && !visibleSales.length && <tr><td className="stock-product-empty" colSpan={7}><p>{query ? "No sales match your search." : "No sales were recorded in this period."}</p></td></tr>}
       </tbody></table></div>
     </section>
   </div>;

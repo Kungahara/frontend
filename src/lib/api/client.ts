@@ -3,7 +3,7 @@ export type AuthUser = {
   firstName: string;
   lastName: string;
   email: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "member";
   businessId: string | null;
   businessName: string | null;
   emailVerified: boolean;
