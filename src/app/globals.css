@@ -1961,7 +1961,7 @@ body:has(.legal-page) { overflow-x: clip; }
 }
 
 /* Owner team management and record attribution. */
-.person-avatar { position: relative; display: inline-grid; width: 1.75rem; height: 1.75rem; place-items: center; overflow: visible; color: white; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 800; vertical-align: middle; background: var(--app-blue); border: 2px solid white; border-radius: 50%; cursor: help; }
+.person-avatar { position: relative; display: inline-grid; width: 1.75rem; height: 1.75rem; place-items: center; overflow: visible; color: white; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 800; vertical-align: middle; background: var(--app-blue); border: 2px solid white; border-radius: 50%; cursor: default; }
 .person-avatar > img, .person-avatar > span:first-child { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .person-avatar > span:first-child { display: grid; place-items: center; }
 .person-avatar-tooltip { position: absolute; bottom: calc(100% + 0.45rem); left: 50%; z-index: 40; width: max-content; max-width: 15rem; padding: 0.36rem 0.52rem; overflow: hidden; color: white; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; background: #172033; border-radius: 0.42rem; opacity: 0; pointer-events: none; transform: translate(-50%, 0.25rem); transition: opacity 140ms ease, transform 140ms ease; }
@@ -2005,6 +2005,9 @@ body:has(.legal-page) { overflow-x: clip; }
 
 .documents-photo-uploader { position: absolute; right: 0.42rem; bottom: 0.42rem; z-index: 4; }
 .documents-photo-uploader .person-avatar { width: 1.55rem; height: 1.55rem; border-color: rgb(255 255 255 / 92%); }
+.documents-photo-uploader .person-avatar-tooltip { right: 0; left: auto; transform: translate(0, 0.25rem); }
+.documents-photo-uploader .person-avatar-tooltip::after { right: 0.5rem; left: auto; transform: none; }
+.documents-photo-uploader .person-avatar:hover .person-avatar-tooltip, .documents-photo-uploader .person-avatar:focus-visible .person-avatar-tooltip { transform: translate(0, 0); }
 
 .settings-section.team-settings-section { position: relative; z-index: 5; overflow: visible; }
 .team-settings-header { justify-content: space-between; }
@@ -2549,8 +2552,8 @@ body:has(.legal-page) { overflow-x: clip; }
 .documents-add-photo-card > span { display: grid; width: 2rem; height: 2rem; place-items: center; color: white; background: var(--app-blue); border-radius: 50%; box-shadow: 0 4px 10px rgb(var(--app-blue-rgb) / 22%); }
 .documents-add-photo-card svg { width: 0.85rem; height: 0.85rem; }
 .documents-add-photo-card strong { font-size: calc(0.64rem * var(--ui-text-scale)); }
-.documents-photo-card { contain: layout paint; isolation: isolate; background: #e8ebf0; box-shadow: 0 4px 12px rgb(35 45 62 / 9%); }
-.documents-photo-open { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; overflow: hidden; text-align: left; background: transparent; border: 0; cursor: pointer; }
+.documents-photo-card { contain: layout; overflow: visible; isolation: isolate; background: #e8ebf0; box-shadow: 0 4px 12px rgb(35 45 62 / 9%); }
+.documents-photo-open { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; overflow: hidden; text-align: left; background: transparent; border: 0; border-radius: inherit; cursor: pointer; }
 .documents-photo-open > img { border-radius: inherit; object-fit: cover; transition: transform 180ms ease; }
 .documents-photo-card:hover .documents-photo-open > img { transform: scale(1.035); }
 .documents-photo-open > span { position: absolute; z-index: 1; right: 0; bottom: 0; left: 0; min-height: 3rem; padding: 1.25rem 2.55rem 0.5rem 0.55rem; color: white; background: linear-gradient(transparent, rgb(13 20 32 / 78%)); }
@@ -3258,9 +3261,10 @@ body:has(.legal-page) { overflow-x: clip; }
 }
 
 /* Structural loading states keep each page usable and stable while its data arrives. */
-.app-page-skeleton { --skeleton-base: #e6e9ee; --skeleton-highlight: #f5f6f8; display: flex; width: 100%; min-height: 100%; box-sizing: border-box; flex-direction: column; gap: 0.85rem; padding: 0.9rem; overflow: hidden; }
+.dashboard-shell, .app-page-skeleton { --skeleton-base: #e6e9ee; --skeleton-highlight: #f5f6f8; }
+.app-page-skeleton { display: flex; width: 100%; min-height: 100%; box-sizing: border-box; flex-direction: column; gap: 0.85rem; padding: 0.9rem; overflow: hidden; }
 .app-page-skeleton.embedded { height: 100%; padding: 0; }
-.app-page-skeleton :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { background: linear-gradient(100deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 45%, var(--skeleton-base) 65%); background-size: 220% 100%; animation: app-skeleton-shimmer 1.35s ease-in-out infinite; }
+:is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { background: linear-gradient(100deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 45%, var(--skeleton-base) 65%); background-size: 220% 100%; animation: app-skeleton-shimmer 1.35s ease-in-out infinite; }
 @keyframes app-skeleton-shimmer { to { background-position-x: -220%; } }
 .app-skeleton-line { display: block; height: 0.58rem; border-radius: 999px; }
 .app-skeleton-line.short { width: 38%; }
@@ -3326,8 +3330,11 @@ body:has(.legal-page) { overflow-x: clip; }
 .sales-items-chart.loading svg { opacity: 0.35; }
 .sales-chart-skeleton { position: absolute; inset: 0.9rem; border-radius: 0.65rem; opacity: 0.72; }
 .analytics-option-skeleton { display: block; min-height: 2.2rem; flex: 0 0 auto; border-radius: 0.55rem; }
-.dashboard-theme-dark .app-page-skeleton { --skeleton-base: #273144; --skeleton-highlight: #37445a; }
+.dashboard-theme-dark, .dashboard-theme-dark .app-page-skeleton { --skeleton-base: #273144; --skeleton-highlight: #37445a; }
 .dashboard-theme-dark :is(.app-skeleton-card, .app-skeleton-panel, .app-skeleton-dashboard-lower > section, .app-skeleton-dashboard-activity, .app-skeleton-analytics > section, .app-skeleton-analytics > aside, .app-skeleton-documents > section, .app-skeleton-settings-section, .app-skeleton-help-row, .app-skeleton-help-card) { background: #151c2b; border-color: #293348; }
+.dashboard-theme-dark .app-skeleton-tabs { background: #151c2b; border-color: #293348; box-shadow: none; }
+.dashboard-theme-dark :is(.app-skeleton-table, .app-skeleton-table-row, .app-skeleton-dashboard-activity > header, .app-skeleton-activity-row, .app-skeleton-settings-section > header, .app-skeleton-settings-row, .app-skeleton-team-grid > span) { border-color: #293348; }
+.dashboard-theme-dark .member-activity-skeleton :is(i, span) { background: var(--skeleton-base); }
 .dashboard-theme-dark .route-loading-screen.route-loading-structure { background: #0f1624; }
 @media (max-width: 900px) {
   .app-skeleton-cards, .app-skeleton-cards.stock-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3352,5 +3359,5 @@ body:has(.legal-page) { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-page-loading > span,
   .dashboard-page-loading p { animation: none; }
-  .app-page-skeleton :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { animation: none; }
+  :is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { animation: none; }
 }

@@ -29,7 +29,7 @@ function inDashboardScope(value: string, scope: DashboardScope) {
   return scope === "month" || date.getDate() === now.getDate();
 }
 
-function MemberActivityList() {
+function MemberActivityList({ activities }: { activities: MemberActivity[] }) {
   const locale = useLocale();
   const actionCopy: Record<string, Record<string, string>> = {
     fr: { added: "a ajouté", invited: "a invité", updated: "a modifié", recorded: "a enregistré", edited: "a modifié", uploaded: "a téléversé", removed: "a supprimé", restocked: "a réapprovisionné", "adjusted stock for": "a ajusté le stock de" },
@@ -39,26 +39,15 @@ function MemberActivityList() {
     fr: { member: "membres", product: "produits", sale: "ventes", loan: "prêts", document: "documents", stock: "mouvements de stock" },
     rw: { member: "abanyamuryango", product: "ibicuruzwa", sale: "ibyagurishijwe", loan: "imyenda", document: "inyandiko", stock: "impinduka z’ububiko" },
   };
-  const [activities, setActivities] = useState<MemberActivity[]>([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    let active = true;
-    inventoryFetch("/api/team/activity").then(async (response) => {
-      const body = await response.json().catch(() => null);
-      if (active && response.ok) setActivities(body?.activities ?? []);
-    }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
   return <aside className="dashboard-member-activity" aria-label="Members activity">
     <header><span><Users /></span><div><strong>Members activity</strong><small>Similar actions are grouped together.</small></div></header>
     <div className="dashboard-member-activity-list">
-      {loading && Array.from({ length: 4 }, (_, index) => <div className="member-activity-skeleton" aria-hidden="true" key={index}><i /><span /></div>)}
-      {!loading && activities.map((activity) => {
+      {activities.map((activity) => {
         const action = actionCopy[locale]?.[activity.action] ?? activity.action;
         const groupedLabel = locale === "en" ? `${activity.count} ${activity.entityType} records` : `${activity.count} ${entityCopy[locale]?.[activity.entityType] ?? activity.entityType}`;
         return <article key={activity.id}><PersonAvatar person={activity.actor} /><div><p><strong>{activity.actor.firstName || activity.actor.email}</strong> {action} {activity.count > 1 ? groupedLabel : activity.items[0] || activity.entityType}</p>{activity.count > 1 && activity.items.length > 0 && <small>{activity.items.join(", ")}</small>}<time dateTime={activity.happenedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(activity.happenedAt))}</time></div></article>;
       })}
-      {!loading && !activities.length && <div className="dashboard-member-activity-empty"><Users /><strong>No member activity yet</strong><small>New stock, sales, finance, and document actions will appear here.</small></div>}
+      {!activities.length && <div className="dashboard-member-activity-empty"><Users /><strong>No member activity yet</strong><small>New stock, sales, finance, and document actions will appear here.</small></div>}
     </div>
   </aside>;
 }
@@ -150,6 +139,7 @@ export function DashboardSummaryCards() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [activities, setActivities] = useState<MemberActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [scope, setScope] = useState<DashboardScope>(() => {
@@ -163,11 +153,11 @@ export function DashboardSummaryCards() {
     let active = true;
     async function load() {
       try {
-        const responses = await Promise.all(["/api/products", "/api/sales", "/api/stock-movements"].map((path) => inventoryFetch(path, { signal: controller.signal })));
+        const responses = await Promise.all(["/api/products", "/api/sales", "/api/stock-movements", "/api/team/activity"].map((path) => inventoryFetch(path, { signal: controller.signal })));
         const bodies = await Promise.all(responses.map((response) => response.json().catch(() => null)));
         if (responses.some((response) => !response.ok)) throw new Error("Unable to load dashboard summary.");
         if (!active) return;
-        setProducts(bodies[0]?.products ?? []); setSales(bodies[1]?.sales ?? []); setMovements(bodies[2]?.stockMovements ?? []); setError("");
+        setProducts(bodies[0]?.products ?? []); setSales(bodies[1]?.sales ?? []); setMovements(bodies[2]?.stockMovements ?? []); setActivities(bodies[3]?.activities ?? []); setError("");
       } catch (reason) {
         if (active && !(reason instanceof DOMException && reason.name === "AbortError")) setError(reason instanceof Error ? reason.message : "Unable to load dashboard summary.");
       } finally {
@@ -210,7 +200,7 @@ export function DashboardSummaryCards() {
     </div>
     <div className="dashboard-lower-content">
     <DashboardGraph products={products} sales={sales} />
-    <MemberActivityList />
+    <MemberActivityList activities={activities} />
     </div>
   </section>;
 }

@@ -79,7 +79,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     setSelling(true);
   }
 
-  async function sell() {
+  async function sell(keepOpen = false) {
     const product = products.find((item) => item.id === productId);
     const soldQuantity = Number(quantity);
     const salePrice = Number(soldFor);
@@ -108,13 +108,22 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
       setBusy(false);
       return;
     }
-    if (body?.product) setProducts((current) => current.map((item) => item.id === product.id ? body.product : item));
+    const updatedProducts = body?.product ? products.map((item) => item.id === product.id ? body.product : item) : products;
+    if (body?.product) setProducts(updatedProducts);
     if (body?.sale) setSales((current) => body.merged
       ? current.some((sale) => sale.id === body.sale.id)
         ? current.map((sale) => sale.id === body.sale.id ? body.sale : sale)
         : [body.sale, ...current]
       : [body.sale, ...current]);
-    setSelling(false);
+    const nextProduct = updatedProducts.find((item) => item.quantity > 0);
+    if (keepOpen && nextProduct) {
+      setProductId(nextProduct.id);
+      setQuantity("1");
+      setSoldFor(nextProduct.sellingPrice);
+      setError("");
+    } else {
+      setSelling(false);
+    }
     setBusy(false);
     window.dispatchEvent(new Event("kungahara:inventory-changed"));
   }
@@ -197,7 +206,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
         </tbody>
       </table>
     </div>
-    {selling && <div className="stock-delete-backdrop" role="presentation"><form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="sell-item-title" onSubmit={(event) => { event.preventDefault(); void sell(); }}>
+    {selling && <div className="stock-delete-backdrop" role="presentation"><form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="sell-item-title" onSubmit={(event) => { event.preventDefault(); const submitter = (event.nativeEvent as SubmitEvent).submitter; void sell(submitter instanceof HTMLButtonElement && submitter.value === "continue"); }}>
       <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => setSelling(false)}><X aria-hidden="true" /></button>
       <h3 id="sell-item-title">Sell new item</h3><p>Choose an item from stock, enter the selling price, and confirm the quantity sold.</p>
       <div className="stock-add-grid">
@@ -206,7 +215,10 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
         <label>Sold for<input required type="number" min="0.01" step="0.01" value={soldFor} onChange={(event) => setSoldFor(event.target.value)} /></label>
       </div>
       {error && <p className="stock-add-note" role="alert">{error}</p>}
-      <button className="stock-add-submit" disabled={busy}>{busy ? "Recording sale…" : "Sell item"}</button>
+      <div className="stock-add-actions">
+        <button className="stock-add-submit" type="submit" value="close" disabled={busy}>{busy ? "Recording sale…" : "Sell item"}</button>
+        <button className="stock-add-submit stock-add-continue" type="submit" value="continue" disabled={busy}>Sell &amp; continue</button>
+      </div>
     </form></div>}
     {editing && <div className="stock-delete-backdrop" role="presentation"><form className="stock-delete-dialog stock-add-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-sale-title" onSubmit={(event) => { event.preventDefault(); void saveSale(); }}>
       <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => setEditing(null)}><X aria-hidden="true" /></button>
