@@ -91,7 +91,7 @@ export default async function HomePage() {
           <div className="marketing-browser-bar"><span /><span /><span /><p>app.kungahara.com/dashboard</p></div>
           <div className="marketing-dashboard-image">
             <Image
-              src="/images/landing/dashboard-preview-enhanced.png"
+              src="/images/landing/dashboard-preview-owner-v2.png"
               alt={tr("Kungahara dashboard showing finances, stock, sales, and business insights")}
               fill
               sizes="(max-width: 1200px) 100vw, 1200px"

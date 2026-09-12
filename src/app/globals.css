@@ -730,7 +730,7 @@ button.marketing-signup { cursor: pointer; }
 .marketing-browser-bar { display: flex; height: 2.15rem; align-items: center; gap: 0.42rem; padding-inline: 0.75rem; }
 .marketing-browser-bar > span { width: 0.62rem; height: 0.62rem; background: #d7e6f3; border-radius: 50%; }
 .marketing-browser-bar p { margin-inline: auto; padding: 0.3rem 3rem; color: #7890a7; font-size: calc(0.55rem * var(--ui-text-scale)); background: rgb(238 247 253 / 75%); border-radius: 999px; }
-.marketing-dashboard-image { position: relative; aspect-ratio: 1365 / 645; overflow: hidden; border-radius: 1rem 1rem 0.35rem 0.35rem; }
+.marketing-dashboard-image { position: relative; aspect-ratio: 1365 / 646; overflow: hidden; border-radius: 1rem 1rem 0.35rem 0.35rem; }
 .marketing-dashboard-image img { object-fit: contain; }
 .live-dashboard-frame { position: absolute; inset: 0; overflow: hidden; background: #edf1f6; }
 .live-dashboard { position: absolute; top: 0; left: 0; display: grid; width: 1365px; height: 645px; grid-template-columns: 247px 1118px; overflow: hidden; color: #112038; background: #edf1f6; font-size: calc(10px * var(--ui-text-scale)); text-align: left; transform-origin: top left; }
@@ -1809,7 +1809,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .least-stock-card .stock-value-amount { color: white; }
 .least-stock-icon { color: #d33f47; background: white; }
 .least-stock-name { display: flex; min-width: 0; align-items: center; padding-top: 0.35rem; }
-.least-stock-name span { max-width: 8rem; overflow: hidden; padding: 0.3rem 0.52rem; color: #a94642; font-size: calc(0.62rem * var(--ui-text-scale)); font-weight: 750; line-height: 1; text-overflow: ellipsis; white-space: nowrap; background: white; border-radius: 999px; }
+.least-stock-name span { max-width: 8rem; overflow: hidden; padding: 0.3rem 0.52rem; color: #df5058; font-size: calc(0.62rem * var(--ui-text-scale)); font-weight: 750; line-height: 1; text-overflow: ellipsis; white-space: nowrap; background: #ffebed; border-radius: 999px; }
 .least-stock-remaining { color: rgb(255 255 255 / 86%); font-size: calc(0.62rem * var(--ui-text-scale)); }
 .least-stock-remaining strong { color: white; font-weight: 750; }
 .stock-summary-previous { color: #9298a2; font-size: calc(0.62rem * var(--ui-text-scale)); }
@@ -1819,6 +1819,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-theme-dark .stock-value-card { background: linear-gradient(135deg, var(--app-blue) 0%, var(--app-blue) 100%); border-color: transparent; }
 .dashboard-theme-dark .least-stock-card { background: linear-gradient(315deg, #8f2732 0%, #b2383f 50%, #ce5149 100%); border-color: transparent; }
 .dashboard-theme-dark .stock-summary-previous strong { color: #d8deea; }
+.dashboard-theme-dark .least-stock-name span { color: #ff858b; background: #3a2329; }
 .stock-product-panel { position: relative; display: flex; min-height: 0; flex: 1; flex-direction: column; margin-top: 1rem; overflow: hidden; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); }
 .stock-product-toolbar { display: flex; min-height: 3.4rem; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.65rem 0.85rem; border-bottom: 1px solid #edf0f4; }
 .stock-product-toolbar h2 { color: #20252e; font-size: calc(1rem * var(--ui-text-scale)); font-weight: 650; }
@@ -2264,6 +2265,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .finance-period-tabs { margin-top: 0.85rem; }
 .finance-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; }
 .dashboard-summary-body { position: relative; display: flex; width: 100%; height: 100%; min-height: 0; padding: 0.9rem; background: #f8f9fb; border: 1px solid #e4e8ef; border-radius: 1rem; box-shadow: 0 7px 22px rgb(32 48 80 / 5%); flex-direction: column; }
+.dashboard-summary-body .finance-summary-grid .finance-summary-card:is(.green, .profit) .stock-summary-icon { color: var(--app-blue); background: rgb(var(--app-blue-rgb) / 10%); }
 .dashboard-summary-loading { overflow: hidden; }
 .dashboard-lower-content { display: flex; min-height: 0; flex: 1; gap: 0.8rem; margin-top: 0.8rem; }
 .dashboard-graph-panel { display: flex; min-width: 0; min-height: 0; flex: 0 0 calc(60% - 0.4rem); padding: 0.85rem; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); flex-direction: column; }
@@ -2509,6 +2511,26 @@ body:has(.legal-page) { overflow-x: clip; }
 .documents-summary-card.folder .documents-summary-icon { background: var(--app-blue); }
 .documents-summary-card.storage .documents-summary-icon { background: var(--app-blue); }
 .documents-summary-card.recent .documents-summary-icon { background: #f06a70; }
+
+/* Keep metric cards visually consistent across dashboard, stock, sales, finance, and documents. */
+.stock-summary-card.stock-summary-card { --summary-card-accent: var(--app-blue); align-content: space-between; grid-template-rows: 2.2rem 2.6rem 1.2rem; background: white; border-color: #e8ebf1; box-shadow: 0 5px 16px rgb(32 48 80 / 5%); }
+.stock-summary-card > :is(.stock-value-amount, .stock-summary-value-row, .least-stock-name) { width: 100%; height: 2.6rem; align-self: stretch; align-items: center; grid-row: 2; margin: 0; padding-top: 0; }
+.stock-summary-card > .stock-value-amount { display: flex; }
+.stock-summary-card > :is(.stock-value-comparison, .stock-summary-previous, .least-stock-remaining, .historical-card-note) { align-self: end; grid-row: 3; margin: 0; }
+.stock-summary-card .sales-item-value-row { flex-wrap: nowrap; }
+.stock-summary-card .sales-item-value-row > .sales-item-value:has(.money-amount) { min-width: 0; flex: 0 1 auto; }
+.stock-summary-card .stock-summary-icon.stock-summary-icon { color: var(--summary-card-accent); background: color-mix(in srgb, var(--summary-card-accent) 11%, transparent); }
+.dashboard-theme-dark .stock-summary-card { background: #151b2a; border-color: #263044; box-shadow: 0 5px 16px rgb(0 0 0 / 12%); }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:not(:first-child):not(:last-child) :is(.stock-value-amount, .stock-summary-value-row strong) { color: var(--app-blue); }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:first-child { --summary-card-accent: white; background: linear-gradient(135deg, var(--app-blue), var(--app-blue)); border-color: transparent; box-shadow: 0 7px 18px rgb(var(--app-blue-rgb) / 24%); }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:first-child :is(.stock-summary-title, .stock-value-amount, .stock-summary-value-row strong, .stock-summary-previous, .historical-card-note, .stock-value-comparison) { color: white; }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:first-child .stock-summary-icon.stock-summary-icon { color: var(--app-blue); background: white; }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child { --summary-card-accent: #d9474d; background: white; border-color: #e8ebf1; box-shadow: 0 5px 16px rgb(32 48 80 / 5%); }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child .stock-summary-title { color: #7f8691; }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child :is(.stock-value-amount, .stock-summary-value-row strong, .least-stock-remaining strong) { color: #d9474d; }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child :is(.stock-summary-previous, .historical-card-note, .least-stock-remaining, .stock-value-comparison) { color: #9298a2; }
+:is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child .stock-summary-icon.stock-summary-icon { color: #d9474d; background: rgb(217 71 77 / 11%); }
+.dashboard-theme-dark :is(.stock-summary-grid, .finance-summary-grid, .historical-summary-grid) > .stock-summary-card:last-child { background: #151b2a; border-color: #263044; box-shadow: 0 5px 16px rgb(0 0 0 / 12%); }
 .documents-main-row { display: flex; height: 0; min-height: 18rem; flex: 1 1 0; align-items: stretch; gap: 0.85rem; margin-top: 0.85rem; overflow: hidden; }
 .documents-library { display: flex; width: calc(62.5% - 0.3rem); min-height: 18rem; overflow: hidden; background: white; border: 1px solid #e6e9ef; border-radius: 0.9rem; box-shadow: 0 5px 16px rgb(32 48 80 / 4%); flex-direction: column; }
 .documents-library-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.8rem 1rem 0.3rem; }
