@@ -3,6 +3,7 @@
 import {
   Banknote,
   Bell,
+  Check,
   CircleDollarSign,
   FileText,
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShoppingCart,
+  ShieldCheck,
   Sun,
   X,
 } from "lucide-react";
@@ -110,6 +112,7 @@ const sidebarSlides = [
 const themeStorageKey = "kungahara:dashboard-theme";
 const languageStorageKey = "kungahara:language";
 type AppLanguage = "rw" | "en" | "fr";
+type ApprovalRequest = { id: string; kind: "remove_member" | "suspend_member" | "business_name"; status: "pending" | "approved" | "rejected"; canRespond: boolean; title: string; message: string; createdAt: string; displayStatus?: "accepted" | "rejected" };
 const languages: Array<{ value: AppLanguage; shortLabel: string; label: string }> = [
   { value: "rw", shortLabel: "RW", label: "Kinyarwanda" },
   { value: "en", shortLabel: "EN", label: "English" },
@@ -155,6 +158,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
   const [sidebarSlide, setSidebarSlide] = useState(0);
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
+  const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
+  const [approvalBusy, setApprovalBusy] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsUnread, setNotificationsUnread] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
@@ -195,6 +200,49 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   function dismissNotification(id: string) {
     setCurrencyAlerts((current) => current.filter((alert) => alert.id !== id));
+  }
+
+  const refreshApprovalRequests = useCallback(async () => {
+    if (!user || user.role !== "owner") { setApprovalRequests([]); return; }
+    try {
+      const response = await inventoryFetch("/api/notifications/approvals", { cache: "no-store" });
+      const body = await response.json().catch(() => null) as { requests?: ApprovalRequest[] } | null;
+      if (!response.ok || !body) return;
+      setApprovalRequests((current) => {
+        const currentIds = new Set(current.map((item) => item.id));
+        if ((body.requests ?? []).some((item) => !currentIds.has(item.id))) setNotificationsUnread(true);
+        return body.requests ?? [];
+      });
+    } catch { /* Approval notifications retry automatically. */ }
+  }, [user]);
+
+  async function decideApproval(requestId: string, decision: "approve" | "reject") {
+    setApprovalBusy(requestId);
+    try {
+      const response = await inventoryFetch("/api/notifications/approvals", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, decision }),
+      });
+      if (!response.ok) return;
+      setApprovalRequests((current) => current.map((item) => item.id === requestId ? { ...item, canRespond: false, displayStatus: decision === "approve" ? "accepted" : "rejected" } : item));
+      window.dispatchEvent(new CustomEvent("kungahara:data-changed"));
+      router.refresh();
+      window.setTimeout(() => {
+        setApprovalRequests((current) => current.filter((item) => item.id !== requestId));
+        setNotificationsOpen(false);
+      }, 700);
+    } finally { setApprovalBusy(""); }
+  }
+
+  async function dismissApproval(requestId: string) {
+    setApprovalBusy(requestId);
+    try {
+      const response = await inventoryFetch("/api/notifications/approvals", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, decision: "acknowledge" }),
+      });
+      if (response.ok) setApprovalRequests((current) => current.filter((item) => item.id !== requestId));
+    } finally { setApprovalBusy(""); }
   }
 
   useEffect(() => {
@@ -308,6 +356,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     window.addEventListener("kungahara:settings-changed", refreshBusinessAlerts);
     return () => { window.clearInterval(timer); window.removeEventListener("kungahara:data-changed", refreshBusinessAlerts); window.removeEventListener("kungahara:settings-changed", refreshBusinessAlerts); };
   }, [alertsHydrated, refreshBusinessAlerts, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const initialTimer = window.setTimeout(() => void refreshApprovalRequests(), 0);
+    const timer = window.setInterval(refreshApprovalRequests, 15_000);
+    window.addEventListener("kungahara:approval-changed", refreshApprovalRequests);
+    return () => { window.clearTimeout(initialTimer); window.clearInterval(timer); window.removeEventListener("kungahara:approval-changed", refreshApprovalRequests); };
+  }, [refreshApprovalRequests, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -475,12 +531,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
               <button className={dark ? "active" : ""} type="button" aria-label={t("toggleTheme")} aria-pressed={dark} title={t("toggleTheme")} onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications">
-              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) setNotificationsUnread(false); }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
+              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
             {notificationsOpen && <div className="notification-popover">
               <div className="notification-popover-header"><strong>{t("todayNotifications")}</strong></div>
-              {currencyAlerts.length ? currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div><button className="notification-dismiss" type="button" aria-label={t("dismissNotification", { title: alert.title })} onClick={() => dismissNotification(alert.id)}><X aria-hidden="true" /></button></article>) : <p>{t("noNotifications")}</p>}
+              {approvalRequests.map((approval) => <article className="notification-item approval" key={approval.id}><span className="notification-item-icon"><ShieldCheck aria-hidden="true" /></span><div><b>{approval.title}</b><p>{approval.message}</p>{approval.canRespond && !approval.displayStatus ? <div className="notification-approval-actions"><button type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "approve")}><Check aria-hidden="true" />Accept</button><button className="reject" type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "reject")}><X aria-hidden="true" />Reject</button></div> : <span className={`notification-approval-status ${approval.displayStatus ?? approval.status}`}>{approval.displayStatus ?? (approval.status === "approved" ? "Accepted" : "Rejected")}</span>}</div>{!approval.canRespond && !approval.displayStatus && <button className="notification-dismiss" type="button" aria-label={`Dismiss ${approval.title}`} disabled={approvalBusy === approval.id} onClick={() => void dismissApproval(approval.id)}><X aria-hidden="true" /></button>}</article>)}
+              {currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div><button className="notification-dismiss" type="button" aria-label={t("dismissNotification", { title: alert.title })} onClick={() => dismissNotification(alert.id)}><X aria-hidden="true" /></button></article>)}
+              {!approvalRequests.length && !currencyAlerts.length && <p>{t("noNotifications")}</p>}
             </div>}
           </div>
         </div>

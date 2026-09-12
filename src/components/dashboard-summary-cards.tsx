@@ -15,7 +15,7 @@ type Product = { id: string; name: string; quantity: number; costPrice: string; 
 type Sale = { productId: string; quantity: number; unitPrice: string; createdAt: string };
 type Movement = { productId: string; type: string; quantity: number; createdAt: string };
 type DashboardScope = "today" | "month" | "year";
-type MemberActivity = { id: string; actor: PersonSummary; action: string; entityType: string; count: number; items: string[]; happenedAt: string };
+type MemberActivity = { id: string; actor: PersonSummary; invitedBy: PersonSummary | null; action: string; entityType: string; count: number; items: string[]; happenedAt: string };
 
 function DashboardMoney({ value }: { value: number }) {
   return <MoneyAmount value={value} />;
@@ -32,8 +32,8 @@ function inDashboardScope(value: string, scope: DashboardScope) {
 function MemberActivityList({ activities }: { activities: MemberActivity[] }) {
   const locale = useLocale();
   const actionCopy: Record<string, Record<string, string>> = {
-    fr: { added: "a ajouté", invited: "a invité", updated: "a modifié", recorded: "a enregistré", edited: "a modifié", uploaded: "a téléversé", removed: "a supprimé", restocked: "a réapprovisionné", "adjusted stock for": "a ajusté le stock de" },
-    rw: { added: "yongeyemo", invited: "yatumiye", updated: "yahinduye", recorded: "yanditse", edited: "yahinduye", uploaded: "yohereje", removed: "yakuyeho", restocked: "yongeye ibicuruzwa bya", "adjusted stock for": "yahinduye ububiko bwa" },
+    fr: { added: "a ajouté", invited: "a invité", joined: "a rejoint", updated: "a modifié", recorded: "a enregistré", edited: "a modifié", uploaded: "a téléversé", removed: "a supprimé", restocked: "a réapprovisionné", "adjusted stock for": "a ajusté le stock de" },
+    rw: { added: "yongeyemo", invited: "yatumiye", joined: "yinjiye muri", updated: "yahinduye", recorded: "yanditse", edited: "yahinduye", uploaded: "yohereje", removed: "yakuyeho", restocked: "yongeye ibicuruzwa bya", "adjusted stock for": "yahinduye ububiko bwa" },
   };
   const entityCopy: Record<string, Record<string, string>> = {
     fr: { member: "membres", product: "produits", sale: "ventes", loan: "prêts", document: "documents", stock: "mouvements de stock" },
@@ -45,7 +45,9 @@ function MemberActivityList({ activities }: { activities: MemberActivity[] }) {
       {activities.map((activity) => {
         const action = actionCopy[locale]?.[activity.action] ?? activity.action;
         const groupedLabel = locale === "en" ? `${activity.count} ${activity.entityType} records` : `${activity.count} ${entityCopy[locale]?.[activity.entityType] ?? activity.entityType}`;
-        return <article key={activity.id}><PersonAvatar person={activity.actor} /><div><p><strong>{activity.actor.firstName || activity.actor.email}</strong> {action} {activity.count > 1 ? groupedLabel : activity.items[0] || activity.entityType}</p>{activity.count > 1 && activity.items.length > 0 && <small>{activity.items.join(", ")}</small>}<time dateTime={activity.happenedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(activity.happenedAt))}</time></div></article>;
+        const inviterName = activity.invitedBy ? `${activity.invitedBy.firstName} ${activity.invitedBy.lastName}`.trim() || activity.invitedBy.email : "";
+        const activityText = activity.action === "joined" ? "joined the workspace" : `${action} ${activity.count > 1 ? groupedLabel : activity.items[0] || activity.entityType}`;
+        return <article key={activity.id} title={inviterName ? `Invited by ${inviterName} (${activity.invitedBy?.email})` : undefined}><PersonAvatar person={activity.actor} /><div><p><strong>{activity.actor.firstName || activity.actor.email}</strong> {activityText}</p>{activity.action !== "joined" && activity.count > 1 && activity.items.length > 0 && <small>{activity.items.join(", ")}</small>}{inviterName && <small className="activity-inviter">Invited by {inviterName}</small>}<time dateTime={activity.happenedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(activity.happenedAt))}</time></div></article>;
       })}
       {!activities.length && <div className="dashboard-member-activity-empty"><Users /><strong>No member activity yet</strong><small>New stock, sales, finance, and document actions will appear here.</small></div>}
     </div>

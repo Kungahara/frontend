@@ -38,6 +38,7 @@ function OAuthCallback() {
     started.current = true;
     const code = search.get("code"), state = search.get("state"), oauthError = search.get("error");
     const expected = sessionStorage.getItem(`oauth_state_${provider}`);
+    const invitationToken = sessionStorage.getItem(`oauth_invitation_${provider}`) ?? undefined;
     const showFailure = (failureMessage: string) => queueMicrotask(() => {
       setFailed(true);
       setMessage(failureMessage);
@@ -46,6 +47,7 @@ function OAuthCallback() {
       showFailure("This sign-in request is invalid or expired. Please start again."); return;
     }
     sessionStorage.removeItem(`oauth_state_${provider}`);
+    sessionStorage.removeItem(`oauth_invitation_${provider}`);
     if (oauthError) {
       showFailure(oauthError === "access_denied"
         ? `${provider === "google" ? "Google" : "Microsoft"} sign-in was cancelled or permission was denied.`
@@ -53,7 +55,7 @@ function OAuthCallback() {
       return;
     }
     if (!code) { showFailure("The sign-in provider did not return an authorization code. Please try again."); return; }
-    authRequest(`oauth/${provider}`, { method: "POST", body: JSON.stringify({ code, redirectUri: `${window.location.origin}/auth/${provider}/callback` }) })
+    authRequest(`oauth/${provider}`, { method: "POST", body: JSON.stringify({ code, redirectUri: `${window.location.origin}/auth/${provider}/callback`, ...(invitationToken ? { invitationToken } : {}) }) })
       .then(() => { markSessionActivity(); router.replace("/dashboard"); router.refresh(); })
       .catch((error) => { setFailed(true); setMessage(error instanceof Error ? error.message : "OAuth sign-in failed."); });
   }, [provider, router, search]);

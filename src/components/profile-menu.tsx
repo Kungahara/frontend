@@ -13,6 +13,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [editingBusiness, setEditingBusiness] = useState(false);
   const [businessName, setBusinessName] = useState(user.businessName ?? "");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -57,12 +58,18 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
     event.preventDefault();
     setBusy(true);
     setError("");
+    setNotice("");
     try {
-      const result = await authRequest<{ user: AuthUser }>("me", { method: "PATCH", body: JSON.stringify({ businessName }) });
+      const result = await authRequest<{ user: AuthUser; approvalRequired?: boolean; message?: string }>("me", { method: "PATCH", body: JSON.stringify({ businessName }) });
       onUserChange(result.user);
       window.dispatchEvent(new CustomEvent("kungahara:user-changed", { detail: result.user }));
       setBusinessName(result.user.businessName ?? "");
       setEditingBusiness(false);
+      if (result.approvalRequired) setNotice(result.message ?? "The business name change is waiting for approval from the other owners.");
+      if (result.approvalRequired) {
+        setError(result.message ?? "The business name change is waiting for approval from the other owners.");
+        window.dispatchEvent(new CustomEvent("kungahara:approval-changed"));
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t("businessError"));
     } finally {
@@ -71,7 +78,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
   }
 
   return <div className="dashboard-profile-control" ref={rootRef}>
-    <button className="dashboard-account" type="button" aria-label={t("openOptions")} aria-expanded={open} onClick={() => { setOpen(!open); setError(""); }}>
+    <button className="dashboard-account" type="button" aria-label={t("openOptions")} aria-expanded={open} onClick={() => { setOpen(!open); setError(""); setNotice(""); }}>
       <span className={`dashboard-account-mark${user.profileImageUrl ? " has-image" : ""}`} aria-hidden="true">{user.profileImageUrl ? <Image src={user.profileImageUrl} alt="" width={44} height={44} unoptimized /> : initials}</span>
     </button>
     {open && <div className="dashboard-profile-menu">
@@ -90,6 +97,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
       {user.profileImageUrl && <button className="profile-menu-action danger" type="button" disabled={busy} onClick={remove}><Trash2 aria-hidden="true" /><span>{t("removePicture")}</span></button>}
       {!user.profileImageUrl && <p className="profile-menu-hint"><Camera aria-hidden="true" /> {t("pictureHint")}</p>}
       {error && <p className="profile-menu-error" role="alert">{error}</p>}
+      {notice && <p className="profile-menu-notice" role="status">{notice}</p>}
     </div>}
   </div>;
 }

@@ -18,13 +18,16 @@ const config = {
   },
 };
 
-export function OAuthButtons({ mode }: { mode: "login" | "signup" }) {
+export function OAuthButtons({ mode, invitationToken, onStart }: { mode: "login" | "signup"; invitationToken?: string; onStart?: () => void }) {
   const t = useTranslations("Auth");
   function start(provider: Provider) {
     const item = config[provider];
     if (!item.clientId) return;
     const state = crypto.randomUUID();
     sessionStorage.setItem(`oauth_state_${provider}`, state);
+    if (invitationToken) sessionStorage.setItem(`oauth_invitation_${provider}`, invitationToken);
+    else sessionStorage.removeItem(`oauth_invitation_${provider}`);
+    onStart?.();
     const redirectUri = `${window.location.origin}/auth/${provider}/callback`;
     const params = new URLSearchParams({ client_id: item.clientId, redirect_uri: redirectUri, response_type: "code", scope: item.scope, state });
     if (provider === "google") params.set("access_type", "online");

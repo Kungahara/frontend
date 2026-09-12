@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Auth");
   return { title: t("createAccount") };
 }
-export default async function SignupPage({ searchParams }: { searchParams: Promise<{ backdropSection?: string; backdropY?: string }> }) {
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ backdropSection?: string; backdropY?: string; invitation?: string }> }) {
   const query = await searchParams;
-  return <AuthShellWithBackdrop mode="signup" backdropSection={query.backdropSection} backdropY={Number(query.backdropY)}><SignupForm /></AuthShellWithBackdrop>;
+  return <AuthShellWithBackdrop mode="signup" backdropSection={query.backdropSection} backdropY={Number(query.backdropY)}><SignupForm invitationToken={query.invitation} /></AuthShellWithBackdrop>;
 }

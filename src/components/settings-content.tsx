@@ -184,9 +184,10 @@ export function SettingsContent() {
     event.preventDefault(); setBusy("profile"); setError(""); setMessage("");
     try {
       const details = { firstName, lastName, ...(user?.role === "owner" ? { businessName } : {}) };
-      const result = await authRequest<{ user: AuthUser }>("me", { method: "PATCH", body: JSON.stringify(details) });
-      setUser(result.user); setMessage("Profile and business details saved.");
+      const result = await authRequest<{ user: AuthUser; approvalRequired?: boolean; message?: string }>("me", { method: "PATCH", body: JSON.stringify(details) });
+      setUser(result.user); setMessage(result.approvalRequired ? result.message ?? "The business name change is waiting for approval from the other owners." : "Profile and business details saved.");
       window.dispatchEvent(new CustomEvent("kungahara:user-changed", { detail: result.user }));
+      if (result.approvalRequired) window.dispatchEvent(new CustomEvent("kungahara:approval-changed"));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save your details."); }
     finally { setBusy(""); }
   }

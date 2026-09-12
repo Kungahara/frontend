@@ -11,6 +11,14 @@ export async function POST(request: Request, context: RouteContext<"/api/auth/[a
   const { action } = await context.params;
   const body = await request.json().catch(() => ({}));
 
+  if (action === "decline-invitation") {
+    const token = typeof body.token === "string" ? body.token : "";
+    if (!token) return NextResponse.json({ error: { message: "Invitation token is required." } }, { status: 400 });
+    const response = await backendRequest(`auth/invitations/${encodeURIComponent(token)}/`, { method: "POST" });
+    if (response.status === 204) return new NextResponse(null, { status: 204 });
+    return NextResponse.json(await readJson(response), { status: response.status });
+  }
+
   if (action === "logout") {
     const { refresh } = await tokenCookies();
     if (refresh) await backendRequest("auth/logout/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken: refresh }) });
@@ -24,8 +32,14 @@ export async function POST(request: Request, context: RouteContext<"/api/auth/[a
   return sessionResponse(response);
 }
 
-export async function GET(_request: Request, context: RouteContext<"/api/auth/[action]">) {
+export async function GET(request: Request, context: RouteContext<"/api/auth/[action]">) {
   const { action } = await context.params;
+  if (action === "invitation") {
+    const token = new URL(request.url).searchParams.get("token") ?? "";
+    if (!token) return NextResponse.json({ error: { message: "Invitation token is required." } }, { status: 400 });
+    const response = await backendRequest(`auth/invitations/${encodeURIComponent(token)}/`);
+    return NextResponse.json(await readJson(response), { status: response.status });
+  }
   if (action !== "me") return NextResponse.json({ error: { message: "Not found." } }, { status: 404 });
   const { access, refresh } = await tokenCookies();
   const response = access ? await backendRequest("auth/me/", { headers: { Authorization: `Bearer ${access}` } }) : null;

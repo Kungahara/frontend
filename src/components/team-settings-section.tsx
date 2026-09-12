@@ -8,7 +8,7 @@ import { CustomSelect } from "@/components/custom-select";
 import { apiErrorMessage, type AuthUser } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
-export type TeamMember = PersonSummary & { status: "active" | "inactive"; joinedAt: string };
+export type TeamMember = PersonSummary & { status: "active" | "inactive"; joinedAt: string; isWorkspaceCreator: boolean };
 export type Invitation = { id: string; email: string; role: "owner" | "member"; status: "pending"; profileImageUrl: null; invitedAt: string; expiresAt: string };
 
 export function TeamSettingsSection({ currentUser, initialMembers, initialInvitations }: { currentUser: AuthUser; initialMembers: TeamMember[]; initialInvitations: Invitation[] }) {
@@ -20,6 +20,7 @@ export function TeamSettingsSection({ currentUser, initialMembers, initialInvita
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [inviteError, setInviteError] = useState("");
   const menuArea = useRef<HTMLDivElement>(null);
 
@@ -47,11 +48,12 @@ export function TeamSettingsSection({ currentUser, initialMembers, initialInvita
   }
 
   async function changeMember(member: TeamMember, action: "active" | "inactive" | "remove") {
-    setBusy(member.id); setError(""); setOpenMenu(null);
+    setBusy(member.id); setError(""); setMessage(""); setOpenMenu(null);
     const response = await inventoryFetch(`/api/team/members/${member.id}`, action === "remove" ? { method: "DELETE" } : { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: action }) });
     const body = response.status === 204 ? null : await response.json().catch(() => null);
     if (response.ok) {
-      if (action === "remove") setMembers((current) => current.filter((item) => item.id !== member.id));
+      if (response.status === 202) setMessage(body?.message ?? "This change is waiting for approval from the other owners.");
+      else if (action === "remove") setMembers((current) => current.filter((item) => item.id !== member.id));
       else setMembers((current) => current.map((item) => item.id === member.id ? body.member : item));
     } else setError(apiErrorMessage(body, `Unable to ${action === "remove" ? "remove" : action === "active" ? "reactivate" : "suspend"} this user.`));
     setBusy("");
@@ -71,10 +73,11 @@ export function TeamSettingsSection({ currentUser, initialMembers, initialInvita
   return <section className="settings-section team-settings-section" aria-labelledby="members-settings-title">
     <header className="team-settings-header"><div><h2 id="members-settings-title">Members</h2><p>Invite people and manage access to this business.</p></div><button className="settings-primary-button" type="button" onClick={() => { setInviteError(""); setInviteOpen(true); }}><UserPlus />Invite new member</button></header>
     {error && <p className="team-settings-error" role="alert">{error}</p>}
+    {message && <div className="team-settings-message" role="status"><span>{message}</span><button type="button" aria-label="Dismiss message" onClick={() => setMessage("")}><X aria-hidden="true" /></button></div>}
     <div className="team-member-list" ref={menuArea}>
       {members.map((member) => <article className="team-member-card" key={member.id}>
         <PersonAvatar person={member} />
-        <div className="team-member-identity"><strong>{member.email}</strong><small>{member.role === "owner" ? "Owner" : "Member"}{member.id === currentUser.id ? " · You" : ""}</small></div>
+        <div className="team-member-identity"><strong>{member.email}</strong><small>{member.role === "owner" ? "Owner" : "Member"}{member.isWorkspaceCreator ? " · Workspace creator" : ""}{member.id === currentUser.id ? " · You" : ""}</small></div>
         <span className={`team-member-status ${member.status}`}><i />{member.status === "active" ? "Active" : "Inactive"}</span>
         <div className="team-member-menu-wrap">
           <button className="team-member-menu-trigger" type="button" aria-label={`Actions for ${member.email}`} aria-expanded={openMenu === member.id} disabled={busy === member.id || member.id === currentUser.id} onClick={() => setOpenMenu((current) => current === member.id ? null : member.id)}><MoreVertical /></button>

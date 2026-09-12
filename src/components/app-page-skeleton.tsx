@@ -37,7 +37,7 @@ export function AppPageSkeleton({ variant, label, embedded = false }: { variant:
   if (variant === "help") return <div className={`app-page-skeleton help${embedded ? " embedded" : ""}`} role="status" aria-label={label} aria-busy="true">
     <Line size="medium" />
     {Array.from({ length: 5 }, (_, row) => <span className="app-skeleton-help-row" key={row}><i /><Line size="long" /><b /></span>)}
-    <span className="app-skeleton-help-card"><div><Line size="short" /><Line size="medium" /></div><span /></span>
+    <span className="app-skeleton-help-card"><div><Line size="short" /><Line size="medium" /></div><span className="app-skeleton-help-form"><i /><b /></span></span>
   </div>;
 
   const cardCount = variant === "stock" ? 5 : 4;

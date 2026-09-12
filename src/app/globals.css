@@ -531,6 +531,14 @@ a {
 .form-heading h1 { margin-top: 0.3rem; font-family: var(--font-display); font-size: calc(clamp(2.25rem, 3.5vw, 3.2rem) * var(--ui-text-scale)); letter-spacing: -0.04em; }
 .form-heading > p:last-child { margin-top: 0.55rem; color: var(--color-ink-muted); }
 .form-loading { padding: 4rem 0; color: var(--color-ink-muted); text-align: center; }
+.invitation-checking { display: grid; min-height: 17rem; align-content: center; justify-items: center; gap: 0.8rem; color: var(--color-ink-muted); text-align: center; }
+.invitation-checking > span { width: 2.4rem; height: 2.4rem; border: 3px solid #dfe6f5; border-top-color: var(--app-blue); border-radius: 50%; animation: spin 0.75s linear infinite; }
+.invitation-checking p { font-size: calc(0.78rem * var(--ui-text-scale)); }
+.invitation-unavailable { display: grid; min-height: 19rem; align-content: center; justify-items: center; text-align: center; }
+.invitation-unavailable > svg { width: 3rem; height: 3rem; padding: 0.72rem; color: #b77518; background: #fff4d9; border-radius: 50%; }
+.invitation-unavailable h1 { margin-top: 0.8rem; font-size: calc(1.3rem * var(--ui-text-scale)); }
+.invitation-unavailable p { max-width: 22rem; margin-top: 0.4rem; color: var(--color-ink-muted); font-size: calc(0.74rem * var(--ui-text-scale)); line-height: 1.5; }
+.invitation-unavailable a { margin-top: 1rem; padding: 0.65rem 0.9rem; color: white; font-size: calc(0.7rem * var(--ui-text-scale)); font-weight: 700; background: var(--app-blue); border-radius: 0.55rem; }
 .auth-form { display: grid; gap: 0.75rem; margin-top: 1.25rem; }
 .auth-form.compact { gap: 0.5rem; margin-top: 0.85rem; }
 .auth-form label { display: grid; gap: 0.45rem; color: var(--color-ink); font-size: calc(0.78rem * var(--ui-text-scale)); font-weight: 750; }
@@ -543,6 +551,22 @@ a {
 .password-wrap button:hover { color: var(--app-blue); background: #edf3ff; }
 .password-wrap button svg { display: block; width: 0.95rem; height: 0.95rem; stroke-width: 1.8; }
 .field-hint { margin-top: -0.25rem; color: var(--color-ink-muted); font-size: calc(0.68rem * var(--ui-text-scale)); }
+.invitation-leave-warning { display: flex; align-items: flex-start; gap: 0.45rem; margin-top: 0.75rem; padding: 0.65rem 0.75rem; color: #9a6516; font-size: calc(0.68rem * var(--ui-text-scale)); line-height: 1.45; background: #fff8e7; border: 1px solid #f3dfae; border-radius: 0.65rem; }
+.invitation-leave-warning svg { width: 0.9rem; height: 0.9rem; flex: 0 0 auto; margin-top: 0.08rem; }
+.invitation-locked-field { position: relative; display: block; }
+.auth-form .invitation-locked-field input { padding-right: 3rem; color: #3d4a5d; background: #eef2f8; border-color: #dce3ef; cursor: default; }
+.invitation-locked-field > button { position: absolute; top: 50%; right: 0.35rem; display: grid; width: 2rem; height: 2rem; place-items: center; padding: 0; color: var(--app-blue); background: #e1e9ff; border: 0; border-radius: 50%; cursor: pointer; transform: translateY(-50%); }
+.invitation-locked-field > button:hover { background: #d4dfff; }
+.invitation-locked-field > button svg { width: 0.9rem; height: 0.9rem; }
+.invitation-refusal-backdrop { position: fixed; z-index: 2000; inset: 0; display: grid; padding: 1rem; place-items: center; background: rgb(15 20 31 / 58%); backdrop-filter: blur(4px); }
+.invitation-refusal-dialog { display: grid; width: min(100%, 25rem); padding: 1.35rem; justify-items: center; color: #2f3744; text-align: center; background: white; border-radius: 1rem; box-shadow: 0 24px 60px rgb(0 0 0 / 26%); }
+.invitation-refusal-dialog > svg { width: 2.7rem; height: 2.7rem; padding: 0.65rem; color: #c74642; background: #fff0f0; border-radius: 50%; }
+.invitation-refusal-dialog h2 { margin-top: 0.75rem; font-size: calc(1rem * var(--ui-text-scale)); }
+.invitation-refusal-dialog p { max-width: 21rem; margin-top: 0.4rem; color: #6f7988; font-size: calc(0.72rem * var(--ui-text-scale)); line-height: 1.55; }
+.invitation-refusal-dialog div { display: flex; gap: 0.55rem; margin-top: 1rem; }
+.invitation-refusal-dialog button { min-height: 2.35rem; padding: 0.55rem 0.85rem; color: #596373; font-size: calc(0.68rem * var(--ui-text-scale)); font-weight: 700; background: #f0f2f6; border: 0; border-radius: 0.55rem; cursor: pointer; }
+.invitation-refusal-dialog button.danger { color: white; background: #d94751; }
+.invitation-refusal-dialog button:disabled { cursor: wait; opacity: 0.55; }
 .form-error { padding: 0.7rem 0.8rem; color: var(--color-danger); font-size: calc(0.75rem * var(--ui-text-scale)); background: rgb(161 61 51 / 7%); border-radius: 0.6rem; }
 .submit-button { min-height: 2.85rem; color: white; font-weight: 800; background: var(--color-primary); border: 0; border-radius: 0.8rem; cursor: pointer; }
 .submit-button:hover { background: var(--color-primary-strong); }
@@ -1618,6 +1642,16 @@ body:has(.legal-page) { overflow-x: clip; }
 .notification-item.loan .notification-item-icon { color: #d58b24; }
 .notification-item.currency { background: #f1edff; }
 .notification-item.currency .notification-item-icon { color: #7955ca; }
+.activity-inviter { color: var(--app-blue) !important; font-weight: 650; }
+.notification-item.approval { background: #eef3ff; border: 1px solid #d9e3ff; }
+.notification-item.approval > div { flex: 1; }
+.notification-approval-actions { display: flex; gap: 0.38rem; margin-top: 0.55rem; }
+.notification-approval-actions button { display: inline-flex; min-height: 1.8rem; align-items: center; gap: 0.25rem; padding: 0.3rem 0.55rem; color: white; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 700; background: var(--app-blue); border: 0; border-radius: 0.42rem; cursor: pointer; }
+.notification-approval-actions button.reject { color: #b74542; background: #fff0ef; }
+.notification-approval-actions button:disabled { cursor: wait; opacity: 0.55; }
+.notification-approval-actions svg { width: 0.65rem; height: 0.65rem; }
+.notification-approval-status { display: inline-flex; margin-top: 0.55rem; padding: 0.28rem 0.55rem; color: #257044; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 750; text-transform: capitalize; background: #e4f6eb; border-radius: 999px; }
+.notification-approval-status.rejected { color: #b74542; background: #ffe8e7; }
 .dashboard-account { gap: 0.5rem; margin-left: 0.25rem; padding: 0; text-align: left; background: transparent; border: 0; cursor: pointer; }
 .dashboard-account-mark { width: 1.9rem; height: 1.9rem; overflow: hidden; font-size: calc(0.65rem * var(--ui-text-scale)); font-weight: 600; }
 .dashboard-account-mark.has-image { background: transparent; }
@@ -1644,6 +1678,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .profile-menu-hint { display: flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.6rem 0.1rem; color: #9aa0aa; font-size: calc(0.52rem * var(--ui-text-scale)); line-height: 1.35; }
 .profile-menu-hint svg { width: 0.72rem; height: 0.72rem; flex: 0 0 auto; }
 .profile-menu-error { margin-top: 0.45rem; padding: 0.5rem 0.6rem; color: #a33f39; font-size: calc(0.56rem * var(--ui-text-scale)); line-height: 1.4; background: #fff0ef; border-radius: 0.5rem; }
+.profile-menu-notice { margin-top: 0.45rem; padding: 0.5rem 0.6rem; color: #315db8; font-size: calc(0.56rem * var(--ui-text-scale)); line-height: 1.4; background: #edf3ff; border-radius: 0.5rem; }
 .profile-menu-action > span { display: grid; min-width: 0; flex: 1; gap: 0.08rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-menu-action > span small { color: #9199a5; font-size: calc(0.5rem * var(--ui-text-scale)); font-weight: 550; }
 .profile-menu-action > svg:last-child { margin-left: auto; }
@@ -1708,6 +1743,8 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-theme-dark .notification-item.loan .notification-item-icon { color: #f0b65d; background: #493a25; }
 .dashboard-theme-dark .notification-item.currency { background: #2d2742; border-color: #443762; }
 .dashboard-theme-dark .notification-item.currency .notification-item-icon { color: #b9a2ff; background: #3a3054; }
+.dashboard-theme-dark .notification-item.approval { background: #1c2945; border-color: #30446e; }
+.dashboard-theme-dark .notification-approval-actions button.reject { color: #ffaaa5; background: #432a30; }
 .dashboard-theme-dark .notification-dismiss { color: #b7c1d1; background: #263249; }
 .dashboard-theme-dark .notification-dismiss:hover { color: #ff9892; background: #30405c; }
 .dashboard-theme-dark .profile-menu-action { color: #cbd4e3; }
@@ -1960,6 +1997,7 @@ body:has(.legal-page) { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   .stock-analysis-chart svg .stock-chart-line, .stock-analysis-chart svg .stock-chart-area, .sales-items-area { animation: none; stroke-dashoffset: 0; }
 }
+.dashboard-theme-dark .profile-menu-notice { color: #b9c8f5; background: #1d2942; }
 
 /* Owner team management and record attribution. */
 .person-avatar { position: relative; display: inline-grid; width: 1.75rem; height: 1.75rem; place-items: center; overflow: visible; color: white; font-size: calc(0.55rem * var(--ui-text-scale)); font-weight: 800; vertical-align: middle; background: var(--app-blue); border: 2px solid white; border-radius: 50%; cursor: default; }
@@ -2061,6 +2099,11 @@ body:has(.legal-page) { overflow-x: clip; }
 .team-invite-dialog .team-role-custom-select .custom-select-menu button { display: flex; width: 100%; min-height: 0; align-items: center; justify-content: space-between; margin: 0; padding: 0.35rem 0.5rem; font-size: calc(0.7rem * var(--ui-text-scale)); text-align: left; border-radius: 0.38rem; }
 .team-invite-dialog .team-invite-error { width: 100%; max-width: none; margin: 0.75rem 0 0; padding: 0.55rem 0.65rem; color: #b23b43; font-size: calc(0.64rem * var(--ui-text-scale)); line-height: 1.4; text-align: left; background: #fff0f1; border: 1px solid #f5d0d3; border-radius: 0.52rem; }
 .team-invite-dialog > .settings-primary-button { width: 100%; margin-top: 0.9rem; }
+.team-settings-message { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0.75rem 0 0.65rem; padding: 0.58rem 0.7rem; color: #315db8; font-size: calc(0.64rem * var(--ui-text-scale)); background: #edf3ff; border: 1px solid #d7e3ff; border-radius: 0.55rem; }
+.team-settings-message button { display: grid; width: 1.35rem; height: 1.35rem; flex: 0 0 auto; place-items: center; padding: 0; color: currentColor; background: transparent; border: 0; border-radius: 50%; cursor: pointer; }
+.team-settings-message button:hover { background: rgb(49 93 184 / 10%); }
+.team-settings-message svg { width: 0.75rem; }
+.dashboard-theme-dark .team-settings-message { color: #b9c8f5; background: #1d2942; border-color: #304268; }
 .settings-delete-dialog .team-dialog-close { position: absolute; top: 0.65rem; right: 0.65rem; display: grid; width: 1.8rem; height: 1.8rem; min-height: 1.8rem; place-items: center; padding: 0; color: #76808e; background: #f0f2f5; border: 0; border-radius: 50%; cursor: pointer; }
 .team-dialog-close svg { width: 0.8rem; }
 
@@ -2075,6 +2118,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-member-activity-list article { display: flex; gap: 0.55rem; padding: 0.55rem 0.1rem; border-bottom: 1px solid #eff1f4; }
 .dashboard-member-activity-list article:last-child { border-bottom: 0; }
 .dashboard-member-activity-list article > div { display: grid; min-width: 0; gap: 0.1rem; }
+.dashboard-member-activity-list .person-avatar-tooltip { display: none; }
 .dashboard-member-activity-list p { color: #576171; font-size: calc(0.58rem * var(--ui-text-scale)); line-height: 1.35; }
 .dashboard-member-activity-list p strong { color: #293341; }
 .dashboard-member-activity-list small, .dashboard-member-activity-list time { overflow: hidden; color: #959ca7; font-size: calc(0.5rem * var(--ui-text-scale)); text-overflow: ellipsis; white-space: nowrap; }
@@ -3286,7 +3330,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-shell, .app-page-skeleton { --skeleton-base: #e6e9ee; --skeleton-highlight: #f5f6f8; }
 .app-page-skeleton { display: flex; width: 100%; min-height: 100%; box-sizing: border-box; flex-direction: column; gap: 0.85rem; padding: 0.9rem; overflow: hidden; }
 .app-page-skeleton.embedded { height: 100%; padding: 0; }
-:is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { background: linear-gradient(100deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 45%, var(--skeleton-base) 65%); background-size: 220% 100%; animation: app-skeleton-shimmer 1.35s ease-in-out infinite; }
+:is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-form i, .app-skeleton-help-form b, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { background: linear-gradient(100deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 45%, var(--skeleton-base) 65%); background-size: 220% 100%; animation: app-skeleton-shimmer 1.35s ease-in-out infinite; }
 @keyframes app-skeleton-shimmer { to { background-position-x: -220%; } }
 .app-skeleton-line { display: block; height: 0.58rem; border-radius: 999px; }
 .app-skeleton-line.short { width: 38%; }
@@ -3342,9 +3386,11 @@ body:has(.legal-page) { overflow-x: clip; }
 .app-skeleton-help-row { display: flex; min-height: 3.8rem; align-items: center; gap: 0.8rem; padding: 0.75rem; background: #f8f9fb; border: 1px solid #e3e7ed; border-radius: 0.8rem; }
 .app-skeleton-help-row i, .app-skeleton-help-row b { display: block; width: 1.65rem; height: 1.65rem; flex: 0 0 auto; border-radius: 0.45rem; }
 .app-skeleton-help-row b { margin-left: auto; border-radius: 50%; }
-.app-skeleton-help-card { display: flex; min-height: 7rem; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; background: #f8f9fb; border: 1px solid #e3e7ed; border-radius: 0.9rem; }
-.app-skeleton-help-card > div { display: grid; width: 45%; gap: 0.5rem; }
-.app-skeleton-help-card > span { width: 44%; height: 4.5rem; border-radius: 0.65rem; }
+.app-skeleton-help-card { display: grid; min-height: 7.6rem; align-content: start; gap: 0.7rem; padding: 0.9rem; background: #f8f9fb; border: 1px solid #e3e7ed; border-radius: 0.9rem; }
+.app-skeleton-help-card > div { display: grid; width: min(45%, 18rem); gap: 0.35rem; }
+.app-skeleton-help-form { display: flex; width: 100%; min-height: 3.05rem; align-items: flex-end; gap: 0.5rem; padding: 0.4rem 0.45rem 0.4rem 0.7rem; background: transparent; border: 1px solid #e1e5ec; border-radius: 0.7rem; }
+.app-skeleton-help-form i { display: block; height: 0.65rem; flex: 1; border-radius: 999px; }
+.app-skeleton-help-form b { display: block; width: 4.4rem; height: 2.15rem; flex: 0 0 auto; border-radius: 0.55rem; }
 .route-loading-screen.route-loading-structure { display: block; padding: 0.9rem; overflow: hidden; background: #edf0f4; backdrop-filter: none; }
 .app-skeleton-data-row td { height: 2.8rem; }
 .app-skeleton-data-row td span { display: block; width: min(7rem, 72%); height: 0.58rem; border-radius: 999px; }
@@ -3356,6 +3402,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-theme-dark :is(.app-skeleton-card, .app-skeleton-panel, .app-skeleton-dashboard-lower > section, .app-skeleton-dashboard-activity, .app-skeleton-analytics > section, .app-skeleton-analytics > aside, .app-skeleton-documents > section, .app-skeleton-settings-section, .app-skeleton-help-row, .app-skeleton-help-card) { background: #151c2b; border-color: #293348; }
 .dashboard-theme-dark .app-skeleton-tabs { background: #151c2b; border-color: #293348; box-shadow: none; }
 .dashboard-theme-dark :is(.app-skeleton-table, .app-skeleton-table-row, .app-skeleton-dashboard-activity > header, .app-skeleton-activity-row, .app-skeleton-settings-section > header, .app-skeleton-settings-row, .app-skeleton-team-grid > span) { border-color: #293348; }
+.dashboard-theme-dark .app-skeleton-help-form { border-color: #303a50; }
 .dashboard-theme-dark .member-activity-skeleton :is(i, span) { background: var(--skeleton-base); }
 .dashboard-theme-dark .route-loading-screen.route-loading-structure { background: #0f1624; }
 @media (max-width: 900px) {
@@ -3377,9 +3424,13 @@ body:has(.legal-page) { overflow-x: clip; }
   .app-skeleton-analytics > aside { min-height: 9rem; }
   .app-skeleton-tabs span { width: 4rem; }
   .app-skeleton-team-grid { grid-template-columns: 1fr; }
+  .app-skeleton-help-card > div { width: 70%; }
+  .app-skeleton-help-form { align-items: stretch; flex-direction: column; }
+  .app-skeleton-help-form i { width: 100%; min-height: 2.25rem; }
+  .app-skeleton-help-form b { width: 100%; min-height: 2.75rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-page-loading > span,
   .dashboard-page-loading p { animation: none; }
-  :is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-card > span, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { animation: none; }
+  :is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-form i, .app-skeleton-help-form b, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { animation: none; }
 }
