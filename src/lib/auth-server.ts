@@ -24,7 +24,10 @@ export async function sessionResponse(response: Response) {
   result.cookies.set("kungahara_access", tokens.accessToken, {
     httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: tokens.expiresIn,
   });
-  const persistence = tokens.rememberMe ? { maxAge: tokens.refreshExpiresIn } : {};
+  // Keep every authenticated session across application/browser restarts.
+  // The backend still enforces the shorter two-day inactivity window when
+  // Remember me is off and the longer configured lifetime when it is on.
+  const persistence = { maxAge: tokens.refreshExpiresIn };
   result.cookies.set("kungahara_refresh", tokens.refreshToken, {
     httpOnly: true, secure, sameSite: "strict", path: "/api/auth", ...persistence,
   });

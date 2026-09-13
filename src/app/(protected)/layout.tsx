@@ -24,14 +24,14 @@ import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState
 import { Brand } from "@/components/brand";
 import { AuthUserProvider } from "@/components/auth-user-context";
 import { AppPageSkeleton } from "@/components/app-page-skeleton";
-import { CurrencyMonitor, type CurrencyAlert } from "@/components/currency-monitor";
+import { CurrencyMonitor, type CurrencyAlert, type CurrencyPosition } from "@/components/currency-monitor";
 import { InactivityLogout } from "@/components/inactivity-logout";
 import { LogoutButton } from "@/components/logout-button";
 import { ProfileMenu } from "@/components/profile-menu";
 import { UsageHeartbeat } from "@/components/usage-heartbeat";
 import { WorkspaceCopyTranslator } from "@/components/workspace-copy-translator";
 import { localizedFullDate } from "@/lib/localized-date";
-import { authRequest, type AuthUser } from "@/lib/api/client";
+import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 function StockIcon(props: SVGProps<SVGSVGElement>) {
@@ -112,7 +112,7 @@ const sidebarSlides = [
 const themeStorageKey = "kungahara:dashboard-theme";
 const languageStorageKey = "kungahara:language";
 type AppLanguage = "rw" | "en" | "fr";
-type ApprovalRequest = { id: string; kind: "remove_member" | "suspend_member" | "business_name"; status: "pending" | "approved" | "rejected"; canRespond: boolean; title: string; message: string; createdAt: string; displayStatus?: "accepted" | "rejected" };
+type ApprovalRequest = { id: string; kind: "remove_member" | "suspend_member" | "business_name"; status: "pending" | "approved" | "rejected"; canRespond: boolean; viewerDecision?: "accepted" | "rejected" | null; title: string; message: string; createdAt: string; displayStatus?: "accepted" | "rejected" };
 const languages: Array<{ value: AppLanguage; shortLabel: string; label: string }> = [
   { value: "rw", shortLabel: "RW", label: "Kinyarwanda" },
   { value: "en", shortLabel: "EN", label: "English" },
@@ -158,8 +158,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
   const [sidebarSlide, setSidebarSlide] = useState(0);
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
+  const [initialCurrencies, setInitialCurrencies] = useState<CurrencyPosition[]>([]);
   const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
   const [approvalBusy, setApprovalBusy] = useState("");
+  const [approvalErrors, setApprovalErrors] = useState<Record<string, string>>({});
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsUnread, setNotificationsUnread] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
@@ -174,6 +176,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const sidebarSlideChangedAt = useRef(0);
   const alertsDate = useRef(businessTime().dateKey);
   const deliveryAttemptIds = useRef(new Set<string>());
+  const approvalDecisionInFlight = useRef(new Set<string>());
+  const dismissedApprovalIds = useRef(new Set<string>());
 
   function toggleTheme() {
     setDark((current) => {
@@ -208,41 +212,62 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       const response = await inventoryFetch("/api/notifications/approvals", { cache: "no-store" });
       const body = await response.json().catch(() => null) as { requests?: ApprovalRequest[] } | null;
       if (!response.ok || !body) return;
+      const visibleRequests = (body.requests ?? []).filter((item) => !dismissedApprovalIds.current.has(item.id));
       setApprovalRequests((current) => {
-        const currentIds = new Set(current.map((item) => item.id));
-        if ((body.requests ?? []).some((item) => !currentIds.has(item.id))) setNotificationsUnread(true);
-        return body.requests ?? [];
+        const currentStates = new Map(current.map((item) => [item.id, item.status]));
+        if (visibleRequests.some((item) => !currentStates.has(item.id) || currentStates.get(item.id) !== item.status)) setNotificationsUnread(true);
+        return visibleRequests;
       });
     } catch { /* Approval notifications retry automatically. */ }
   }, [user]);
 
   async function decideApproval(requestId: string, decision: "approve" | "reject") {
+    if (approvalDecisionInFlight.current.has(requestId)) return;
+    approvalDecisionInFlight.current.add(requestId);
     setApprovalBusy(requestId);
+    setApprovalErrors((current) => ({ ...current, [requestId]: "" }));
+    setApprovalRequests((current) => current.map((item) => item.id === requestId ? { ...item, canRespond: false, displayStatus: decision === "approve" ? "accepted" : "rejected" } : item));
     try {
       const response = await inventoryFetch("/api/notifications/approvals", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId, decision }),
       });
-      if (!response.ok) return;
-      setApprovalRequests((current) => current.map((item) => item.id === requestId ? { ...item, canRespond: false, displayStatus: decision === "approve" ? "accepted" : "rejected" } : item));
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setApprovalRequests((current) => current.map((item) => item.id === requestId ? { ...item, canRespond: true, displayStatus: undefined } : item));
+        setApprovalErrors((current) => ({ ...current, [requestId]: apiErrorMessage(body, "This decision could not be saved. Please try again.") }));
+        return;
+      }
       window.dispatchEvent(new CustomEvent("kungahara:data-changed"));
       router.refresh();
       window.setTimeout(() => {
-        setApprovalRequests((current) => current.filter((item) => item.id !== requestId));
         setNotificationsOpen(false);
       }, 700);
-    } finally { setApprovalBusy(""); }
+    } finally { approvalDecisionInFlight.current.delete(requestId); setApprovalBusy(""); }
   }
 
   async function dismissApproval(requestId: string) {
+    if (approvalDecisionInFlight.current.has(requestId)) return;
+    approvalDecisionInFlight.current.add(requestId);
+    const dismissed = approvalRequests.find((item) => item.id === requestId);
+    dismissedApprovalIds.current.add(requestId);
     setApprovalBusy(requestId);
+    setApprovalRequests((current) => current.filter((item) => item.id !== requestId));
+    let saved = false;
     try {
       const response = await inventoryFetch("/api/notifications/approvals", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, decision: "acknowledge" }),
+        body: JSON.stringify({ requestId, decision: "dismiss" }),
       });
-      if (response.ok) setApprovalRequests((current) => current.filter((item) => item.id !== requestId));
-    } finally { setApprovalBusy(""); }
+      saved = response.ok;
+    } finally {
+      if (!saved) {
+        dismissedApprovalIds.current.delete(requestId);
+        if (dismissed) setApprovalRequests((current) => current.some((item) => item.id === requestId) ? current : [dismissed, ...current]);
+      }
+      approvalDecisionInFlight.current.delete(requestId);
+      setApprovalBusy("");
+    }
   }
 
   useEffect(() => {
@@ -251,9 +276,29 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     // reuse the old token and clear the session established by the first one.
     if (authenticationStarted.current) return;
     authenticationStarted.current = true;
-    authRequest<{ user: AuthUser }>("me")
-      .then((result) => setUser(result.user))
-      .catch(() => router.replace("/login"));
+    void (async () => {
+      try {
+        const result = await authRequest<{ user: AuthUser }>("me");
+        const currencyResponse = await inventoryFetch("/api/currencies", { cache: "no-store" });
+        const currencyBody = await currencyResponse.json().catch(() => null) as { currencies?: Array<{ id: string; pair: string }> } | null;
+        const listedCurrencies = currencyResponse.ok ? currencyBody?.currencies ?? [] : [];
+        const loadedCurrencies = await Promise.all(listedCurrencies.map(async (currency): Promise<CurrencyPosition> => {
+          const [base, quote] = currency.pair.split("/");
+          try {
+            const rateResponse = await fetch(`/api/currencies/rate?base=${base}&quote=${quote}`, { cache: "no-store" });
+            if (!rateResponse.ok) return { ...currency, lastPrice: null, currentPrice: null, error: true };
+            const rate = await rateResponse.json() as { lastPrice: number; currentPrice: number };
+            return { ...currency, lastPrice: rate.lastPrice, currentPrice: rate.currentPrice, error: false };
+          } catch {
+            return { ...currency, lastPrice: null, currentPrice: null, error: true };
+          }
+        }));
+        setInitialCurrencies(loadedCurrencies);
+        setUser(result.user);
+      } catch {
+        router.replace("/login");
+      }
+    })();
   }, [router]);
 
   useEffect(() => {
@@ -518,7 +563,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <header className="dashboard-topbar">
         <div className="dashboard-page-identity"><strong>{pageTitle}</strong><small>{currentDate}</small></div>
         <div className="dashboard-topbar-right">
-          <CurrencyMonitor onSignificantChange={receiveCurrencyAlert} />
+          <CurrencyMonitor initialCurrencies={initialCurrencies} onSignificantChange={receiveCurrencyAlert} />
           <div className="dashboard-topbar-actions" ref={notificationsRef}>
             <div className="dashboard-language-toggle" role="group" aria-label={t("language")}>
               {languages.map((item) => <button className={language === item.value ? "active" : ""} type="button" aria-label={t("useLanguage", { language: item.label })} aria-pressed={language === item.value} title={item.label} key={item.value} onClick={() => selectLanguage(item.value)}>{item.shortLabel}</button>)}
@@ -536,7 +581,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
             <ProfileMenu user={user} onUserChange={setUser} />
             {notificationsOpen && <div className="notification-popover">
               <div className="notification-popover-header"><strong>{t("todayNotifications")}</strong></div>
-              {approvalRequests.map((approval) => <article className="notification-item approval" key={approval.id}><span className="notification-item-icon"><ShieldCheck aria-hidden="true" /></span><div><b>{approval.title}</b><p>{approval.message}</p>{approval.canRespond && !approval.displayStatus ? <div className="notification-approval-actions"><button type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "approve")}><Check aria-hidden="true" />Accept</button><button className="reject" type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "reject")}><X aria-hidden="true" />Reject</button></div> : <span className={`notification-approval-status ${approval.displayStatus ?? approval.status}`}>{approval.displayStatus ?? (approval.status === "approved" ? "Accepted" : "Rejected")}</span>}</div>{!approval.canRespond && !approval.displayStatus && <button className="notification-dismiss" type="button" aria-label={`Dismiss ${approval.title}`} disabled={approvalBusy === approval.id} onClick={() => void dismissApproval(approval.id)}><X aria-hidden="true" /></button>}</article>)}
+              {approvalRequests.map((approval) => { const shownStatus = approval.displayStatus ?? approval.viewerDecision ?? approval.status; return <article className="notification-item approval" key={approval.id}><span className="notification-item-icon"><ShieldCheck aria-hidden="true" /></span><div><b>{approval.title}</b><p>{approval.message}</p>{approvalErrors[approval.id] && <p className="notification-approval-error" role="alert">{approvalErrors[approval.id]}</p>}{approval.canRespond && !approval.displayStatus ? <div className="notification-approval-actions"><button type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "approve")}><Check aria-hidden="true" />Accept</button><button className="reject" type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "reject")}><X aria-hidden="true" />Reject</button></div> : <span className={`notification-approval-status ${shownStatus}`}>{shownStatus === "pending" ? "Waiting for approval" : shownStatus === "approved" || shownStatus === "accepted" ? "Accepted" : "Rejected"}</span>}</div><button className="notification-dismiss" type="button" aria-label={`Dismiss ${approval.title}`} disabled={approvalBusy === approval.id} onClick={() => void dismissApproval(approval.id)}><X aria-hidden="true" /></button></article>; })}
               {currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div><button className="notification-dismiss" type="button" aria-label={t("dismissNotification", { title: alert.title })} onClick={() => dismissNotification(alert.id)}><X aria-hidden="true" /></button></article>)}
               {!approvalRequests.length && !currencyAlerts.length && <p>{t("noNotifications")}</p>}
             </div>}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, TrendingDown, TrendingUp, X } from "lucide-react";
+import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -8,7 +9,7 @@ import { CustomSelect } from "@/components/custom-select";
 import { apiErrorMessage } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
-type CurrencyPosition = {
+export type CurrencyPosition = {
   id: string;
   pair: string;
   lastPrice: number | null;
@@ -24,6 +25,16 @@ export type CurrencyAlert = {
 
 const MAX_CURRENCY_CARDS = 3;
 const currencyOptions = ["RWF", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "CAD", "CNY", "JPY", "AUD", "CHF"];
+
+const currencyFlagCodes: Record<string, string> = {
+  RWF: "rw", USD: "us", EUR: "eu", GBP: "gb", KES: "ke", UGX: "ug", TZS: "tz",
+  ZAR: "za", CAD: "ca", CNY: "cn", JPY: "jp", AUD: "au", CHF: "ch",
+};
+
+function CurrencyFlag({ code }: { code: string }) {
+  const flagCode = currencyFlagCodes[code];
+  return flagCode ? <Image src={`/currency-flags/${flagCode}.svg`} width={32} height={32} alt={`${code} flag`} /> : null;
+}
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 }).format(value);
@@ -44,12 +55,12 @@ function movementAlert(currency: CurrencyPosition, copy: { title: (pair: string)
   };
 }
 
-export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?: (alert: CurrencyAlert) => void }) {
+export function CurrencyMonitor({ onSignificantChange, initialCurrencies }: { onSignificantChange?: (alert: CurrencyAlert) => void; initialCurrencies?: CurrencyPosition[] }) {
   const loadingText = useTranslations("Loading");
   const t = useTranslations("Currency");
   const locale = useLocale();
-  const [currencies, setCurrencies] = useState<CurrencyPosition[]>([]);
-  const [loadingCurrencies, setLoadingCurrencies] = useState(true);
+  const [currencies, setCurrencies] = useState<CurrencyPosition[]>(() => initialCurrencies ?? []);
+  const [loadingCurrencies, setLoadingCurrencies] = useState(initialCurrencies === undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
@@ -63,6 +74,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
   }, [locale]);
 
   useEffect(() => {
+    if (initialCurrencies !== undefined) return;
     const controller = new AbortController();
     inventoryFetch("/api/currencies", { signal: controller.signal }).then(async (response) => {
       const body = await response.json().catch(() => null) as { currencies?: Array<{ id: string; pair: string }> } | null;
@@ -78,7 +90,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
       if (!controller.signal.aborted) setLoadingCurrencies(false);
     });
     return () => controller.abort();
-  }, [t]);
+  }, [initialCurrencies, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +177,11 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
     }
   }
 
+  if (loadingCurrencies && currencies.length === 0) return <section className="currency-monitor currency-monitor-loading" aria-label={loadingText("currency")} aria-busy="true">
+    <div className="currency-card-list"><span className="currency-card currency-card-skeleton" aria-hidden="true"><i /><b /><em /></span></div>
+    <span className="add-currency-button currency-add-skeleton" aria-hidden="true" />
+  </section>;
+
   return <section className="currency-monitor" aria-label={t("monitored")}>
     <div className="currency-card-list">
       {currencies.map((currency) => {
@@ -174,7 +191,7 @@ export function CurrencyMonitor({ onSignificantChange }: { onSignificantChange?:
         const TrendIcon = increased ? TrendingUp : TrendingDown;
         return <article className={`currency-card ${increased ? "currency-up" : "currency-down"}`} key={currency.id}>
           <div className="currency-card-identity">
-            <span className="currency-symbols" aria-hidden="true"><i>{base.slice(0, 1)}</i><i>{quote.slice(0, 1)}</i></span>
+            <span className="currency-symbols"><i><CurrencyFlag code={base} /></i><i><CurrencyFlag code={quote} /></i></span>
             <div className="currency-card-pair"><span>{base}/</span><small>{quote}</small></div>
           </div>
           <div className="currency-movement">{currency.error ? <strong>{t("unavailable")}</strong> : movement === null ? <strong>{loadingText("currency")}</strong> : <><TrendIcon aria-hidden="true" /><strong>{Math.abs(movement).toFixed(2)}%</strong></>}</div>

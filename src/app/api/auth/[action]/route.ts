@@ -1,6 +1,23 @@
 import { backendRequest, clearSession, readJson, sessionResponse, tokenCookies } from "@/lib/auth-server";
 import { NextResponse } from "next/server";
 
+type RefreshResult = { body: unknown; status: number; ok: boolean };
+const refreshes = new Map<string, Promise<RefreshResult>>();
+
+function refreshOnce(refreshToken: string) {
+  const existing = refreshes.get(refreshToken);
+  if (existing) return existing;
+  const pending = backendRequest("auth/refresh/", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  }).then(async (response) => ({ body: await readJson(response), status: response.status, ok: response.ok }));
+  refreshes.set(refreshToken, pending);
+  void pending.finally(() => setTimeout(() => {
+    if (refreshes.get(refreshToken) === pending) refreshes.delete(refreshToken);
+  }, 5_000));
+  return pending;
+}
+
 const actions: Record<string, string> = {
   login: "auth/login/", signup: "auth/signup/",
   "forgot-password": "auth/forgot-password/", "reset-password": "auth/reset-password/",
@@ -44,9 +61,9 @@ export async function GET(request: Request, context: RouteContext<"/api/auth/[ac
   const { access, refresh } = await tokenCookies();
   const response = access ? await backendRequest("auth/me/", { headers: { Authorization: `Bearer ${access}` } }) : null;
   if ((!response || response.status === 401) && refresh) {
-    const refreshed = await backendRequest("auth/refresh/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken: refresh }) });
-    if (!refreshed.ok) return clearSession(NextResponse.json(await readJson(refreshed), { status: 401 }));
-    return sessionResponse(refreshed);
+    const refreshed = await refreshOnce(refresh);
+    if (!refreshed.ok) return clearSession(NextResponse.json(refreshed.body, { status: 401 }));
+    return sessionResponse(new Response(JSON.stringify(refreshed.body), { status: refreshed.status, headers: { "Content-Type": "application/json" } }));
   }
   if (!response?.ok) return clearSession(NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 }));
   return NextResponse.json(await readJson(response));
