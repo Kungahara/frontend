@@ -281,7 +281,9 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         const result = await authRequest<{ user: AuthUser }>("me");
         const currencyResponse = await inventoryFetch("/api/currencies", { cache: "no-store" });
         const currencyBody = await currencyResponse.json().catch(() => null) as { currencies?: Array<{ id: string; pair: string }> } | null;
-        const listedCurrencies = currencyResponse.ok ? currencyBody?.currencies ?? [] : [];
+        const listedCurrencies = currencyResponse.ok
+          ? Array.from(new Map((currencyBody?.currencies ?? []).map((currency) => [currency.pair.toUpperCase(), currency])).values())
+          : [];
         const loadedCurrencies = await Promise.all(listedCurrencies.map(async (currency): Promise<CurrencyPosition> => {
           const [base, quote] = currency.pair.split("/");
           try {
@@ -576,7 +578,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
               <button className={dark ? "active" : ""} type="button" aria-label={t("toggleTheme")} aria-pressed={dark} title={t("toggleTheme")} onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications">
-              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{notificationsUnread && <span className="notification-dot" />}</button>
+              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{notificationsUnread && (approvalRequests.length > 0 || currencyAlerts.length > 0) && <span className="notification-dot" />}</button>
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
             {notificationsOpen && <div className="notification-popover">

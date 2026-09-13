@@ -31,6 +31,10 @@ const currencyFlagCodes: Record<string, string> = {
   ZAR: "za", CAD: "ca", CNY: "cn", JPY: "jp", AUD: "au", CHF: "ch",
 };
 
+function uniqueCurrencyPairs<T extends { pair: string }>(items: T[]) {
+  return Array.from(new Map(items.map((item) => [item.pair.toUpperCase(), item])).values());
+}
+
 function CurrencyFlag({ code }: { code: string }) {
   const flagCode = currencyFlagCodes[code];
   return flagCode ? <Image src={`/currency-flags/${flagCode}.svg`} width={32} height={32} alt={`${code} flag`} /> : null;
@@ -59,7 +63,7 @@ export function CurrencyMonitor({ onSignificantChange, initialCurrencies }: { on
   const loadingText = useTranslations("Loading");
   const t = useTranslations("Currency");
   const locale = useLocale();
-  const [currencies, setCurrencies] = useState<CurrencyPosition[]>(() => initialCurrencies ?? []);
+  const [currencies, setCurrencies] = useState<CurrencyPosition[]>(() => uniqueCurrencyPairs(initialCurrencies ?? []));
   const [loadingCurrencies, setLoadingCurrencies] = useState(initialCurrencies === undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -79,9 +83,9 @@ export function CurrencyMonitor({ onSignificantChange, initialCurrencies }: { on
     inventoryFetch("/api/currencies", { signal: controller.signal }).then(async (response) => {
       const body = await response.json().catch(() => null) as { currencies?: Array<{ id: string; pair: string }> } | null;
       if (!response.ok) throw new Error(apiErrorMessage(body, t("loadError")));
-      setCurrencies((body?.currencies ?? []).map((currency) => ({
+      setCurrencies(uniqueCurrencyPairs((body?.currencies ?? []).map((currency) => ({
         id: currency.id, pair: currency.pair, lastPrice: null, currentPrice: null,
-      })));
+      }))));
       setError("");
     }).catch((loadError) => {
       if (loadError instanceof DOMException && loadError.name === "AbortError") return;
@@ -147,9 +151,9 @@ export function CurrencyMonitor({ onSignificantChange, initialCurrencies }: { on
         setError(apiErrorMessage(body, t("saveError")));
         return;
       }
-      setCurrencies((current) => [...current, {
+      setCurrencies((current) => uniqueCurrencyPairs([...current, {
         id: body.currency!.id, pair: body.currency!.pair, lastPrice: null, currentPrice: null,
-      }]);
+      }]));
       setAdding(false);
     } catch {
       setError(t("saveError"));

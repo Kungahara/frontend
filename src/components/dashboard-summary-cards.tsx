@@ -46,7 +46,16 @@ function MemberActivityList({ activities }: { activities: MemberActivity[] }) {
         const action = actionCopy[locale]?.[activity.action] ?? activity.action;
         const groupedLabel = locale === "en" ? `${activity.count} ${activity.entityType} records` : `${activity.count} ${entityCopy[locale]?.[activity.entityType] ?? activity.entityType}`;
         const inviterName = activity.invitedBy ? `${activity.invitedBy.firstName} ${activity.invitedBy.lastName}`.trim() || activity.invitedBy.email : "";
-        const activityText = activity.action === "joined" ? "joined the workspace" : `${action} ${activity.count > 1 ? groupedLabel : activity.items[0] || activity.entityType}`;
+        const item = activity.items[0] || activity.entityType;
+        const activityText = activity.action === "joined"
+          ? "joined the workspace"
+          : activity.action === "recorded" && activity.entityType === "sale"
+            ? locale === "fr"
+              ? activity.count > 1 ? `a enregistré ${activity.count} ventes` : `a enregistré une vente de ${item}`
+              : locale === "rw"
+                ? activity.count > 1 ? `yanditse ibyagurishijwe ${activity.count}` : `yanditse igurisha rya ${item}`
+                : activity.count > 1 ? `recorded ${activity.count} sales` : `recorded a sale of ${item}`
+            : `${action} ${activity.count > 1 ? groupedLabel : item}`;
         return <article key={activity.id} title={inviterName ? `Invited by ${inviterName} (${activity.invitedBy?.email})` : undefined}><PersonAvatar person={activity.actor} /><div><p><strong>{activity.actor.firstName || activity.actor.email}</strong> {activityText}</p>{activity.action !== "joined" && activity.count > 1 && activity.items.length > 0 && <small>{activity.items.join(", ")}</small>}{inviterName && <small className="activity-inviter">Invited by {inviterName}</small>}<time dateTime={activity.happenedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(activity.happenedAt))}</time></div></article>;
       })}
       {!activities.length && <div className="dashboard-member-activity-empty"><Users /><strong>No member activity yet</strong><small>New stock, sales, finance, and document actions will appear here.</small></div>}
