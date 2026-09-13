@@ -166,9 +166,9 @@ export function DashboardSummaryCards() {
       try {
         const responses = await Promise.all(["/api/products", "/api/sales", "/api/stock-movements", "/api/team/activity"].map((path) => inventoryFetch(path, { signal: controller.signal })));
         const bodies = await Promise.all(responses.map((response) => response.json().catch(() => null)));
-        if (responses.some((response) => !response.ok)) throw new Error("Unable to load dashboard summary.");
+        if (responses.slice(0, 3).some((response) => !response.ok)) throw new Error("Unable to load dashboard summary.");
         if (!active) return;
-        setProducts(bodies[0]?.products ?? []); setSales(bodies[1]?.sales ?? []); setMovements(bodies[2]?.stockMovements ?? []); setActivities(bodies[3]?.activities ?? []); setError("");
+        setProducts(bodies[0]?.products ?? []); setSales(bodies[1]?.sales ?? []); setMovements(bodies[2]?.stockMovements ?? []); setActivities(responses[3].ok ? bodies[3]?.activities ?? [] : []); setError("");
       } catch (reason) {
         if (active && !(reason instanceof DOMException && reason.name === "AbortError")) setError(reason instanceof Error ? reason.message : "Unable to load dashboard summary.");
       } finally {

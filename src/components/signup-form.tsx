@@ -100,7 +100,6 @@ export function SignupForm({ invitationToken }: { invitationToken?: string }) {
 
   return <>
     <header className="form-heading"><p className="eyebrow">{t("joinKungahara")}</p><h1>{invitation ? t("joinBusiness", { businessName: invitation.businessName }) : t("joinUs")}</h1><p>{invitation ? t("invitedSignupIntro", { businessName: invitation.businessName }) : t("signupIntro")}</p></header>
-    {invitation && <p className="invitation-leave-warning"><AlertTriangle aria-hidden="true" />{t("invitationRefreshWarning")}</p>}
     <form className="auth-form compact" onSubmit={submit}>
       <div className="field-row"><label>{t("firstName")}<input name="firstName" autoComplete="given-name" required /></label><label>{t("lastName")}<input name="lastName" autoComplete="family-name" required /></label></div>
       <label>{t("businessName")}<span className={invitation ? "invitation-locked-field" : undefined}><input key={invitation ? "invited-business" : "new-business"} name="businessName" autoComplete="organization" placeholder={t("businessExample")} defaultValue={invitation?.businessName} readOnly={Boolean(invitation)} onClick={invitation ? () => setShowRefusal(true) : undefined} required />{invitation && <button type="button" onClick={() => setShowRefusal(true)} aria-label={t("changeInvitedBusiness")}><Building2 aria-hidden="true" /></button>}</span></label>
