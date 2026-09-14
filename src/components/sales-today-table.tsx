@@ -214,7 +214,7 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
       <button className="stock-delete-close" type="button" aria-label="Close" onClick={() => setSelling(false)}><X aria-hidden="true" /></button>
       <h3 id="sell-item-title">Sell new item</h3><p>Choose an item from stock, enter the selling price, and confirm the quantity sold.</p>
       <div className="stock-add-grid">
-        <CustomSelect className="stock-form-wide" label="Product" value={productId} options={products.filter((product) => product.quantity > 0).map((product) => ({ value: product.id, label: `${product.name} · ${product.size || "No size"} · ${product.quantity} available` }))} onChange={(value) => { setProductId(value); setSoldFor(products.find((product) => product.id === value)?.sellingPrice ?? ""); }} />
+        <CustomSelect className="stock-form-wide" label="Product" value={productId} options={products.filter((product) => product.quantity > 0).map((product) => ({ value: product.id, label: `${product.name}${product.size ? ` (${product.size})` : ""}` }))} onChange={(value) => { setProductId(value); setSoldFor(products.find((product) => product.id === value)?.sellingPrice ?? ""); }} />
         <label>Quantity sold<input required type="number" min="1" max={products.find((product) => product.id === productId)?.quantity ?? 1} value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label>
         <label>Sold for<input required type="number" min="0.01" step="0.01" value={soldFor} onChange={(event) => setSoldFor(event.target.value)} /></label>
       </div>
