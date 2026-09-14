@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuthUser } from "@/components/auth-user-context";
+
 import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,6 +22,8 @@ function localDateValue(date = new Date()) {
 }
 
 export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
+  const { user } = useAuthUser();
+  const isOwner = user.role === "owner";
   const commonText = useTranslations("Common");
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -197,12 +201,12 @@ export function SalesTodayTable({ onSettled }: { onSettled?: () => void }) {
     </header>
     {error && !selling && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-product-table-wrap">
-      <table className="stock-product-table sales-product-table sales-attribution-table">
-        <thead><tr><th>Last activity</th><th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
+      <table className={`stock-product-table sales-product-table sales-attribution-table${isOwner ? "" : " member-sales-today-table"}`}>
+        <thead><tr>{isOwner && <th>Last activity</th>}<th>Name</th><th>Category</th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Sold for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
         <tbody className={!loading && !todaySales.length ? "empty" : ""}>
-          {!loading && todaySales.map((sale) => <tr key={sale.id}><td><PersonAvatar person={sale.updatedBy ?? sale.createdBy} label="Last activity" /></td><td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.unitPrice)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td><td><div className="stock-row-actions"><button type="button" aria-label={`Edit sale of ${sale.productName}`} onClick={() => openEditDialog(sale)}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete sale of ${sale.productName}`} onClick={() => { setError(""); setDeleting(sale); }}><Trash2 aria-hidden="true" /></button></div></td></tr>)}
+          {!loading && todaySales.map((sale) => <tr key={sale.id}>{isOwner && <td><PersonAvatar person={sale.updatedBy ?? sale.createdBy} label="Last activity" /></td>}<td><strong>{sale.productName}</strong></td><td><span className="stock-category-pill">{sale.categoryName}</span></td><td>{sale.size || "—"}</td><td><MoneyAmount value={Number(sale.unitPrice)} /></td><td><span className="stock-quantity-value">{sale.quantity}</span></td><td><div className="stock-row-actions"><button type="button" aria-label={`Edit sale of ${sale.productName}`} onClick={() => openEditDialog(sale)}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete sale of ${sale.productName}`} onClick={() => { setError(""); setDeleting(sale); }}><Trash2 aria-hidden="true" /></button></div></td></tr>)}
           {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`sales-skeleton-${row}`}>{Array.from({ length: 7 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
-          {!loading && !todaySales.length && <tr><td className="stock-product-empty" colSpan={7}>{query ? <p>No sales match your search.</p> : <div className="stock-empty-state sales-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to record sales" width={180} height={180} /><strong>Ready for today&apos;s first sale</strong><p>Use Sell new item to record a sale. It will appear here automatically.</p><button type="button" disabled={!products.some((product) => product.quantity > 0)} onClick={openSellDialog}><Plus aria-hidden="true" />Sell new item</button></div>}</td></tr>}
+          {!loading && !todaySales.length && <tr><td className="stock-product-empty" colSpan={isOwner ? 7 : 6}>{query ? <p>No sales match your search.</p> : <div className="stock-empty-state sales-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to record sales" width={180} height={180} /><strong>Ready for today&apos;s first sale</strong><p>Use Sell new item to record a sale. It will appear here automatically.</p><button type="button" disabled={!products.some((product) => product.quantity > 0)} onClick={openSellDialog}><Plus aria-hidden="true" />Sell new item</button></div>}</td></tr>}
         </tbody>
       </table>
     </div>

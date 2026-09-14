@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuthUser } from "@/components/auth-user-context";
+
 import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -18,8 +20,10 @@ const salesViews: Array<{ id: SalesView; label: string }> = [
 ];
 
 export function SalesOverview({ initialView = "today" }: { initialView?: SalesView }) {
+  const { user } = useAuthUser();
+  const isOwner = user.role === "owner";
   const loadingText = useTranslations("Loading");
-  const [view, setView] = useState<SalesView>(initialView);
+  const [view, setView] = useState<SalesView>(!isOwner && initialView === "analytics" ? "today" : initialView);
   const [summaryReady, setSummaryReady] = useState(false);
   const [todayReady, setTodayReady] = useState(false);
   const [historyReady, setHistoryReady] = useState(false);
@@ -28,9 +32,9 @@ export function SalesOverview({ initialView = "today" }: { initialView?: SalesVi
   const finishToday = useCallback(() => setTodayReady(true), []);
   const finishHistory = useCallback(() => setHistoryReady(true), []);
   const finishAnalytics = useCallback(() => setAnalyticsReady(true), []);
-  const ready = summaryReady && todayReady && historyReady && analyticsReady;
+  const ready = summaryReady && todayReady && historyReady && (!isOwner || analyticsReady);
   const navigation = <nav className="sales-view-tabs" aria-label="Sales views">
-    {salesViews.map((item) => <button className={view === item.id ? "active" : ""} type="button" aria-pressed={view === item.id} key={item.id} onClick={() => setView(item.id)}>{item.label}</button>)}
+    {salesViews.filter((item) => isOwner || item.id !== "analytics").map((item) => <button className={view === item.id ? "active" : ""} type="button" aria-pressed={view === item.id} key={item.id} onClick={() => setView(item.id)}>{item.label}</button>)}
   </nav>;
 
   return <>
@@ -39,7 +43,7 @@ export function SalesOverview({ initialView = "today" }: { initialView?: SalesVi
       {view !== "history" && navigation}
       <div className="sales-view-content">
         <div className="sales-cached-panel" hidden={view !== "today"}><SalesTodayTable onSettled={finishToday} /></div>
-        <div className="sales-cached-panel" hidden={view !== "analytics"}><SalesAnalytics onSettled={finishAnalytics} /></div>
+        {isOwner && <div className="sales-cached-panel" hidden={view !== "analytics"}><SalesAnalytics onSettled={finishAnalytics} /></div>}
         <div className="sales-cached-panel" hidden={view !== "history"}><SalesHistoryTable navigation={navigation} onSettled={finishHistory} /></div>
       </div>
     </div>

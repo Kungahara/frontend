@@ -31,7 +31,7 @@ import { ProfileMenu } from "@/components/profile-menu";
 import { UsageHeartbeat } from "@/components/usage-heartbeat";
 import { WorkspaceCopyTranslator } from "@/components/workspace-copy-translator";
 import { localizedFullDate } from "@/lib/localized-date";
-import { apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
+import { ApiError, apiErrorMessage, authRequest, type AuthUser } from "@/lib/api/client";
 import { inventoryFetch } from "@/lib/inventory-client";
 
 function StockIcon(props: SVGProps<SVGSVGElement>) {
@@ -153,10 +153,27 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("Shell");
+  const [dailyReports, setDailyReports] = useState<Array<{ id: string; scheduledAt: string }>>([]);
+  const [connectionError, setConnectionError] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dark, setDark] = useState(savedDarkTheme);
   const [language, setLanguage] = useState<AppLanguage>(savedLanguage);
   const [sidebarSlide, setSidebarSlide] = useState(0);
+  useEffect(() => {
+    if (user?.role !== "owner") return;
+    let active = true;
+    async function loadReports() {
+      try {
+        const response = await inventoryFetch("/api/notifications/reports", { cache: "no-store" });
+        if (!response.ok) return;
+        const body = await response.json();
+        if (active) setDailyReports(body.reports ?? []);
+      } catch { /* Retry on the next poll. */ }
+    }
+    void loadReports();
+    const timer = window.setInterval(() => void loadReports(), 30000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [user?.role]);
   const [currencyAlerts, setCurrencyAlerts] = useState<CurrencyAlert[]>([]);
   const [initialCurrencies, setInitialCurrencies] = useState<CurrencyPosition[]>([]);
   const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
@@ -297,15 +314,17 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         }));
         setInitialCurrencies(loadedCurrencies);
         setUser(result.user);
-      } catch {
-        router.replace("/login");
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) router.replace("/login");
+        else setConnectionError("The server is temporarily unavailable. Your session has been kept. Please try again.");
       }
     })();
   }, [router]);
 
   useEffect(() => {
-    [...menuItems.map((item) => item.href), "/settings", "/help"].forEach((href) => router.prefetch(href));
-  }, [router]);
+    if (!user) return;
+    [...menuItems.filter((item) => user.role === "owner" || item.href !== "/finance").map((item) => item.href), "/settings", "/help"].forEach((href) => router.prefetch(href));
+  }, [router, user]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -363,7 +382,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const refreshBusinessAlerts = useCallback(async () => {
     try {
       const [productsResponse, salesResponse, loansResponse] = await Promise.all([
-        inventoryFetch("/api/products"), inventoryFetch("/api/sales"), inventoryFetch("/api/loans"),
+        inventoryFetch("/api/products"), inventoryFetch("/api/sales"), user?.role === "owner" ? inventoryFetch("/api/loans") : Promise.resolve(new Response(JSON.stringify({ loans: [] }))),
       ]);
       if (!productsResponse.ok || !salesResponse.ok || !loansResponse.ok) return;
       const [productsBody, salesBody, loansBody] = await Promise.all([productsResponse.json(), salesResponse.json(), loansResponse.json()]);
@@ -393,7 +412,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       });
       alerts.forEach(receiveCurrencyAlert);
     } catch { /* Notifications should never block the workspace. */ }
-  }, [language, receiveCurrencyAlert, t]);
+  }, [language, receiveCurrencyAlert, t, user]);
 
   useEffect(() => {
     if (!user || !alertsHydrated) return;
@@ -505,6 +524,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     ];
   }
 
+  if (!user && connectionError) return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`}><div className="workspace-connection-error" role="alert"><h2>Connection interrupted</h2><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>Try again</button></div></main>;
+
   if (!user) {
     return <main className={`dashboard-page-loading${dark ? " dashboard-theme-dark" : ""}`} aria-label={t("workspaceLoading")} role="status" suppressHydrationWarning><span aria-hidden="true" /><p suppressHydrationWarning>{t("workspaceLoading")}</p></main>;
   }
@@ -529,7 +550,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       </div>
       <p className="dashboard-nav-label">{t("menu")}</p>
       <nav className="dashboard-nav" aria-label={t("menu")}>
-        {menuItems.map(({ href, key, icon: Icon }) => (
+        {menuItems.filter((item) => user.role === "owner" || item.href !== "/finance").map(({ href, key, icon: Icon }) => (
           <Link className={displayedPath === href ? "active" : ""} href={href} key={href} onClick={() => { if (pathname !== href) { setPendingPath(href); setRouteLoading(true); } }}>
             <Icon aria-hidden="true" />
             <span>{t(`navigation.${key}`)}</span>
@@ -578,14 +599,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
               <button className={dark ? "active" : ""} type="button" aria-label={t("toggleTheme")} aria-pressed={dark} title={t("toggleTheme")} onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications">
-              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{notificationsUnread && (approvalRequests.length > 0 || currencyAlerts.length > 0) && <span className="notification-dot" />}</button>
+              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{(notificationsUnread || dailyReports.length > 0) && (dailyReports.length > 0 || approvalRequests.length > 0 || currencyAlerts.length > 0) && <span className="notification-dot" />}</button>
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
             {notificationsOpen && <div className="notification-popover">
               <div className="notification-popover-header"><strong>{t("todayNotifications")}</strong></div>
               {approvalRequests.map((approval) => { const shownStatus = approval.displayStatus ?? approval.viewerDecision ?? approval.status; return <article className="notification-item approval" key={approval.id}><span className="notification-item-icon"><ShieldCheck aria-hidden="true" /></span><div><b>{approval.title}</b><p>{approval.message}</p>{approvalErrors[approval.id] && <p className="notification-approval-error" role="alert">{approvalErrors[approval.id]}</p>}{approval.canRespond && !approval.displayStatus ? <div className="notification-approval-actions"><button type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "approve")}><Check aria-hidden="true" />Accept</button><button className="reject" type="button" disabled={approvalBusy === approval.id} onClick={() => void decideApproval(approval.id, "reject")}><X aria-hidden="true" />Reject</button></div> : <span className={`notification-approval-status ${shownStatus}`}>{shownStatus === "pending" ? "Waiting for approval" : shownStatus === "approved" || shownStatus === "accepted" ? "Accepted" : "Rejected"}</span>}</div><button className="notification-dismiss" type="button" aria-label={`Dismiss ${approval.title}`} disabled={approvalBusy === approval.id} onClick={() => void dismissApproval(approval.id)}><X aria-hidden="true" /></button></article>; })}
+              {dailyReports.map((report) => <article className="notification-item" key={report.id}><span className="notification-item-icon"><FileText /></span><div><b>Daily member report</b><p>{new Date(report.scheduledAt).toLocaleString()}</p><a className="settings-primary-button" href={`/api/reports/${report.id}`}>Download</a></div></article>)}
               {currencyAlerts.map((alert) => <article className={`notification-item ${notificationTone(alert.id)}`} key={alert.id}><span className="notification-item-icon"><NotificationIcon id={alert.id} /></span><div><b>{alert.title}</b><p>{alert.message}</p></div><button className="notification-dismiss" type="button" aria-label={t("dismissNotification", { title: alert.title })} onClick={() => dismissNotification(alert.id)}><X aria-hidden="true" /></button></article>)}
-              {!approvalRequests.length && !currencyAlerts.length && <p>{t("noNotifications")}</p>}
+              {!dailyReports.length && !approvalRequests.length && !currencyAlerts.length && <p>{t("noNotifications")}</p>}
             </div>}
           </div>
         </div>

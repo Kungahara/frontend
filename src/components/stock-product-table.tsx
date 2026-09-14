@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuthUser } from "@/components/auth-user-context";
+
 import { ArrowLeft, Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -166,6 +168,8 @@ function StockAnalysisChart({ products, sales, categoryId, productId, period, ye
 }
 
 export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { initialAnalysisOpen?: boolean; onSettled?: () => void }) {
+  const { user } = useAuthUser();
+  const isOwner = user.role === "owner";
   const commonText = useTranslations("Common");
   const locale = useLocale();
   const tr = useWorkspaceCopy();
@@ -189,7 +193,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
   const [addMessage, setAddMessage] = useState("");
   const addFormRef = useRef<HTMLFormElement>(null);
   const addPendingRef = useRef(false);
-  const [analysisOpen, setAnalysisOpen] = useState(initialAnalysisOpen);
+  const [analysisOpen, setAnalysisOpen] = useState(isOwner && initialAnalysisOpen);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedAnalysisProductId, setSelectedAnalysisProductId] = useState("all");
   const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>("1Y");
@@ -229,8 +233,9 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
 
   const visibleProducts = useMemo(() => {
     const value = query.trim().toLowerCase();
-    const filtered = value ? products.filter((product) => [product.name, product.categoryName, product.size]
-      .some((field) => field.toLowerCase().includes(value))) : products;
+    const scoped = products;
+    const filtered = value ? scoped.filter((product) => [product.name, product.categoryName, product.size]
+      .some((field) => field.toLowerCase().includes(value))) : scoped;
     if (!tableSort) return filtered;
     return [...filtered].sort((a, b) => {
       const difference = tableSort.key === "price" ? Number(a.costPrice) - Number(b.costPrice) : availableQuantity(a) - availableQuantity(b);
@@ -438,7 +443,7 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
     window.dispatchEvent(new Event("kungahara:data-changed"));
   }
 
-  if (analysisOpen) {
+  if (isOwner && analysisOpen) {
     const selectedCategoryName = selectedCategoryId === "all" ? "All categories" : categories.find((category) => category.id === selectedCategoryId)?.name ?? "Category";
     const categoryProducts = selectedCategoryId === "all" ? products : products.filter((product) => product.categoryId === selectedCategoryId);
     const selectedProductName = selectedAnalysisProductId === "all" ? selectedCategoryName : products.find((product) => product.id === selectedAnalysisProductId)?.name ?? selectedCategoryName;
@@ -481,28 +486,28 @@ export function StockProductTable({ initialAnalysisOpen = false, onSettled }: { 
       <h2 id="stock-products-title">Stock products</h2>
       <div className="stock-product-toolbar-actions">
         <label className="stock-product-search"><span className="sr-only">Search stock products</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search…" /><Search aria-hidden="true" /></label>
-        <button className="stock-add-product" type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add product</button>
+        {isOwner && <button className="stock-add-product" type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add product</button>}
       </div>
     </header>
     {error && <p className="stock-product-error" role="alert">{error}</p>}
     <div className="stock-product-table-wrap">
-      <table className="stock-product-table stock-attribution-table">
-        <thead><tr><th>Last activity</th><th>Name</th><th><button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button></th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Price bought for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th><th>Actions</th></tr></thead>
+      <table className={`stock-product-table stock-attribution-table${isOwner ? "" : " member-stock-table"}`}>
+        <thead><tr>{isOwner && <th>Last activity</th>}<th>Name</th><th>{isOwner ? <button className="stock-category-heading" type="button" aria-expanded={analysisOpen} aria-controls="stock-analysis" onClick={() => void openAnalysis()}>Category</button> : "Category"}</th><th>Size</th><th aria-sort={tableSort?.key === "price" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Price bought for" direction={tableSort?.key === "price" ? tableSort.direction : null} onToggle={() => toggleTableSort("price")} /></th><th aria-sort={tableSort?.key === "quantity" ? tableSort.direction === "asc" ? "ascending" : "descending" : "none"}><MoneySortButton label="Quantity" direction={tableSort?.key === "quantity" ? tableSort.direction : null} onToggle={() => toggleTableSort("quantity")} /></th>{isOwner && <th>Actions</th>}</tr></thead>
         <tbody className={!loading && !visibleProducts.length ? "empty" : ""}>
           {visibleProducts.map((product) => {
             const quantity = availableQuantity(product);
             const isLowStock = quantity <= product.lowStockLevel;
             return <tr key={product.id}>
-              <td><PersonAvatar person={product.updatedBy ?? product.createdBy} label="Last activity" /></td>
+              {isOwner && <td><PersonAvatar person={product.updatedBy ?? product.createdBy} label="Last activity" /></td>}
               <td><strong>{product.name}</strong></td>
-              <td><button className="stock-category-pill" type="button" onClick={() => setQuery(product.categoryName)}>{product.categoryName}</button></td>
+              <td>{isOwner ? <button className="stock-category-pill" type="button" onClick={() => setQuery(product.categoryName)}>{product.categoryName}</button> : <span className="stock-category-pill">{product.categoryName}</span>}</td>
               <td>{product.size || "—"}</td>
               <td><MoneyAmount value={Number(product.costPrice)} /></td>
               <td><span className={`stock-quantity-value${isLowStock ? " low" : ""}`} tabIndex={isLowStock ? 0 : undefined} aria-label={isLowStock ? `${quantity} units. Stock value is low.` : `${quantity} units`} data-tooltip={isLowStock ? "Stock value is low" : undefined}>{quantity}</span></td>
-              <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>
+              {isOwner && <td><div className="stock-row-actions"><button type="button" aria-label={`Edit ${product.name}`} onClick={() => { setError(""); setEditing({ ...product, quantityText: String(product.quantity), lowStockLevelText: String(lowStockThreshold(product.quantity)) }); }}><Pencil aria-hidden="true" /></button><button className="danger" type="button" aria-label={`Delete ${product.name}`} onClick={() => { setDeleting(product); setConfirmation(""); }}><Trash2 aria-hidden="true" /></button></div></td>}
             </tr>;
           })}
-          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={7}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>Start adding products now</strong><p>Build your stock list and keep every item organized in one place.</p><button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button></div>}</td></tr>}
+          {!loading && !visibleProducts.length && <tr><td className="stock-product-empty" colSpan={isOwner ? 7 : 5}>{query ? <p>No products match your search.</p> : <div className="stock-empty-state"><Image src="/images/stock-empty.png" alt="Business owner ready to organize inventory" width={180} height={180} /><strong>{isOwner ? "Start adding products now" : "No stock products yet"}</strong><p>{isOwner ? "Build your stock list and keep every item organized in one place." : "Products will appear here when an owner adds stock."}</p>{isOwner && <button type="button" onClick={openAddDialog}><Plus aria-hidden="true" />Add your first product</button>}</div>}</td></tr>}
           {loading && Array.from({ length: 5 }, (_, row) => <tr className="app-skeleton-data-row" aria-hidden="true" key={`stock-skeleton-${row}`}>{Array.from({ length: 7 }, (_, column) => <td key={column}><span /></td>)}</tr>)}
         </tbody>
       </table>

@@ -62,10 +62,14 @@ export async function GET(request: Request, context: RouteContext<"/api/auth/[ac
   const response = access ? await backendRequest("auth/me/", { headers: { Authorization: `Bearer ${access}` } }) : null;
   if ((!response || response.status === 401) && refresh) {
     const refreshed = await refreshOnce(refresh);
-    if (!refreshed.ok) return clearSession(NextResponse.json(refreshed.body, { status: 401 }));
+    if (!refreshed.ok) {
+      const failed = NextResponse.json(refreshed.body, { status: refreshed.status });
+      return refreshed.status === 401 ? clearSession(failed) : failed;
+    }
     return sessionResponse(new Response(JSON.stringify(refreshed.body), { status: refreshed.status, headers: { "Content-Type": "application/json" } }));
   }
-  if (!response?.ok) return clearSession(NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 }));
+  if (!response || response.status === 401) return clearSession(NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 }));
+  if (!response.ok) return NextResponse.json(await readJson(response), { status: response.status });
   return NextResponse.json(await readJson(response));
 }
 

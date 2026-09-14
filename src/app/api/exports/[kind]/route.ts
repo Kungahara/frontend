@@ -7,9 +7,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/expor
   if (!access) return NextResponse.json({ error: { message: "Please sign in to continue." } }, { status: 401 });
   const { kind } = await params;
   if (!new Set(["stock", "sales", "loans"]).has(kind)) return NextResponse.json({ error: { message: "This export is not available." } }, { status: 404 });
-  const requestedCopy = new URL(request.url).searchParams.get("copy") ?? "";
-  const copyQuery = /^\d{1,4}$/.test(requestedCopy) && requestedCopy !== "0" ? `?copy=${requestedCopy}` : "";
-  const response = await backendRequest(`exports/${kind}/${copyQuery}`, { headers: { Authorization: `Bearer ${access}` } });
+  const response = await backendRequest(`exports/${kind}/?${new URLSearchParams([...new URL(request.url).searchParams].filter(([key]) => ["copy", "year", "month"].includes(key))).toString()}`, { headers: { Authorization: `Bearer ${access}` } });
   if (!response.ok) return NextResponse.json(await readJson(response), { status: response.status });
   const pdf = await response.arrayBuffer();
   const signature = new TextDecoder("ascii").decode(new Uint8Array(pdf, 0, Math.min(5, pdf.byteLength)));

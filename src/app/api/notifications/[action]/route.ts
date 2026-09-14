@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { backendRequest, readJson, tokenCookies } from "@/lib/auth-server";
 
 const endpoints: Record<string, string> = {
+  "report-schedule": "reports/schedule/",
+  reports: "reports/notifications/",
   preferences: "notifications/preferences/",
   subscription: "notifications/subscription/",
   deliver: "notifications/deliver/",

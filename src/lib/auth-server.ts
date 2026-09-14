@@ -9,7 +9,11 @@ const secure = process.env.AUTH_COOKIE_SECURE === "true";
 type TokenResponse = { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number; rememberMe: boolean; user: unknown };
 
 export async function backendRequest(path: string, init: RequestInit = {}) {
-  return fetch(`${BACKEND}/${path.replace(/^\//, "")}`, { ...init, cache: "no-store" });
+  try {
+    return await fetch(`${BACKEND}/${path.replace(/^\//, "")}`, { ...init, cache: "no-store" });
+  } catch {
+    return Response.json({ error: { code: "service_unavailable", message: "Unable to connect to the server. Please try again shortly." } }, { status: 503 });
+  }
 }
 
 export async function readJson(response: Response) {

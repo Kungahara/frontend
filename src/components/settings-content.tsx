@@ -1,4 +1,6 @@
 "use client";
+import { CustomSelect } from "@/components/custom-select";
+import { ReportSettings } from "@/components/report-settings";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -61,6 +63,9 @@ function Switch({ checked, disabled = false, label, onChange }: { checked: boole
 }
 
 export function SettingsContent() {
+  const [reportPeriod, setReportPeriod] = useState("all");
+  const [reportYear, setReportYear] = useState(new Date().getFullYear());
+  const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const router = useRouter();
   const commonText = useTranslations("Common");
   const loadingText = useTranslations("Loading");
@@ -222,7 +227,7 @@ export function SettingsContent() {
       const savedCounter = Number.parseInt(window.localStorage.getItem(counterKey) ?? "1", 10);
       const copyNumber = Number.isFinite(savedCounter) && savedCounter > 0 ? savedCounter : 1;
       window.localStorage.setItem(counterKey, String(copyNumber + 1));
-      window.open(`/api/exports/${kind}?copy=${copyNumber}`, "_self");
+      window.open(`/api/exports/${kind}?copy=${copyNumber}${reportPeriod !== "all" ? `&year=${reportYear}` : ""}${reportPeriod === "month" ? `&month=${reportMonth}` : ""}`, "_self");
       setMessage(`${kind[0].toUpperCase()}${kind.slice(1)} PDF download started.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : `Unable to export ${kind}.`);
@@ -272,8 +277,10 @@ export function SettingsContent() {
 
     {user.role === "owner" && teamData && <TeamSettingsSection currentUser={user} initialMembers={teamData.members} initialInvitations={teamData.invitations} />}
 
-    <section className="settings-section" aria-label="Data and account settings">
-      <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>
+    {user.role === "owner" && <ReportSettings />}
+    <section className="settings-section settings-report-exports" aria-label="Data and account settings">
+      {user.role === "owner" && <><div className="settings-form-grid settings-report-period"><CustomSelect label="Reporting period" value={reportPeriod} onChange={setReportPeriod} options={[{ value: "all", label: "All records" }, { value: "month", label: "Month" }, { value: "year", label: "Year" }]} />{reportPeriod !== "all" && <label>Year<input type="number" min="2000" max="9998" value={reportYear} onChange={(event) => setReportYear(Number(event.target.value))} /></label>}{reportPeriod === "month" && <CustomSelect label="Month" value={String(reportMonth)} onChange={(value) => setReportMonth(Number(value))} options={Array.from({ length: 12 }, (_, month) => ({ value: String(month + 1), label: new Date(2026, month, 1).toLocaleString("en", { month: "long" }) }))} />}</div><p className="settings-report-note">Sales use sale dates; loans use borrowing dates. Stock shows period-end quantities at current prices.</p></>}
+      {user.role === "owner" && <div className="settings-export-grid">{(["stock", "sales", "loans"] as const).map((kind) => <button type="button" disabled={!!busy} key={kind} aria-label={`Export ${kind} as PDF`} onClick={() => void exportData(kind)}><Download /><span><strong>Export {kind}</strong><small>Download PDF</small></span></button>)}</div>}
       <div className="settings-danger-row"><span><ShieldAlert /></span><div><strong>Delete account</strong><small>This permanently removes your account and cannot be undone.</small></div><button type="button" onClick={() => setDeleteOpen(true)}>Delete account</button></div>
     </section>
 

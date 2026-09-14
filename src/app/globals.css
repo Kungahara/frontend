@@ -1527,7 +1527,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .dashboard-sidebar-signout { display: flex; width: 100%; min-height: 2.5rem; align-items: center; gap: 0.65rem; padding: 0.55rem 0.7rem; color: #dc4f48; font-size: calc(0.72rem * var(--ui-text-scale)); font-weight: 450; background: transparent; border: 0; border-radius: 0.5rem; transition: color 150ms ease, background 150ms ease; }
 .dashboard-sidebar-signout svg { width: 0.9rem; height: 0.9rem; flex: 0 0 auto; stroke-width: 1.65; }
 .dashboard-sidebar-signout:hover { color: #bf3f39; background: #fff0ef; }
-.dashboard-sidebar-promo { position: relative; display: grid; min-height: 9.75rem; margin: 0.45rem 0.25rem 0.4rem; padding: 0.5rem 0.72rem 0.4rem; overflow: hidden; color: white; background: linear-gradient(155deg, var(--app-blue) 0%, var(--app-blue) 58%, var(--app-blue) 100%); border-radius: 0.9rem; box-shadow: 0 7px 16px rgb(var(--app-blue-rgb) / 20%); }
+.dashboard-sidebar-promo { position: relative; display: grid; min-height: 9.75rem; margin: auto 0.25rem; padding: 0.5rem 0.72rem 0.4rem; overflow: hidden; color: white; background: linear-gradient(155deg, var(--app-blue) 0%, var(--app-blue) 58%, var(--app-blue) 100%); border-radius: 0.9rem; box-shadow: 0 7px 16px rgb(var(--app-blue-rgb) / 20%); }
 .dashboard-sidebar-promo::before { position: absolute; top: -2rem; left: -1.2rem; width: 5rem; height: 5rem; background: rgb(255 255 255 / 10%); border-radius: 50%; content: ""; }
 .sidebar-promo-art { position: relative; display: grid; height: 2.25rem; place-items: center; }
 .sidebar-promo-orbit { position: absolute; width: 2.7rem; height: 2.7rem; border: 1px solid rgb(255 255 255 / 28%); border-radius: 50%; box-shadow: 2.2rem 0 0 -0.9rem rgb(173 202 255 / 38%), -2rem 0.5rem 0 -1rem rgb(255 255 255 / 28%); }
@@ -3447,3 +3447,43 @@ body:has(.legal-page) { overflow-x: clip; }
   .dashboard-page-loading p { animation: none; }
   :is(.app-page-skeleton, .dashboard-shell) :is(.app-skeleton-line, .app-skeleton-circle, .app-skeleton-control, .app-skeleton-button, .app-skeleton-search, .app-skeleton-card > i, .app-skeleton-table-row i, .app-skeleton-photo-grid i, .app-skeleton-documents aside i, .app-skeleton-activity-row > i, .app-skeleton-team-grid > span > em, .app-skeleton-help-row i, .app-skeleton-help-row b, .app-skeleton-help-form i, .app-skeleton-help-form b, .app-skeleton-settings-row > span, .analytics-option-skeleton, .documents-summary-value-skeleton, .app-skeleton-data-row span, .sales-chart-skeleton) { animation: none; }
 }
+
+/* Member tables have fewer columns than the owner attribution tables. */
+.stock-product-table.member-stock-table, .stock-product-table.member-sales-today-table, .stock-product-table.member-sales-history-table { table-layout: fixed; min-width: 36rem; }
+.stock-product-table:is(.member-stock-table, .member-sales-today-table, .member-sales-history-table) :is(th, td) { padding-inline: 1rem; text-align: left; }
+.stock-product-table.member-stock-table :is(th, td):nth-child(1) { width: 28%; }
+.stock-product-table.member-stock-table :is(th, td):nth-child(2) { width: 22%; }
+.stock-product-table.member-stock-table :is(th, td):nth-child(3) { width: 12%; }
+.stock-product-table.member-stock-table :is(th, td):nth-child(4) { width: 23%; }
+.stock-product-table.member-stock-table :is(th, td):nth-child(5) { width: 15%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(1) { width: 24%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(2) { width: 20%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(3) { width: 10%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(4) { width: 20%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(5) { width: 12%; }
+.stock-product-table.member-sales-today-table :is(th, td):nth-child(6) { width: 14%; text-align: center; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(1) { width: 23%; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(2) { width: 23%; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(3) { width: 18%; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(4) { width: 8%; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(5) { width: 18%; }
+.stock-product-table.member-sales-history-table :is(th, td):nth-child(6) { width: 10%; }
+.settings-section.settings-report-exports { overflow: visible; }
+.settings-report-schedule { grid-template-columns: 0.7fr 1fr 1.35fr auto; align-items: end; gap: 1rem; }
+.settings-report-schedule .settings-primary-button { height: 2.35rem; white-space: nowrap; }
+.settings-report-toggle { display: grid; align-content: space-between; min-height: 3.55rem; gap: 0.6rem; color: #5f6876; font-size: calc(0.6rem * var(--ui-text-scale)); font-weight: 650; }
+.settings-report-toggle .settings-switch { align-self: center; margin-block: 0.3rem; }
+.settings-report-period { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 1rem; }
+.settings-report-period .custom-select-trigger { height: 2.35rem; }
+.settings-report-period .custom-select-field > span { color: #5f6876; font-size: calc(0.6rem * var(--ui-text-scale)); font-weight: 650; }
+.settings-report-note, .settings-report-message { margin: 0; padding: 0 0.95rem 0.9rem; color: #687386; font-size: calc(0.62rem * var(--ui-text-scale)); line-height: 1.5; }
+.settings-report-message { display: flex; align-items: center; gap: 0.75rem; }
+.dashboard-theme-dark :is(.settings-report-note, .settings-report-message, .settings-report-toggle, .settings-report-period .custom-select-field > span) { color: #a9b5c8; }
+.dashboard-theme-dark .settings-report-schedule input { color-scheme: dark; }
+.workspace-connection-error { display: grid; justify-items: center; gap: 1rem; max-width: 30rem; padding: 2rem; text-align: center; }
+.workspace-connection-error h2 { font-size: 1.2rem; }
+.workspace-connection-error button { padding: 0.65rem 1.1rem; color: white; background: var(--app-blue); border: 0; border-radius: 0.5rem; cursor: pointer; }
+@media (min-width: 901px) { .dashboard-sidebar-promo { margin-block: auto; flex-shrink: 0; } .dashboard-sidebar > .dashboard-general { margin-top: 0; } }
+@media (max-width: 600px) { .settings-report-schedule { grid-template-columns: repeat(2, minmax(0, 1fr)); } .settings-report-period { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; } }
+
+.dashboard-theme-dark .settings-report-schedule label { color: #a9b5c8; }

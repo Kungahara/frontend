@@ -89,7 +89,7 @@ export function ProfileMenu({ user, onUserChange }: { user: AuthUser; onUserChan
       {editingBusiness ? <form className="profile-business-form" onSubmit={saveBusiness}>
         <label>{t("businessName")}<input autoFocus required maxLength={200} value={businessName} onChange={(event) => setBusinessName(event.target.value)} /></label>
         <div><button type="submit" aria-label={t("saveBusinessName")} disabled={busy || !businessName.trim()}><Check aria-hidden="true" /></button><button type="button" aria-label={t("cancelBusinessEdit")} onClick={() => { setEditingBusiness(false); setBusinessName(user.businessName ?? ""); }}><X aria-hidden="true" /></button></div>
-      </form> : <button className="profile-menu-action" type="button" disabled={user.role !== "owner"} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>{t("businessName")}</small>{user.businessName ?? t("notSet")}</span><Pencil aria-hidden="true" /></button>}
+      </form> : <button className="profile-menu-action" type="button" disabled={user.role !== "owner"} onClick={() => setEditingBusiness(true)}><Building2 aria-hidden="true" /><span><small>{t("businessName")}</small>{user.businessName ?? t("notSet")}</span>{user.role === "owner" && <Pencil aria-hidden="true" />}</button>}
       <label className={`profile-menu-action${busy ? " disabled" : ""}`}>
         <CloudUpload aria-hidden="true" /><span>{busy ? commonText("uploading") : user.profileImageUrl ? t("changePicture") : t("uploadPicture")}</span>
         <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} />
