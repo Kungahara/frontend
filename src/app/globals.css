@@ -2423,6 +2423,7 @@ body:has(.legal-page) { overflow-x: clip; }
 .settings-secondary-button:hover, .settings-primary-button:hover { color: white; background: var(--app-blue); border-color: var(--app-blue); }
 .settings-secondary-button input { display: none; }
 .settings-primary-button { justify-self: start; color: white; background: var(--app-blue); border-color: var(--app-blue); }
+.notification-item .settings-primary-button { min-height: 1.65rem; padding-block: 0.2rem; line-height: 1.2; }
 .settings-primary-button:disabled, .settings-secondary-button:disabled { opacity: 0.55; cursor: not-allowed; }
 .settings-form-grid { display: grid; padding: 0.9rem 0.95rem; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
 .settings-form-grid label { display: grid; gap: 0.28rem; color: #5f6876; font-size: calc(0.6rem * var(--ui-text-scale)); font-weight: 650; }

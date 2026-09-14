@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { type ReactNode, type SVGProps, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, type SVGProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Brand } from "@/components/brand";
 import { AuthUserProvider } from "@/components/auth-user-context";
@@ -180,12 +180,31 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [approvalBusy, setApprovalBusy] = useState("");
   const [approvalErrors, setApprovalErrors] = useState<Record<string, string>>({});
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationsUnread, setNotificationsUnread] = useState(false);
+  const [seenNotifications, setSeenNotifications] = useState<string[]>([]);
   const [routeLoading, setRouteLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarTransitioning, setSidebarTransitioning] = useState(false);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [alertsHydrated, setAlertsHydrated] = useState(false);
+  const notificationKeys = useMemo(() => [
+    ...dailyReports.map((report) => `report:${report.id}`),
+    ...approvalRequests.map((approval) => `approval:${approval.id}:${approval.status}`),
+    ...currencyAlerts.map((alert) => `alert:${alert.id}`),
+  ], [dailyReports, approvalRequests, currencyAlerts]);
+  const notificationsUnread = alertsHydrated && notificationKeys.some((key) => !seenNotifications.includes(key));
+  const markNotificationsRead = useCallback(() => {
+    if (!user || !alertsHydrated) return;
+    const seen = Array.from(new Set([...seenNotifications, ...notificationKeys]));
+    setSeenNotifications(seen);
+    try {
+      window.localStorage.setItem(`kungahara:notifications-seen:${user.id}`, JSON.stringify(seen));
+    } catch { /* Read state still works for this session if storage is unavailable. */ }
+  }, [user, alertsHydrated, seenNotifications, notificationKeys]);
+  useEffect(() => {
+    if (!notificationsOpen || !notificationsUnread) return;
+    const timer = window.setTimeout(markNotificationsRead, 0);
+    return () => window.clearTimeout(timer);
+  }, [notificationsOpen, notificationsUnread, markNotificationsRead]);
   const authenticationStarted = useRef(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const currencyAlertIds = useRef(new Set<string>());
@@ -213,7 +232,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     currencyAlertIds.current.clear();
     deliveryAttemptIds.current.clear();
     setCurrencyAlerts([]);
-    setNotificationsUnread(false);
     try { window.localStorage.setItem(languageStorageKey, next); } catch { /* The selection still applies for this visit. */ }
     window.dispatchEvent(new CustomEvent("kungahara:language-changed", { detail: { language: next } }));
     void fetch("/api/language", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language: next }) }).finally(() => window.location.reload());
@@ -230,11 +248,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       const body = await response.json().catch(() => null) as { requests?: ApprovalRequest[] } | null;
       if (!response.ok || !body) return;
       const visibleRequests = (body.requests ?? []).filter((item) => !dismissedApprovalIds.current.has(item.id));
-      setApprovalRequests((current) => {
-        const currentStates = new Map(current.map((item) => [item.id, item.status]));
-        if (visibleRequests.some((item) => !currentStates.has(item.id) || currentStates.get(item.id) !== item.status)) setNotificationsUnread(true);
-        return visibleRequests;
-      });
+      setApprovalRequests(visibleRequests);
     } catch { /* Approval notifications retry automatically. */ }
   }, [user]);
 
@@ -376,7 +390,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     if (currencyAlertIds.current.has(alert.id)) return;
     currencyAlertIds.current.add(alert.id);
     setCurrencyAlerts((current) => [alert, ...current]);
-    setNotificationsUnread(true);
   }, []);
 
   const refreshBusinessAlerts = useCallback(async () => {
@@ -443,7 +456,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         }) : [];
         currencyAlertIds.current = new Set(alerts.map((alert) => alert.id));
         setCurrencyAlerts(alerts);
-        setNotificationsUnread(window.localStorage.getItem(`${key}:unread`) === "true");
+        const seen = JSON.parse(window.localStorage.getItem(`kungahara:notifications-seen:${user.id}`) ?? "[]");
+        setSeenNotifications(Array.isArray(seen) ? seen.filter((id): id is string => typeof id === "string") : []);
       } catch {
         setCurrencyAlerts([]);
       }
@@ -456,8 +470,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     if (!alertsHydrated || !user) return;
     const key = notificationStorageKey(user.id);
     window.localStorage.setItem(key, JSON.stringify(currencyAlerts));
-    window.localStorage.setItem(`${key}:unread`, String(notificationsUnread));
-  }, [alertsHydrated, currencyAlerts, notificationsUnread, user]);
+  }, [alertsHydrated, currencyAlerts, user]);
 
   useEffect(() => {
     if (!alertsHydrated || !user || currencyAlerts.length === 0) return;
@@ -489,8 +502,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       currencyAlertIds.current.clear();
       deliveryAttemptIds.current.clear();
       setCurrencyAlerts([]);
-      setNotificationsUnread(false);
-      void refreshBusinessAlerts();
+        void refreshBusinessAlerts();
     }, 60_000);
     return () => window.clearInterval(timer);
   }, [refreshBusinessAlerts]);
@@ -599,7 +611,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
               <button className={dark ? "active" : ""} type="button" aria-label={t("toggleTheme")} aria-pressed={dark} title={t("toggleTheme")} onClick={toggleTheme}><Moon aria-hidden="true" /></button>
             </div>
             <div className="dashboard-notifications">
-              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { setNotificationsUnread(false); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{(notificationsUnread || dailyReports.length > 0) && (dailyReports.length > 0 || approvalRequests.length > 0 || currencyAlerts.length > 0) && <span className="notification-dot" />}</button>
+              <button type="button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) { markNotificationsRead(); void refreshApprovalRequests(); } }}><Bell aria-hidden="true" />{!notificationsOpen && notificationsUnread && <span className="notification-dot" />}</button>
             </div>
             <ProfileMenu user={user} onUserChange={setUser} />
             {notificationsOpen && <div className="notification-popover">
