@@ -59,6 +59,14 @@ Provider secrets, database credentials, and Cloudinary credentials belong on the
 
 ## Development
 
+### AI assistant
+
+The bottom-right, icon-only assistant is available throughout the signed-in workspace, with English, French, and Kinyarwanda UI and light/dark themes. The conversation stays in memory while navigating and is cleared when the workspace unmounts or a new conversation is started.
+
+To enable Grok replies, set `XAI_API_KEY` and `XAI_ASSISTANT_MODEL` in `.env.local` (or your hosting server environment), then restart Next.js. Create a key in the [xAI console](https://console.x.ai/) and choose a Grok model available to your account that supports the [xAI Responses API](https://docs.x.ai/developers/model-capabilities/text/generate-text). These variables are server-only; never prefix them with `NEXT_PUBLIC_`.
+
+The authenticated `/api/assistant` route sends the conversation, selected language, and current page path to xAI with `store: false`. It does not send account details or fetch business records. This first version explains application features; it cannot read inventory, calculate live business totals, or make changes. Missing configuration and provider failures display a retryable message without fabricating a reply.
+
 ### Commands
 
 | Command | Purpose |

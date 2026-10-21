@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, type SVGProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Brand } from "@/components/brand";
+import { AiAssistant } from "@/components/ai-assistant";
 import { AuthUserProvider } from "@/components/auth-user-context";
 import { AppPageSkeleton } from "@/components/app-page-skeleton";
 import { CurrencyMonitor, type CurrencyAlert, type CurrencyPosition } from "@/components/currency-monitor";
@@ -629,5 +630,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         {routeLoading && <div className="route-loading-screen route-loading-structure"><AppPageSkeleton variant={(["stock", "sales", "finance", "documents", "settings", "help"].includes(displayedPath.slice(1)) ? displayedPath.slice(1) : "dashboard") as "dashboard" | "stock" | "sales" | "finance" | "documents" | "settings" | "help"} label={t("loadingPage")} embedded /></div>}
       </main>
     </section>
+    <AiAssistant />
   </div></AuthUserProvider>;
 }
